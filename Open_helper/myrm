@@ -1,0 +1,14 @@
+#!/bin/bash
+function MYLS () {
+for FILE in `ls -A $1`
+do
+if [ -d "$1/$FILE" ]
+then
+rm $1/$FILE$2
+MYLS "$1/$FILE" "$2"
+# else
+rm $1$2
+fi
+done
+}
+MYLS "$1" "$2"

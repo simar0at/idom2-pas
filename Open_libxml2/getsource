@@ -1,0 +1,3 @@
+#!/bin/bash
+cp ../../../libxml2/*.inc .
+cp ../../../libxml2/*.pas .

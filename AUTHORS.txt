@@ -1,0 +1,7 @@
+Martijn Brinkers <martijn_brinkers@yahoo.co.uk>
+Uwe Fechner <ufechner@4commerce.de>
+Petr Kozelka <pkozelka@email.cz>
+Thomas Freudenberg <th.freudenberg@4commerce.de>
+
+Testing:
+Jan Kubatzki <j.kubatzki@4commerce.de>

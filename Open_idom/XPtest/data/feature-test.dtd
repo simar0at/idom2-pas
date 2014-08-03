@@ -1,0 +1,21 @@
+<!ELEMENT test (#PCDATA)>
+<!ENTITY % feature-test "IGNORE">
+
+<![ %feature-test; [
+
+<!-- 
+     these declarations apply if an earlier declaration set %feature-test;
+     to "INCLUDE", otherwise they are skipped over.
+-->
+
+<!ENTITY e1 "aaa">
+<!ENTITY e2 "bbb">
+
+]]>
+
+<!--
+     if %feature-test; is left as "IGNORE", then these are used:
+-->
+
+<!ENTITY e1 "xxx">
+<!ENTITY e2 "yyy">

@@ -1,0 +1,15 @@
+#!/bin/bash
+cd ..
+cd ..
+rm -r idom2-release
+cp -r idom2 idom2-release
+cd idom2-release
+./Open_helper/myrm . /*.~*
+./Open_helper/myrm . /*.bak
+./Open_helper/myrm . /*.dcu
+./Open_helper/myrm . /*.ini
+./Open_helper/myrm . /*.exe
+./Open_helper/myrm . /*.cfg
+./Open_helper/myrm . /.#*.*
+# delete all dirs with the name CVS
+./Open_helper/rmcvs .

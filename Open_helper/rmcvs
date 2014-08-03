@@ -1,0 +1,16 @@
+#!/bin/bash
+function MYLS () {
+for FILE in `ls -A $1`
+do
+if [ -d "$1/$FILE" ]
+then
+if [ -d "$1/CVS" ]
+then
+  echo $1/CVS
+  rm -r $1/CVS
+fi
+MYLS "$1/$FILE" 
+fi
+done
+}
+MYLS "$1" 

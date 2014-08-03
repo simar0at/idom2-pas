@@ -1,0 +1,8 @@
+*.local
+*.identcache
+*.exe
+*.jdbg
+*.map
+*.~*~
+*.dcu
+_*.*

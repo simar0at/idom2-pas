@@ -1,0 +1,45 @@
+Hello,
+
+if you want to participate in the development of the idom2 project,
+you are wellcome.
+
+However, I want to ask you, to keep the following rules:
+
+1. don't commit any changes to libxmldom.pas, that break any of 
+   the XPTests, that worked before.
+
+If you want to make major design changes, ask me before doing so,
+than we can decide how we cope with it, e.g. by creating a
+new branch.
+
+If you think, there are XPTests, that are wrong (not DOM2
+compliant), notify this on the mailing list or add an XPTest
+to the appropriate unit, that is correct.
+
+2. ask on the mailing list, before adding new files or directories
+   to the cvs. 
+
+Often it is important, to choose a good file name, and every 
+devoloper has different opinions, what a good file name is,
+so this should be discussed in advance.
+
+3. Don't make any changes to idom2.pas.
+This is the central unit, so any changes can heavily influence
+the work of other people.
+
+If you have suggestions to improve this unit, post them on 
+the mailing list, if the majority of the devolopers agree
+to the changes, I will add them.
+
+If you want to add new interfaces to idom2_ext.pas, that's ok.
+
+That's all for now, too many rules aren't good, anyway.
+
+Uwe Fechner
+
+Questions or suggestions to:
+
+idom2-pas-interest@lists.sourceforge.net
+
+http://lists.sourceforge.net/lists/listinfo/idom2-pas-interest
+ 

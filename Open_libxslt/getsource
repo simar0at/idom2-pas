@@ -1,0 +1,4 @@
+#!/bin/bash
+cp ../../../libxslt/*.inc .
+cp ../../../libxslt/*.pas .
+cp ../../../libxslt/*.imp .

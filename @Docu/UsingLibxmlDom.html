@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>using libxmldom</title>
+             
+  <style>
+
+     h1       { text-align: center; }
+
+     .author  { text-align: right;
+
+                background: #dadada;
+
+                border: 1px solid #808080;
+
+                padding: 20px; }
+
+     .topic   { padding: 10px;
+
+                background: #fafae0;
+
+                border: 1px solid #808080;
+
+                margin-top: 10px; }
+
+     .comment { font-size: -1;
+
+                color: #808080;
+
+                padding-left: 50px;
+
+                font-style: italic;
+
+                width: 70%;}
+
+     pre      { color: #008000;
+
+                padding: 10px;
+
+                background: #F0F0F0;
+
+                border: 1px solid silver; }
+
+     li       { margin-bottom: 20px; }
+
+     div      { margin-bottom: 20px; }
+
+  </style>
+</head>
+ <body>
+   
+<h1>Using libxmldom</h1>
+    
+<div class="author">written by U.Fechner, 2002-03-29<br>
+ html by J.Kubatzki, 2002-03-26</div>
+    
+<div class="topic">Guide for converting programs, that used msxml before, 
+to the use of the libxmldom.pas implementation of the idom2.pas and idom2_ext.pas 
+interfaces:</div>
+    
+<ol>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div>include the following units into your project:      
+    <pre>uses <br>  idom2,<br>  idom2_ext,<br>  libxmldom;<br></pre>
+  </div>
+        
+    <div> If you want to have the choice, to switch to msxml at runtime,
+than write:      
+    <pre>uses<br>  idom2,<br>  idom2_ext,<br>  libxmldom,<br>  msxml_impl;<br></pre>
+       
+    <div class="comment"> libxmldom and/or msxml_impl should be included only
+once in the whole project, IDom2 and IDom2_ext in all units, that make use
+of the types and interfaces, defined there </div>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> define a const for the domvendor:      
+    <pre>const<br>  domvendor = SLIBXML;<br></pre>
+  </div>
+        
+    <div> if you want to try msxml      
+    <pre>const<br>  domvendor = 'MSXML2_RENTAL_MODEL';<br></pre>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> define a global variable like that:      
+    <pre>var<br>  dom: IDomImplementation;<br></pre>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div>       initialize the dom:      
+    <pre>dom := getDom(domvendor)<br></pre>
+       
+    <div class="comment"> just once at the start of the program<br>
+  there is no need to free the dom implementation at the end, it's done automaticly 
+because it works with interfaces </div>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> get an empty document:      
+    <pre>var<br>  doc: IDomDocument; (local var)<br><br>doc := dom.createDocument('','',nil);<br></pre>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> load from string:      
+    <pre>(doc as IDomPersist).loadxml('&lt;?xml version="1.0" encoding="iso-8859-1"?&gt;&lt;test/&gt;');<br></pre>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> load from file:      
+    <pre>var <br>  ok: boolean;<br><br>(doc as IDomParseOptions).preserveWhiteSpace := false;<br></pre>
+       
+    <div class="comment">This line is important for msdom-compatibility, even
+though it doesn't have exactly the same effect as with msxml:<br>
+  It doesn't remove 'empty' lines, that contain spaces.<br>
+  If you need complete removal of whitespace, write an own procedure, that 
+is doing that after parsing (easy with xpath).</div>
+       
+    <pre>ok := (doc as IDomPersist).load(filename);<br></pre>
+       
+    <div class="comment">always check, whether the result is true!</div>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> save to file:      
+    <pre>ok := (doc as IDomPersist).save(filename);<br></pre>
+       
+    <div class="comment">always check, whether the result is true!</div>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> free the document, when not longer needed:      
+    <pre>doc := nil;<br></pre>
+       
+    <div class="comment"> It's a good idea, to set all the vars, that hold 
+dom-interfaces, to nil when you don't need them any more. Well, if you casted 
+interfaces like (doc as IDomPersist).xxx than the document isn't freed, if 
+you set the vars to nil, because there still is a reference to the hidden 
+var of type IDomPersist. </div>
+       
+    <div class="comment"> So you can do the following: </div>
+       
+    <pre>var<br>  doc: IDomDocument;<br>  persist: IDomPersist;<br><br>doc := dom.createDocument('','',nil);<br>persist := doc as IDomPersist;<br>persist.load(filename);       <br>...<br>persist := nil;<br>doc := nil<br>writeln(inttostr((dom as IDomDebug).doccount));<br></pre>
+       
+    <div class="comment">Now the doccount is zero.</div>
+       
+    <div class="comment">Much more easy:<br>
+  You put your code into a procedure, define all vars locally, then they
+are freed automatically, when you leave the procedure. </div>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+   
+</ol>
+    
+<div class="topic"> remark on namespaces: </div>
+    
+<ul>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> Suppose, the following namespace is definied:      
+    <pre>&lt;dds:repository xmlns:xds="http://abc.org/dds"&gt;<br></pre>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> Then this works with msxml, but is wrong for dom2 implementations: 
+      
+    <pre>getElementsByTagName('dds:datalinks'); <br></pre>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> Use this method instead:      
+    <pre>getElementsByTagNameNs('http://abc.org/dds','datalinks'); <br></pre>
+  </div>
+   </li>
+  <!-- ********************************************************************************** -->
+   
+</ul>
+    
+<div class="topic"> working with DTD's (validation): </div>
+    
+<ul>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> If you do this:      
+    <pre>var<br>  ok: boolean;<br><br>doc := dom.createDocument('','',nil);<br>ok := (doc as IDomPersist).load(filename);<br></pre>
+  than the file is validated automatically, but no error is raised, if the 
+validation fails. The result is false, if the file wasn't found or if it isn't
+well-formed. </div>
+   </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div> If you do that:      
+    <pre>(doc as IDomParseOptions).validate := True;<br>ok := (doc as IDomPersist).load(filename);<br></pre>
+  than the ok is false and the resulting document is NIL, if there  was a 
+validation failure. </div>
+   </li>
+  <!-- ********************************************************************************** -->
+   
+</ul>
+    
+<div class="topic"> using IDomNodeExt (replacement for the similar IDomNodeEx 
+from Borland): </div>
+    
+<ul>
+  <!-- ********************************************************************************** -->
+  <li>      
+    <div>doing a transformation (XSLT)      
+    <pre>var<br>  xml,xsl             : IDomDocument;<br>  xnode,snode         : IDomNode;<br>  xmlstr, xslstr,html : WideString;<br><br>  (xml as IDomPersist).loadxml(xmlstr);<br>  (xsl as IDomPersist).loadxml(xslstr);<br>  xnode := xml as IDomNode;<br>  snode := xsl.documentElement as IDomNode;<br>  (xnode as IDomNodeExt).transformNode(snode,html);<br></pre>
+       
+    <div class="comment">This program transforms the given xmlstr with the 
+stylesheet, passed in xslstr (it must be a valid stylesheet, that produdes 
+html output) into the string with the name html. </div>
+  </div>
+  </li>
+  <!-- ********************************************************************************** -->
+  <li>       
+    <div>getting the textual representation of a node      
+    <pre>(doc as IDomPersist).loadxml('&lt;?xml version="1.0" encoding="iso-8859-1"?&gt;&lt;root&gt;&lt;child/&gt;&lt;/root&gt;');<br>WriteLn('a) '+(doc.documentElement as IDomNodeExt).xml);  <br>WriteLn('b) '+(doc.documentElement.firstChild as IDomNodeExt).xml);<br></pre>
+  outputs:      
+    <pre>a) &lt;root&gt;&lt;child/&gt;&lt;/root&gt;<br>b) &lt;child/&gt;<br></pre>
+  </div>
+      </li>
+  <!-- ********************************************************************************** -->
+   
+</ul>
+    
+<div class="topic">using IDomOutputOptions:</div>
+    
+<ul>
+  <!-- ********************************************************************************** -->
+  <li>      
+    <div>changing the encoding for the output      
+    <pre>var <br>  outputstr: widestring;<br>  filename:  string;<br>  doc:       IDomDocument;<br><br>(doc as IDomPersist).loadxml('&lt;?xml version="1.0" encoding="iso-8859-1"?&gt;&lt;root&gt;&lt;child/&gt;&lt;/root&gt;');<br>(doc as IDomOutputOptions).encoding := 'utf-8';<br>outputstr:=(doc as IDomPersist).xml;<br>ok := (doc as IDomPersist).save(filename); <br></pre>
+       
+    <div class="comment">Outputstr is utf16 encoded now. <br>
+  I don't now, wether this is correct, but it's the same way, as msxml works.<br>
+  The file, that was written in the last line of the example, is encoded
+in utf8.</div>
+   </div>
+  </li>
+  <!-- ********************************************************************************** -->
+  <li>      
+    <div>getting the encoding of the parsed source      
+    <pre>(doc as IDomPersist).loadxml('&lt;?xml version="1.0" encoding="iso-8859-1"?&gt;&lt;root&gt;&lt;child/&gt;&lt;/root&gt;');<br>WriteLn((doc as IDomOutputOptions).parsedEncoding);<br></pre>
+  outputs:      
+    <pre>iso-8859-1<br></pre>
+       
+    <div class="comment">Ok, parsedEncoding does not fit perfectly into IDomOutputOptions. 
+It's readonly, thus there's no effect to the output, but by default the parsed 
+encodeing is used as encoding for the output, so you find this info here.</div>
+   </div>
+  </li>
+  <!-- ********************************************************************************** -->
+   
+</ul>
+    
+</body>
+</html>

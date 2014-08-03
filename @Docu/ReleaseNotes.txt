@@ -1,0 +1,100 @@
+idom2-beta-1 release notes:
+---------------------------
+
+This is the first public release on sourceforge.
+
+It contains:
+
+a) the idom2.pas file with the dom2 interface declarations.
+
+They were translated from java and checked against the idl definitions.
+
+Additionally this file contains interfaces to get a dom implementation
+and a simple interface to read xml files.
+
+An interface, to get an enumeration of the installed domvendors
+is included, too.
+
+b) the idom2_ext.pas file:
+
+Extensions to the dom2 interface definitions.
+
+In the moment, interfaces for msxml compatibility, xpath, xslt
+and some more special features are included.
+
+c) libxmldom.pas, an implementation of these interfaces, based
+   on libxml2 (www.xmlsoft.org)
+
+d) msxml_impl.pas, an implementation based on msxml
+
+e) XPTestSuiteIdom2.dpr, a test project with more than 375 unit tests, that
+   tests most of the defined methods and interfaces.
+   The tests themselves can be used as examples, how to use the dom functions,
+   too.
+
+f) The currently neccessary dll files and .so files are included, too,
+   although it is better, you get them directly from the sources given
+   on www.xmlsoft.org
+
+-----------------------------------------------------------------------------
+
+idom2-pas is tested with delphi6, kylix2 (open edition) and delphi5.
+
+It is tested on win2k and linux (debian-woody), please report it, if it runs
+on other operating systems, too.
+
+-----------------------------------------------------------------------------
+
+Final remarks:
+
+- the libxmldom.pas implemention passes all 375 XPTests
+- msxml_impl passes about 2/3 of these tests
+
+- all dom2 core and xml interfaces and methods are implemented
+- a good xpath implementation is included
+- a simple xslt implementation is included
+
+- the speed of libxmldom.pas is good, AND it is a crossplatform library 
+  AND open source (yes, it's a feature)
+
+Known limitations of libxmldom.pas:
+
+a) namespace declaration attributes do not appear in the list of attributes
+   of an element
+
+b) the widestring interface in IDomPersist.xml has problems with utf16 
+   character encoding (write utf8 instead)
+
+c) the IDomNodeExt.xml property doesn't create namespace declaration
+   attributes, that are defined above the node, from which we ask the
+   xml string
+
+d) there is no IDomParseError interface yet, so if there was an error, we
+   don't know, in which line.
+
+   Workaround:
+   Use a console application, there you get the precise error message on the
+   screen. (On Kylix you get them on the console, you started kylix or the
+   X11 application from).
+
+e) the prettyPrint option just inserts line breaks, no indenting spaces
+
+f) all linebreaks in the output are unix-style (#10)
+
+g) On Kylix you get the error message 'Validation failure. No DTD found.'
+   each time you parse a file without DTD, even if you set validate to false.
+   This message appears on the console only, you can safely ignore it.
+
+So there is still some work to be done, you are invited to help.
+
+-----------------------------------------------------------------------------
+We would be pleased, if other people could adapt more dom implementations,
+e.g. OpenXML or Xerces or Sablotron for using the idom2.pas interfaces.
+
+Also the integration of the SAX interface and an implementation of it,
+using libxml2, would be nice.
+-----------------------------------------------------------------------------
+
+Regards:
+
+Uwe Fechner, 2002-03-29
