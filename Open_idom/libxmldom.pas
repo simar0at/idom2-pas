@@ -1012,6 +1012,7 @@ var iloop: xmlAttrPtr;
 begin
   // assign parent property to this scopes parent
   xmlAttr.parent := parent;
+  xmlAttr.doc := parent.doc;
   // first check that properties is intialized
   if (not Assigned(parent.properties))
      then
