@@ -6,6 +6,7 @@ program XPTestSuite_idom2;
 {.$APPTYPE CONSOLE}
 
 uses
+//  FastMM4 in 'FastMM4.pas',
   TestModules,
   TestFramework,
   TextTestRunner,

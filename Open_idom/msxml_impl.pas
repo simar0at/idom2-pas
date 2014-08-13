@@ -846,9 +846,9 @@ end;
 
 destructor TDomWrapperRepository.destroy;
 begin
-  inherited destroy;
   freeAndNil(fWrapperList);
   freeAndNil(fMsIntfList);
+  inherited destroy;
 end;
 
 procedure TDomWrapperRepository.registerWrapper(msIntf : IUnknown; wrapper : TObject);
@@ -2403,5 +2403,7 @@ initialization
   registerDomVendorFactory(TMSXMLDocumentBuilderFactory.create(true));
   {create the global 'memory manager' managing all wrappers}
   gDomWrapperRepository := TDomWrapperRepository.create;
+finalization
+  FreeAndNil(gDomWrapperRepository);
 end.
 

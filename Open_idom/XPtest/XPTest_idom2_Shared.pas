@@ -107,7 +107,7 @@ const
             '    <xsl:value-of select="name()" />' +
             '  </xsl:template>' +
             '</xsl:stylesheet>';
-  outstr  = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">' +
+  outstr  = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">' +
             '<html>' +
             '<head>' +
             '<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">' +
@@ -119,8 +119,9 @@ const
             '</html>';
   outstr1 = xmldecl +
             '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">' +
-            '<html>' +
+            '<html xmlns="http://www.w3.org/1999/xhtml">' +
             '<head>' +
+            '<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />' +
             '<title>test</title>' +
             '</head>' +
             '<body>' +
@@ -390,6 +391,7 @@ begin
     // ignore, that we connot load, maybe its readonly by cvs checkout
     ini := TIniFile.Create('./XPTestSuite_idom2.ini');
     result := Ini.ReadString('TestDocuments', 'DataPath', cDefault);
+    ini.Free;
   except
     result := cDefault;
   end;

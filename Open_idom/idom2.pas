@@ -963,7 +963,7 @@ type
   (**
    * Interface for enumerating vendors.
    *)
-  IDomVendorList = interface
+  IDomVendorList = interface(IInterface)
     ['{2739F26E-98D6-49D0-AAE4-2B0D2DF128BE}']
 
     (**
@@ -1017,21 +1017,8 @@ implementation
 
 type
 
-  (*
-   * Register for registering different DocumentBuilderFactories. Each
-   * DocumentBuilderFactory is identified by a vendorID.
-   *)
-  TDomVendorRegister = class(TInterfacedObject, IDomVendorList)
-    private
-      (* list of DocumentBuilderFactories *)
-      fFactoryList : TInterfaceList;
-    protected //IDomVendorList
-      function  get_Count: integer;
-      function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
-    public
-      constructor Create;
-      destructor Destroy; override;
-
+  IDomVendorRegister = interface (IInterface)
+  ['{7066DA54-8AC1-42A3-8456-DDE9C527A1FD}']
       (*
        * add a new DocumentBuilderFactory to the list.
        * Pre-condition:
@@ -1047,11 +1034,29 @@ type
       function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
   end;
 
+  (*
+   * Register for registering different DocumentBuilderFactories. Each
+   * DocumentBuilderFactory is identified by a vendorID.
+   *)
+  TDomVendorRegister = class(TInterfacedObject, IDomVendorRegister, IDomVendorList)
+    private
+      (* list of DocumentBuilderFactories *)
+      fFactoryList : TInterfaceList;
+    protected //IDomVendorList
+      function  get_Count: integer;
+      function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
+      procedure add(domDocumentBuilderFactory : IDomDocumentBuilderFactory);
+      function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
+    public
+      constructor Create;
+      destructor Destroy; override;
+  end;
+
 var
   (*
    * global TDomVendorRegister. Used to register the domDocumentBuilderFactories
   *)
-  gDomVendorRegister : TDomVendorRegister;
+  gDomVendorRegister : IDomVendorRegister;
 
 (******************************************************************************)
 
@@ -1061,7 +1066,7 @@ constructor TDomVendorRegister.Create;
 begin
   inherited Create;
   fFactoryList := TInterfaceList.Create;
-  _AddRef; // one extra lock needed
+//  _AddRef; // one extra lock needed
 end;
 
 destructor TDomVendorRegister.Destroy;
@@ -1105,7 +1110,7 @@ end;
 (*
  * returns the global TDomVendorRegister (create on demand)
  *)
-function get_DomVendorRegisterSingleton : TDomVendorRegister;
+function get_DomVendorRegisterSingleton : IDomVendorRegister;
 begin
   if gDomVendorRegister = nil then
   begin

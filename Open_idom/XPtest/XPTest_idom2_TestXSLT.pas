@@ -134,7 +134,8 @@ begin
   snode := xsl.documentElement as IDomNode;
   (xnode as IDomNodeExt).transformNode(snode, Text);
   Text := Unify(Text);
-  check(Text = outstr, 'wrong content');
+  CheckEquals(outstr, Text, 'wrong content');
+//  check(Text = outstr, 'wrong content');
 end;
 
 // libxmldom wrapper currently does not support html documents

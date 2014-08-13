@@ -464,6 +464,8 @@ type
                                    // on this two lists.
                                    // todo: use one list for prefix and uri as
                                    //       name-value pairs
+    procedure setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
+    procedure setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
   protected
     // IDomDocument
     function get_doctype: IDomDocumentType;
@@ -3470,6 +3472,27 @@ begin
   Result := fValidate;
 end;
 
+procedure TDomDocument.setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
+begin
+  while next <> nil do
+  begin
+    next.doc := doc;
+    setDocOnNextLevel(next.children, doc);
+    setDocOnNextLevel(xmlNodePtr(next.properties), doc);
+    next := next.next;
+  end;
+end;
+
+procedure TDomDocument.setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
+begin
+  while next <> nil do
+  begin
+    next.doc := doc;
+    setDocOnCurrentLevel(next.next, doc);
+    next := next.children;
+  end;
+end;
+
 procedure TDomDocument.set_async(Value: boolean);
 begin
   fAsync := True;
@@ -4048,11 +4071,16 @@ end;
 procedure TDomDocument.appendAttr(attr: xmlAttrPtr);
 begin
   if attr <> nil then FAttrList.add(attr);
+  if attr.children <> nil then
+    attr.children.doc := attr.doc;
 end;
 
 procedure TDomDocument.appendNode(node: xmlNodePtr);
+var
+  next: xmlNodePtr;
 begin
   if node <> nil then FNodeList.add(node);
+  setDocOnCurrentLevel(node, node.doc);
 end;
 
 //********************************************************************//
