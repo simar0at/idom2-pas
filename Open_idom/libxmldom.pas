@@ -3649,7 +3649,7 @@ end;
 
 procedure TDomDocument.save(Source: DOMString);
 var
-  encoding:    PAnsiChar;
+  encoding:    AnsiString;
   bytes:       integer;
   sSource: AnsiString;
   format:      integer;
@@ -3657,7 +3657,7 @@ begin
   // check encoding
   if fEncoding = ''
      then encoding := getXmlDocument.encoding
-     else encoding := PAnsiChar(lowercase(fEncoding));
+     else encoding := lowercase(fEncoding);
 
   // check output format
   if fPrettyPrint
@@ -3673,7 +3673,7 @@ begin
     // xmlPrepareNSSerialization(xmlDocGetRootElement(fXmlDocPtr));
 
     // now save it to Sourec
-    bytes := xmlSaveFormatFileEnc(PAnsiChar(sSource), getXmlDocument, encoding, format);
+    bytes := xmlSaveFormatFileEnc(PAnsiChar(sSource), getXmlDocument, PAnsiChar(encoding), format);
 
   finally
     // !!! ALLWAYS repair our ns nodes previous
@@ -4364,7 +4364,7 @@ var
   CString: PAnsiChar;
   buffer:  xmlOutputBufferPtr;
   fEncoding: AnsiString;
-  encoding:  PAnsiChar;
+  encoding:  AnsiString;
   encoder: xmlCharEncodingHandlerPtr;
 begin
   // default
@@ -4374,17 +4374,17 @@ begin
   fEncoding:=(self.fOwnerDocument as IDomOutputOptions).encoding;
   if fEncoding = ''
      then encoding := fXmlNode.doc.encoding
-     else encoding := PAnsiChar(lowercase(fEncoding));
+     else encoding := lowercase(fEncoding);
   // get the right encoder
   if (encoding <> 'utf8')
-    then encoder:=xmlFindCharEncodingHandler(encoding)
+    then encoder:=xmlFindCharEncodingHandler(PAnsiChar(encoding))
     else encoder:=nil;
 
   // allocate an output buffer
   buffer := xmlAllocOutputBuffer(encoder);
 
   // dump the content of the node to the buffer
-  xmlNodeDumpOutput(buffer, fXmlNode.doc, fXmlNode, 0, 0, encoding);
+  xmlNodeDumpOutput(buffer, fXmlNode.doc, fXmlNode, 0, 0, PAnsiChar(encoding));
 
   // flush the buffer
   xmlOutputBufferFlush(buffer);
