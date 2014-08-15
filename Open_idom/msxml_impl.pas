@@ -2344,10 +2344,15 @@ begin
 end;
 
 procedure TMSXMLNode.registerNS(const prefix : DomString; const uri : DomString);
+var
+  oldNameSpaces: AnsiString;
+  XMLDocIntf: IXMLDomDocument2;
 begin
-  ((get_OwnerDocument as IDocEx).get_fMSDomDocument as IXMLDomDocument2).setProperty(
+  XMLDocIntf := ((get_OwnerDocument as IDocEx).get_fMSDomDocument as IXMLDomDocument2);
+  oldNameSpaces := XMLDocIntf.getProperty('SelectionNamespaces');
+  XMLDocIntf.setProperty(
           'SelectionNamespaces',
-          'xmlns:'+prefix+'=''' + URI + '''');
+          oldNamespaces + ' xmlns:'+prefix+'=''' + URI + '''');
 end;
 
 procedure TMSXMLNode.transformNode(const stylesheet: IDomNode;
