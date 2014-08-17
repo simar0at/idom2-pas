@@ -74,7 +74,7 @@ begin
     textnode := xml.createTextNode('test' + IntToStr(i));
     node.appendChild(textnode);
   end;
-  check((node as IDomNodeExt).Text = tmp, 'wrong content');
+  check((node as IDomNodeEx).Text = tmp, 'wrong content');
 end;
 
 procedure TTestXSLT.setText;
@@ -86,7 +86,7 @@ begin
   node := xml.createElement('test');
   xml.documentElement.appendChild(node);
   node := xml.documentElement;
-  (node as IDomNodeExt).Text := 'test';
+  (node as IDomNodeEx).Text := 'test';
   check((node as IDomNodeSelect).selectNode('test') = nil, '<test /> not removed');
   for i := 0 to node.childNodes.length - 1 do begin
     if node.childNodes[i].nodeType = TEXT_NODE then begin
@@ -132,7 +132,7 @@ begin
   check(ok, 'stylesheet no valid xml');
   xnode := xml as IDomNode;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDomNodeExt).transformNode(snode, Text);
+  (xnode as IDomNodeEx).transformNode(snode, Text);
   Text := Unify(Text);
   CheckEquals(outstr, Text, 'wrong content');
 //  check(Text = outstr, 'wrong content');
@@ -189,7 +189,7 @@ begin
   xnode := xml as IDomNode;
   snode := xsl.documentElement as IDomNode;
   try
-    (xnode as IDomNodeExt).transformNode(snode, Text);
+    (xnode as IDomNodeEx).transformNode(snode, Text);
   except
     fail('transformation raises exception');
   end;
@@ -204,7 +204,7 @@ begin
   (xsl as IDomPersist).loadxml(xslstr1);
   xnode := xml as IDomNode;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDomNodeExt).transformNode(snode, Text);
+  (xnode as IDomNodeEx).transformNode(snode, Text);
   check(Text = 'test', 'wrong content - expected: "test" found: "' + Text + '"');
 end;
 
@@ -216,7 +216,8 @@ begin
   (xsl as IDomPersist).loadxml(xslstr1);
   xnode := xml as IDomNode;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDomNodeExt).transformNode(snode, doc);
+  doc := xsl.domImplementation.createDocument('','',nil);
+  (xnode as IDomNodeEx).transformNode(snode, doc);
   check(doc.documentElement = nil, 'documentElement<>nil')
 end;
 
@@ -244,7 +245,7 @@ begin
     '</html>';
   (xsl as IDomPersist).loadxml(Text);
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDomNodeExt).transformNode(snode, result1);
+  (xnode as IDomNodeEx).transformNode(snode, result1);
 
   Text :=
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/TR/xhtml1/strict">' +
@@ -263,7 +264,7 @@ begin
   (xsl as IDomPersist).loadxml(Text);
 
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDomNodeExt).transformNode(snode, result2);
+  (xnode as IDomNodeEx).transformNode(snode, result2);
   check(result1 = result2, 'different output');
 end;
 
@@ -292,7 +293,7 @@ begin
   (xsl as IDomPersist).loadxml(Text);
   snode := xsl.documentElement as IDomNode;
   try
-    (xnode as IDomNodeExt).transformNode(snode, result1);
+    (xnode as IDomNodeEx).transformNode(snode, result1);
     fail('There should have been an EDomError');
   except
   end;
@@ -307,7 +308,7 @@ begin
   Text := xmldecl + '<root><data><test name="test1" success="yes"/></data></root>';
   ok := (xml as IDomPersist).loadxml(Text);
   check(ok, 'text no valid xml');
-  Text := Unify((xml.documentElement.firstChild as IDomNodeExt).xml);
+  Text := Unify((xml.documentElement.firstChild as IDomNodeEx).xml);
   check(Text = '<data><test name="test1" success="yes"/></data>', 'wrong content');
 end;
 
@@ -321,7 +322,8 @@ begin
   check(ok, 'stylesheet no valid xml');
   xnode := xml as IDomNode;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDomNodeExt).transformNode(snode, doc);
+  doc := xsl.domImplementation.createDocument('','',nil);
+  (xnode as IDomNodeEx).transformNode(snode, doc);
   Text := (doc as IDomPersist).xml;
   Text := Unify(Text,False);
   check(Text = outstr1, 'wrong content');
@@ -336,7 +338,7 @@ begin
   check(ok, 'stylesheet is not a valid xml document');
   xnode := xml as IDomNode;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDomNodeExt).transformNode(snode, Text);
+  (xnode as IDomNodeEx).transformNode(snode, Text);
   Text := Unify(Text,False);
   check(Text = outstr1, 'wrong content');
 end;
@@ -349,7 +351,7 @@ begin
   str1:='<root><text>äöüß</text><text>ÄÖÜ</text></root>';
   teststr := xmldecl+str1;
   (xml as IDOMPersist).loadxml(teststr);
-  str2:=(xml.documentElement as IDomNodeExt).xml;
+  str2:=(xml.documentElement as IDomNodeEx).xml;
   check(str1=str2,'wrong output');
 end;
 
@@ -368,8 +370,8 @@ begin
   check(xml.documentElement.lastChild.firstChild.nodeType = TEXT_NODE, 'wrong nodeType');
   check(xml.documentElement.firstChild.firstChild.nodeValue = teststr, 'wrong nodeValue');
   check(xml.documentElement.lastChild.firstChild.nodeValue = 'ÄÖÜ', 'wrong nodeValue');
-  resultstr:=(xml.documentElement as IDomNodeExt).xml;
-  check((resultstr = rootstr), 'xml output is different from parsed text ... "'+unify((xml.documentElement as IDomNodeExt).xml)+'"');
+  resultstr:=(xml.documentElement as IDomNodeEx).xml;
+  check((resultstr = rootstr), 'xml output is different from parsed text ... "'+unify((xml.documentElement as IDomNodeEx).xml)+'"');
 end;
 
 procedure TTestXSLT.getXml_NodeList;

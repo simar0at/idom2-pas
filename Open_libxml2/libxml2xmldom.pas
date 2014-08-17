@@ -58,7 +58,7 @@ interface
 
 uses
 {$IFDEF MSWINDOWS}
-  Windows, ActiveX,
+  ActiveX,
 {$ENDIF}
 {$ifdef VER130} // Delphi 5
   jclUnicode,   // UTF8Encode and UTF8Decode
@@ -120,10 +120,20 @@ function IsSameNode(node1, node2: IDomNode): boolean;
 
 implementation
 
+uses
+{$IFDEF MSWINDOWS}
+  Windows, ComObj,
+{$ENDIF}
+  XmlConst;
+
 type
+  TDOMSafeCallHandler = class(TInterfacedObject)
+    function SafeCallException(ExceptObject: TObject;
+      ExceptAddr: Pointer): HRESULT; override;
+  end;
   { TDomImplementation }
 
-  TDomImplementation = class(TInterfacedObject, IDomImplementation,IDomDebug)
+  TDomImplementation = class(TDOMSafeCallHandler, IDomImplementation,IDomDebug)
   private
     fDoccount: integer;  // number of living documents, created with this
                          // implementation. For debugging purposes only.
@@ -145,8 +155,8 @@ type
   // used for creation of classes from libxml2-nodes
   TDomNodeClass = class of TDomNode;
 
-  TDomNode = class(TInterfacedObject, IDomNode, IXMLDOMNodeRef, IDomNodeSelect,
-      IDomNodeExt, IDomNodeCompare)
+  TDomNode = class(TDOMSafeCallHandler, IDomNode, IXMLDOMNodeRef, IDomNodeSelect,
+      IDomNodeEx, IDomNodeEx2, IDomNodeCompare)
   private
     // this field helps to manage the lifetime of the OwnerDocument:
     // the document won't be freed, as long as a node exists, that
@@ -192,7 +202,7 @@ type
     procedure RegisterNS(const prefix, URI: DomString);
     { IDomNodeExt }
     procedure transformNode(const stylesheet: IDomNode; var output: DomString); overload; safecall;
-    procedure transformNode(const stylesheet: IDomNode; var output: IDomDocument); overload; safecall;
+    procedure transformNode(const stylesheet: IDomNode; const output: IDomDocument); overload; safecall;
     function get_text: DomString; safecall;
     procedure set_text(const Value: DomString); safecall;
     function get_xml: DOMString; safecall;
@@ -204,7 +214,7 @@ type
     property xmlNode: xmlNodePtr read fXmlNode;
   end;
 
-  TDomNodeList = class(TInterfacedObject, IDomNodeList, IDomNodeListExt)
+  TDomNodeList = class(TDOMSafeCallHandler, IDomNodeList, IDomNodeListExt)
   private
     fParent: xmlNodePtr;               // if we have a list like node.childnodes,
                                        // the parent node is stored here
@@ -226,7 +236,7 @@ type
 
   TDomNamedNodeMapType = (nnmAttributes, nnmEntities, nnmNotations);
 
-  TDomNamedNodeMap = class(TInterfacedObject, IDomNamedNodeMap)
+  TDomNamedNodeMap = class(TDOMSafeCallHandler, IDomNamedNodeMap)
     // this class is used for attributes, entities and notations
   private
     fnnmType: TDomNamedNodeMapType;  // the type of the namedNodeMap
@@ -431,6 +441,9 @@ type
 
     // managing stylesheets, that must be freed differently
     procedure set_fTempXSL(tempXSL: xsltStylesheetPtr);
+
+    // doc element injection for XSLT transform.
+    procedure injectDifferentDocElement(docElement: xmlDocPtr);
   end;
 
   { TDomDocument }
@@ -469,6 +482,7 @@ type
                                    //       name-value pairs
     procedure setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
     procedure setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
+    procedure injectDifferentDocElement(docElement: xmlDocPtr);
   protected
     // IDomDocument
     function get_doctype: IDomDocumentType; safecall;
@@ -581,8 +595,8 @@ var
  * xml utility functions
  *)
 
-function IsXmlName(const S: WideString): boolean; forward;
-function IsXmlChars(const S: WideString): boolean; forward;
+function IsXmlName(const S: DOMString): boolean; forward;
+function IsXmlChars(const S: DOMString): boolean; forward;
 
 
 // *************************************************************
@@ -764,7 +778,7 @@ begin
   Result := True;
 end;
 
-function charCountOf(c: WideChar; const s: WideString; breakAfter: integer = 0): integer;
+function charCountOf(c: WideChar; const s: DOMString; breakAfter: integer = 0): integer;
 var i: integer;
 begin
   result := 0;
@@ -777,23 +791,23 @@ begin
        end;
 end;
 
-function split_prefix(const qualifiedName: WideString): WideString;
+function split_prefix(const qualifiedName: DOMString): DOMString;
 begin
   Result := Copy(qualifiedName, 1, Pos(':', qualifiedName) - 1);
 end;
 
-function split_localName(const qualifiedName: WideString): WideString;
+function split_localName(const qualifiedName: DOMString): DOMString;
 begin
   Result := Copy(qualifiedName, Pos(':', qualifiedName) + 1, MAXINT);
 end;
 
-function UTF8Decode(const s: PAnsiChar): WideString;
+function UTF8Decode(const s: DOMString): DOMString;
 begin
-  if Assigned(s)
+  if s <> ''
   {$ifdef VER130} // Delphi 5
      then Result := jclUnicode.UTF8Decode(s)
   {$else}
-     then Result := System.UTF8Decode(s)
+     then Result := System.UTF8Decode(AnsiString(s))
   {$endif}
      else Result := '';
 end;
@@ -2013,7 +2027,7 @@ begin
   // cyle trough the nodelist
   for i:=0 to self.get_length-1 do begin
     // append the xml of the current node to the result
-    result:=result+delim+(self.get_item(i) as IDomNodeExt).xml;
+    result:=result+delim+(self.get_item(i) as IDomNodeEx).xml;
   end;
 end;
 
@@ -3325,6 +3339,12 @@ begin
 end;
 
 
+procedure TDomDocument.injectDifferentDocElement(docElement: xmlDocPtr);
+begin
+  xmlFreeDoc(getXmlDocument);
+  fXmlNode := xmlNodePtr(docElement);
+end;
+
 function TDomDocument.createElementNS(const namespaceURI,
   qualifiedName: DOMString): IDomElement;
 var
@@ -4277,7 +4297,7 @@ begin
 end;
 
 procedure TDomNode.transformNode(const stylesheet: IDomNode;
-  var output: IDomDocument);
+  const output: IDomDocument);
 var
   doc:       xmlDocPtr;
   styleDoc:  xmlDocPtr;
@@ -4286,7 +4306,8 @@ var
   tempXSL:   xsltStylesheetPtr;
   impl:      IDomImplementation;
 begin
-  output := nil;
+  if output = nil then
+    raise DOMException.Create(SNodeExpected);
   doc := fXmlNode.doc;
   // if the node is the documentnode, it's ownerdocument is nil,
   // so you have to use self to get the domImplementation
@@ -4304,7 +4325,7 @@ begin
   (stylesheet.ownerDocument as IDomInternal).set_fTempXSL(tempXSL);
   outputDoc := xsltApplyStylesheet(tempXSL, doc, nil);
   if outputDoc = nil then exit;
-  output := TDomDocument.Create(impl, xmlNodePtr(outputDoc)) as IDomDocument;
+  (output as IDomInternal).injectDifferentDocElement(outputDoc);
 end;
 
 function TDomNode.IsSameNode(node: IDomNode): boolean;
@@ -4550,6 +4571,18 @@ end;
 function TDomDocument.getXmlDocument: xmlDocPtr;
 begin
   Result := xmlDocPtr(xmlNode);
+end;
+
+{ TDOMSafeCallHandler }
+
+function TDOMSafeCallHandler.SafeCallException(ExceptObject: TObject;
+  ExceptAddr: Pointer): HRESULT;
+var
+  HelpFile: string;
+begin
+  if ExceptObject is EOleException then
+    HelpFile := (ExceptObject as EOleException).HelpFile;
+  Result := HandleSafeCallException(ExceptObject, ExceptAddr, IDOMNode, '', Helpfile);
 end;
 
 initialization

@@ -5,6 +5,7 @@ interface
 uses
   TestFrameWork,
   xmldom,
+  xmldom_ext,
   SysUtils,
   domSetup,
   XPTest_idom2_Shared,
@@ -304,8 +305,8 @@ begin
   (doc as IDomParseOptions).resolveExternals := false;
   check((doc as IDomPersist).loadxml(xml),'parse error');
   docElement := doc.documentElement;
-  (docElement as IDOMNodeSelect).registerNs('xds','http://xmlns.4commerce.de/xds');
-  (docElement as IDOMNodeSelect).registerNs('hallo','http://xmlns.4commerce.de/hallo');
+  registerNs(doc, 'xds','http://xmlns.4commerce.de/xds');
+  registerNs(doc, 'hallo','http://xmlns.4commerce.de/hallo');
   xds_datalinks := (docElement as IDOMNodeSelect).selectNodes('/xds:repository/hallo:config/xds:datalinks/dlink');
   check(xds_datalinks.length = 2, 'wrong length');
 end;
@@ -330,7 +331,7 @@ begin
   (doc as IDomParseOptions).resolveExternals := false;
   check((doc as IDomPersist).loadxml(xml),'parse error');
   docElement := doc.documentElement;
-  (docElement as IDOMNodeSelect).registerNs('xds','http://xmlns.4commerce.de/xds');
+  registerNs(doc, 'xds','http://xmlns.4commerce.de/xds');
   xds_datalinks := (docElement as IDOMNodeSelect).selectNodes('/xds:repository/xds:config/xds:datalinks/dlink');
   check(xds_datalinks.length = 2, 'wrong length');
 end;

@@ -59,19 +59,9 @@ type
   // for accessing the text-value of an element (similar to textcontent in dom3)
   // and for obtaining the string-value of a node (property xml)
 
-  IDomNodeExt = interface(IDomNode)
+  IDomNodeEx2 = interface(IDomNode)
     ['{1B41AE3F-6365-41FC-AFDD-26BC143F9C0F}']
-    { Property Acessors }
-    function get_text: DomString; safecall;
-    function get_xml: DomString; safecall;
-    procedure set_text(const Value: DomString); safecall;
-    { Methods }
-    procedure transformNode(const stylesheet: IDomNode; var output: DomString); overload; safecall;
-    procedure transformNode(const stylesheet: IDomNode; var output: IDomDocument); safecall;
-      overload;
-    { Properties }
-    property Text: DomString read get_text write set_text;
-    property xml: DomString read get_xml;
+    procedure RegisterNS(const prefix, URI: DomString);
   end;
 
   { IDomNodeListExt }
@@ -125,6 +115,73 @@ type
     property doccount: integer read get_doccount write set_doccount;
   end;
 
+procedure registerNS(doc: IDOMDocument; prefix, namespaceuri: DOMString);
+
 implementation
+
+uses SysUtils, msxmldom, msxml;
+
+type
+
+// *********************************************************************//
+// Interface: IXMLDOMSchemaCollection
+// Flags:     (4544) Dual NonExtensible OleAutomation Dispatchable
+// GUID:      {373984C8-B845-449B-91E7-45AC83036ADE}
+// *********************************************************************//
+  IXMLDOMSchemaCollection = interface(IDispatch)
+    ['{373984C8-B845-449B-91E7-45AC83036ADE}']
+    procedure add(const namespaceURI: WideString; var_: OleVariant); safecall;
+    function get(const namespaceURI: WideString): IXMLDOMNode; safecall;
+    procedure remove(const namespaceURI: WideString); safecall;
+    function Get_length: Integer; safecall;
+    function Get_namespaceURI(index: Integer): WideString; safecall;
+    procedure addCollection(const otherCollection: IXMLDOMSchemaCollection); safecall;
+    function Get__newEnum: IUnknown; safecall;
+    property length: Integer read Get_length;
+    property namespaceURI[index: Integer]: WideString read Get_namespaceURI; default;
+    property _newEnum: IUnknown read Get__newEnum;
+  end;
+
+// *********************************************************************//
+// Interface: IXMLDOMDocument2
+// Flags:     (4544) Dual NonExtensible OleAutomation Dispatchable
+// GUID:      {2933BF95-7B36-11D2-B20E-00C04F983E60}
+// *********************************************************************//
+  IXMLDOMDocument2 = interface(IXMLDOMDocument)
+    ['{2933BF95-7B36-11D2-B20E-00C04F983E60}']
+    function Get_namespaces: IXMLDOMSchemaCollection; safecall;
+    function Get_schemas: OleVariant; safecall;
+    procedure _Set_schemas(otherCollection: OleVariant); safecall;
+    function validate: IXMLDOMParseError; safecall;
+    procedure setProperty(const name: WideString; value: OleVariant); safecall;
+    function getProperty(const name: WideString): OleVariant; safecall;
+    property namespaces: IXMLDOMSchemaCollection read Get_namespaces;
+    property schemas: OleVariant read Get_schemas write _Set_schemas;
+  end;
+
+procedure registerNS(doc: IDOMDocument; prefix, namespaceuri: DOMString);
+var
+  msxmlnodewrapper: IXMLDOMNodeRef;
+  msxmldoc : IXMLDOMDocument2;
+  oldNameSpaces: AnsiString;
+  extdomnode: IDomNodeEx2;
+begin
+  doc.QueryInterface(IXMLDOMNodeRef, msxmlnodewrapper);
+  if Assigned(msxmlnodewrapper) then
+  begin
+    msxmldoc := msxmlnodewrapper.GetXMLDOMNode as IXMLDomDocument2;
+    oldNameSpaces := msxmldoc.getProperty('SelectionNamespaces');
+    msxmldoc.setProperty(
+          'SelectionNamespaces',
+          oldNamespaces + ' xmlns:'+prefix+'=''' + namespaceuri + '''');
+    Exit;
+  end;
+  doc.QueryInterface(IDomNodeEx2, extdomnode);
+  if Assigned(extdomnode) then
+  begin
+    (doc.documentElement as IDomNodeEx2).RegisterNS(prefix, namespaceuri);
+    Exit;
+  end;
+end;
 
 end.
