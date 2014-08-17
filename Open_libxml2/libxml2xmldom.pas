@@ -201,7 +201,7 @@ type
     function selectNodes(const nodePath: WideString): IDomNodeList; safecall;
     procedure RegisterNS(const prefix, URI: DomString);
     { IDomNodeExt }
-    procedure transformNode(const stylesheet: IDomNode; var output: DomString); overload; safecall;
+    procedure transformNode(const stylesheet: IDomNode; var output: WideString); overload; safecall;
     procedure transformNode(const stylesheet: IDomNode; const output: IDomDocument); overload; safecall;
     function get_text: DomString; safecall;
     procedure set_text(const Value: DomString); safecall;
@@ -523,7 +523,7 @@ type
     function load(Source: OleVariant): WordBool; safecall;
     function loadFromStream(const stream: TStream): WordBool; overload; safecall;
     function loadFromStream(const stream: IStream): WordBool; overload; safecall;
-    function loadxml(const Value: DOMString): WordBool; safecall;
+    function loadxml(const Value: WideString): WordBool; safecall;
     procedure save(destination: OleVariant); safecall;
     procedure saveToStream(const stream: TStream); overload; safecall;
     procedure saveToStream(const stream: IStream); overload; safecall;
@@ -605,7 +605,7 @@ function IsXmlChars(const S: DOMString): boolean; forward;
 
 
 // converts an error no into the corresponding string
-function errorString(err: integer): AnsiString;
+function errorString(err: integer): string;
 begin
   case err of
     INDEX_SIZE_ERR: Result := 'INDEX_SIZE_ERR';
@@ -632,8 +632,8 @@ begin
 end;
 
 // Raises an exception with speaking message
-procedure checkError(err: integer; classname: AnsiString = 'unknown');
-var location: AnsiString;
+procedure checkError(err: integer; classname: string = 'unknown');
+var location: string;
 begin
   if classname = 'unknown'
     then location := ''
@@ -874,7 +874,7 @@ begin
   result := Copy(Source, p - @Source[1], e - p + 1);
 
   // check for encoding
-  p := PWideChar(@result[1]) + Pos(WideString('encoding='), result) - 1;
+  p := PWideChar(@result[1]) + Pos(WideString('encoding='), WideString(result)) - 1;
 
   if (p < @result[1])
      then result := ''
@@ -1460,7 +1460,7 @@ end;
 // IDomNode
 function TDomNode.get_nodeName: DOMString;
 const
-  emptyWString: WideString = '';
+  emptyWString: DOMString = '';
 begin
   case fXmlNode.type_ of
     XML_HTML_DOCUMENT_NODE,
@@ -3626,14 +3626,14 @@ begin
   end;
 end;
 
-function TDomDocument.loadxml(const Value: DOMString): WordBool;
+function TDomDocument.loadxml(const Value: WideString): WordBool;
 // Load dom from string;
 var pxml: AnsiString;
 begin
   xmlInitParser();
 
   fEncoding:=extractEncoding(Value);
-  if (Pos(fencoding, WideString('"utf8"utf-8"utf16"utf-16"')) = 0)
+  if (Pos(WideString(fencoding), WideString('"utf8"utf-8"utf16"utf-16"')) = 0)
   then begin
     // we NEED this copy to create an complete memory area
     pxml := Value;
@@ -4163,7 +4163,7 @@ begin
   end;
 end;
 
-function IsXmlChars(const S: WideString): boolean;
+function IsXmlChars(const S: DOMString): boolean;
 var
   i, l, pl: integer;
   sChar:    widechar;
@@ -4199,7 +4199,7 @@ begin
   end;   {while ...}
 end;
 
-function IsXmlName(const S: WideString): boolean;
+function IsXmlName(const S: DOMString): boolean;
 var
   i: integer;
 begin
@@ -4245,7 +4245,7 @@ end;
 {$endif}
 
 procedure TDomNode.transformNode(const stylesheet: IDomNode;
-  var output: DomString);
+  var output: WideString);
 var
   doc:       xmlDocPtr;
   styleDoc:  xmlDocPtr;
