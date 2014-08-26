@@ -1,3 +1,13 @@
+MPL/LGPL/GPL licensed DOM Vendor for Delphi using libxml2
+=========================================================
+Origin of the project: http://idom2-pas.sourceforge.net/
+with Fixed Bugs, changes for Delphi 2010, current (git 2014) libxml2.dll and dependencies
+Added IDOMParseError implementation, RelaxNG and XSD Schema validation.
+Should be a drop in replacement of the ever ageing msxmldom DOM Vendor.
+xsl:import and xsl:include resolution by callback implementation. 
+
+Original Readme (form around 2002)
+==================================
 This is the main directory of the idom2-pas project.
 
 idom2 implements the dom2 specification, as defined at:
