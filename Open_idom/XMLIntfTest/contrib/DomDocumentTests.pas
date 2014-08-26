@@ -101,7 +101,7 @@ type
 implementation
 
 uses
-  SysUtils, XMLIntf;
+  SysUtils, XMLIntf, ComObj;
 
 
 procedure TDomDocumentFundamentalTests.setup;
@@ -172,8 +172,8 @@ begin
     attr := document.createAttributeNS(namespaceURI, malformedName);
     fail('DOMException NAMESPACE_ERR should have been thrown for attribute name='+malformedName);
   except
-    on e : DOMException do
-      check(e.code = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown for attribute name='+malformedName);
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown for attribute name='+malformedName);
   end;
 end;
 
@@ -196,8 +196,8 @@ begin
     attr := document.createAttributeNS(namespaceURI, qualifiedName);
     fail('DOMException NAMESPACE_ERR should have been thrown');
   except
-    on e : DOMException do
-      check(e.code = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
   end;
 end;
 
@@ -228,8 +228,8 @@ begin
       fail('DOMException INVALID_CHARACTER_ERR should have been thrown ' +
            'but was not');
     except
-      on e : DOMException do
-        check(e.code = INVALID_CHARACTER_ERR,
+      on e: EOleException do
+        check(e.HelpContext = INVALID_CHARACTER_ERR,
                 'INVALID_CHARACTER_ERR should be thrown but was: ' + e.message);
     end;
   end;
@@ -255,8 +255,8 @@ begin
     attr := document.createAttributeNS(namespaceURI, qualifiedName);
     fail('DOMException NAMESPACE_ERR should have been thrown');
   except
-    on e : DOMException do
-      check(e.code = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
   end;
 end;
 
@@ -370,8 +370,8 @@ var
   element  : IDomElement;
   attrMap  : IDomNamedNodeMap;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   element := document.createElement('address');
   attrMap := element.attributes;
   (* because of default attr there should be a default attr street/ Yes *)
@@ -396,8 +396,8 @@ begin
     element := document.createElementNS(namespaceURI, malformedName);
     fail('NAMESPACE_ERR should have been thrown');
   except
-    on e : DOMException do
-      check(e.code = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
   end;
 end;
 
@@ -417,8 +417,8 @@ begin
     element := document.createElementNS(namespaceURI, qualifiedName);
     fail('NAMESPACE_ERR should have been thrown');
   except
-    on e : DOMException do
-      check(e.code = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
   end;
 end;
 
@@ -447,8 +447,8 @@ begin
       fail('DOMException INVALID_CHARACTER_ERR should have been thrown ' +
            'but was not');
     except
-      on e : DOMException do
-        check(e.code = INVALID_CHARACTER_ERR,
+      on e: EOleException do
+        check(e.HelpContext = INVALID_CHARACTER_ERR,
                 'INVALID_CHARACTER_ERR should be thrown but was: ' + e.message);
     end;
   end;
@@ -473,8 +473,8 @@ begin
     element := document.createElementNS(namespaceURI, qualifiedName);
     fail('NAMESPACE_ERR should have been thrown');
   except
-    on e : DOMException do
-      check(e.code = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR, 'NAMESPACE_ERR should have been thrown');
   end;
 end;
 
@@ -515,8 +515,8 @@ var
   document  : IDomDocument;
   entityRef : IDomEntityReference;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   entityRef := document.createEntityReference(ENTITY_NAME);
   check(entityRef.childNodes.length = 1, 'entityRef.childNodes.length <> 1');
   check(entityRef.childNodes.item[0].nodeName = '#text',
@@ -593,8 +593,8 @@ var
   document : IDomDocument;
   docType  : IDomDocumentType;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   docType := document.docType;
   check(docType.name = 'address', 'docType.name <> ''address''');
 end;
@@ -610,8 +610,8 @@ var
   document : IDomDocument;
   docType  : IDomDocumentType;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   docType := document.docType;
   check(docType = nil, 'docType <> nil');
 end;
@@ -633,8 +633,8 @@ var
   document   : IDomDocument;
   docElement : IDomElement;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(HTML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(HTML_VALID_DOC);
   docElement := document.documentElement;
   check(docElement.nodeName = 'HTML', 'docElement.nodeName <> HTML');
 end;
@@ -657,8 +657,8 @@ var
   element  : IDomElement;
   docType: IDomDocumentType;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   element := document.getElementById('NAME');
   docType := document.docType;
   check(element <> nil, 'getElementById(''NAME'') = nil');
@@ -683,8 +683,8 @@ var
   document : IDomDocument;
   element  : IDomElement;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   element := document.getElementById('nonexisting');
   check(element = nil, 'getElementById(''nonexisting'') <> nil');
 end;
@@ -714,8 +714,8 @@ var
   document : IDomDocument;
   nodeList : IDomNodeList;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   nodeList := document.getElementsByTagNameNS('*', '*');
   check(nodeList.length = 6, 'nodeList.length <> 6');
 end;
@@ -742,8 +742,8 @@ var
   document : IDomDocument;
   nodeList : IDomNodeList;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   nodeList := document.getElementsByTagName('info');
   check(nodeList.length = 5, 'nodeList.length <> 5');
 end;
@@ -777,8 +777,8 @@ var
   document : IDomDocument;
   nodeList : IDomNodeList;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   nodeList := document.getElementsByTagNameNS('*', 'info');
   check(nodeList.length = 6, 'nodeList.length <> 6');
   //XXX TODO: check the order of elements
@@ -806,8 +806,8 @@ var
   document : IDomDocument;
   nodeList : IDomNodeList;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   nodeList := document.getElementsByTagName('*');
   check(nodeList.length = 7, 'nodeList.length <> 7');
   check(nodeList.item[0].nodeName = 'address', 'nodeName <> address');
@@ -839,8 +839,8 @@ var
   element  : IDomElement;
   textNode : IDomText;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   nodeList := document.getElementsByTagName('info');
   element := nodeList.item[2] as IDomElement;
   textNode := element.firstChild as IDomText;
@@ -861,8 +861,8 @@ var
   document          : IDomDocument;
   domImplementation : IDomImplementation;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   domImplementation := document.domImplementation;
   check(domImplementation.hasFeature('xml', '1.0'),
           'hasFeature(''xml'', ''1.0'' = false')
@@ -880,8 +880,8 @@ var
   document : IDomDocument;
   element  : IDomElement;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(XML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(XML_VALID_DOC);
   element := document.documentElement;
   check(element.nodeName = 'address', 'root name <> ''address''');
 end;
@@ -903,8 +903,8 @@ const
 var
   document : IDomDocument;
 begin
-  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.
-          LoadFromXML(HTML_VALID_DOC);
+  document := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('','',nil);
+  (document as IDOMPersist).LoadXML(HTML_VALID_DOC);
   check(document.docType = nil, 'document.docType <> nil');
 end;
 

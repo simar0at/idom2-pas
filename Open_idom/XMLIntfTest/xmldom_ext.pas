@@ -115,11 +115,33 @@ type
     property doccount: integer read get_doccount write set_doccount;
   end;
 
+  {IDOMDocumentEx}
+  // Proivdes validation functions like those found in PHPs DOMDocument
+  // relaxNG and xmlschema are to be stored and applied after loading a document.
+  IDOMDocumentEx = interface
+    ['{6CA1B4C1-D02F-4980-8D54-80784B5157A8}']
+    function get_relaxNG: IDOMDocument; safecall;
+    function get_xmlschema: IDOMDocument; safecall;
+    procedure set_xmlschema(source: IDOMDocument); safecall;
+    procedure set_relaxNG(source: IDOMDocument); safecall;
+    function schemaValidate (filename: OleVariant; flags: LongInt): WordBool; safecall;
+    function schemaValidateSource (source: DOMString; flags: LongInt): WordBool; safecall;
+    function relaxNGValidate (filename: OleVariant): WordBool; safecall;
+    function relaxNGValidateSource (source: DOMString): WordBool; safecall;
+    property relaxNG: IDOMDocument read get_relaxNG write set_relaxNG;
+    property xmlschema: IDOMDocument read get_xmlschema write set_xmlschema;
+  end;
+
+  const // see http://stackoverflow.com/questions/15948847/injecting-xml-schema-defaults-into-documents-with-php
+    SCHEMA_VALIDATE_FLAGS_INJECT_DEFAULTS = 1 shl 0; // = XML_SCHEMA_VAL_VC_I_CREATE
+// 1 shl 1 = XML_SCHEMA_VAL_XSI_ASSEMBLE
+
 procedure registerNS(doc: IDOMDocument; prefix, namespaceuri: DOMString);
+procedure setXSDSchema(doc, xsd: IDOMDocument);
 
 implementation
 
-uses SysUtils, msxmldom, msxml;
+uses SysUtils, msxmldom, msxml, ComObj;
 
 type
 
@@ -182,6 +204,33 @@ begin
     (doc.documentElement as IDomNodeEx2).RegisterNS(prefix, namespaceuri);
     Exit;
   end;
+end;
+
+procedure setXSDSchema(doc, xsd: IDOMDocument);
+var
+  msxmlnodewrapper: IXMLDOMNodeRef;
+  msxmldoc, msxmlxsd: IXMLDOMDocument2;
+  sc: IXMLDOMSchemaCollection;
+  docEx: IDOMDocumentEx;
+begin
+  doc.QueryInterface(IXMLDOMNodeRef, msxmlnodewrapper);
+  if Assigned(msxmlnodewrapper) then
+  begin
+    msxmldoc := msxmlnodewrapper.GetXMLDOMNode as IXMLDomDocument2;
+    xsd.QueryInterface(IXMLDOMNodeRef, msxmlnodewrapper);
+    msxmlxsd := msxmlnodewrapper.GetXMLDOMNode as IXMLDomDocument2;
+    sc := CreateOleObject('Msxml2.XMLSchemaCache.6.0') as IXMLDOMSchemaCollection;
+    sc.Add('', msxmlxsd);
+    msxmldoc.schemas := OleVariant(sc);
+    exit;
+  end;
+  doc.QueryInterface(IDOMDocumentEx, docEx);
+  if Assigned(docEx) then
+  begin
+    docEx.xmlschema := xsd;
+    Exit;
+  end;
+  raise DOMException.Create('XSD Schema validation not implemented');
 end;
 
 end.

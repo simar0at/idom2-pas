@@ -48,9 +48,7 @@ unit libxml2xmldom;
   // Partly supported by libxml2:
   // IDomPersist
   // (asynchron parsing of xml files/ strings is not supported)
-  //
-  // Also not supported by libxml2:
-  // IDomParseError (extended interface, not part of dom-spec)
+
 
 
 interface
@@ -444,12 +442,38 @@ type
 
     // doc element injection for XSLT transform.
     procedure injectDifferentDocElement(docElement: xmlDocPtr);
+
+    // parser context for locating nodes
+    function getParserCtxt: xmlParserCtxtPtr;
+    // get schema varieties
+    function getAsXSDSchema: xmlSchemaPtr;
+    function getAsRelaxNG: xmlRelaxNGPtr;
+  end;
+
+  { TError }
+  TError = record
+    domain : Longint;
+    code : Longint;
+    message_ : AnsiString;
+    level : xmlErrorLevel;
+    file_ : AnsiString;
+    line : Longint;
+    str1 : AnsiString;
+    str2 : AnsiString;
+    str3 : AnsiString;
+    int1 : Longint;
+    linePos : Longint; // either this
+    filePos : Longint; // or this is valid the other is -1
+    ctxt : xmlParserCtxtPtr; // needed for locating nodes in the document. Carefull: may be freed already.
+    node : xmlNodePtr; // nil on parse error, the offending node on validation error.
+    srcText: AnsiString; // the line containing the error
+    constructor Create(xmlError: xmlError; nodeLocator: xmlParserCtxtPtr = nil);
   end;
 
   { TDomDocument }
 
   TDomDocument = class(TDomNode, IDomDocument, IDomParseOptions, IDomPersist,
-      IDomInternal, IDomOutputOptions)
+      IDomParseError, IDomInternal, IDomOutputOptions, IDOMDocumentEx)
   private
     fDomImpl: IDomImplementation;  // the domimplementation used to create this document
     fTempXSL: xsltStylesheetPtr;   // if the document was used as stylesheet,
@@ -480,9 +504,21 @@ type
                                    // on this two lists.
                                    // todo: use one list for prefix and uri as
                                    //       name-value pairs
+    fError: TError;           // xmlError structure returned by xmlCtxGetLastError
+    fParserCtxtPtr: xmlParserCtxtPtr;
+    fDocAsXSDSchema: xmlSchemaPtr; // The doc as parsed XSD schema
+    fDocAsRelaxNG: xmlRelaxNGPtr; // The doc as parsed RelaxNG
+    fDefaultRelaxNGDoc: IDOMDocument;
+    fDefaultRelaxNGValidCtxt: xmlRelaxNGValidCtxtPtr;
+    fDefaultXSDSchemaDoc: IDOMDocument;
+    fDefaultXSDValidCtxt: xmlSchemaValidCtxtPtr;
     procedure setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
     procedure setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
     procedure injectDifferentDocElement(docElement: xmlDocPtr);
+    function schemaValidatorFromDOMDocument(source: IDOMDocument): xmlSchemaValidCtxtPtr;
+    function relaxNGValidatorFromDOMDocument(source: IDOMDocument): xmlRelaxNGValidCtxtPtr;
+    function xsdValidate(source: IDOMDocument; flags: Integer): Boolean;
+    function rngValidate(source: IDOMDocument): Boolean;
   protected
     // IDomDocument
     function get_doctype: IDomDocumentType; safecall;
@@ -539,6 +575,9 @@ type
     procedure set_fTempXSL(tempXSL: xsltStylesheetPtr);
     function  getPrefixList:TStringList;
     function  getUriList:TStringList;
+    function getParserCtxt: xmlParserCtxtPtr;
+    function getAsXSDSchema: xmlSchemaPtr;
+    function getAsRelaxNG: xmlRelaxNGPtr;
     // IDomOutputOptions
     function get_prettyPrint: boolean;
     function get_encoding: DomString;
@@ -547,6 +586,23 @@ type
     procedure set_prettyPrint(prettyPrint: boolean);
     procedure set_encoding(encoding: DomString);
     procedure set_compressionLevel(compressionLevel: integer);
+    // IDOMParseError
+    function get_errorCode: Integer; safecall;
+    function get_url: DOMString; safecall;
+    function get_reason: DOMString; safecall;
+    function get_srcText: DOMString; safecall;
+    function get_line: Integer; safecall;
+    function get_linepos: Integer; safecall;
+    function get_filepos: Integer; safecall;
+    // IDOMDocumentEx
+    function get_relaxNG: IDOMDocument; safecall;
+    function get_xmlschema: IDOMDocument; safecall;
+    procedure set_xmlschema(source: IDOMDocument); safecall;
+    procedure set_relaxNG(source: IDOMDocument); safecall;
+    function schemaValidate (filename: OleVariant; flags: LongInt): WordBool; safecall;
+    function schemaValidateSource (source: DOMString; flags: LongInt): WordBool; safecall;
+    function relaxNGValidate (filename: OleVariant): WordBool; safecall;
+    function relaxNGValidateSource (source: DOMString): WordBool; safecall;
     // not bound to an interface
     function  getXmlDocument: xmlDocPtr;
     function  findNamespaceNode(const ns: xmlNsPtr): boolean;
@@ -566,7 +622,7 @@ type
     constructor Create(DOMImpl: IDomImplementation; docnode: xmlNodePtr); overload;
     destructor Destroy; override;
   end;
-
+  PDomDocument = ^TDomDocument;
   { TDomDocumentFragment }
 
   TDomDocumentFragment = class(TDomNode, IDomDocumentFragment)
@@ -608,21 +664,21 @@ function IsXmlChars(const S: DOMString): boolean; forward;
 function errorString(err: integer): string;
 begin
   case err of
-    INDEX_SIZE_ERR: Result := 'INDEX_SIZE_ERR';
-    DOMSTRING_SIZE_ERR: Result := 'DOMSTRING_SIZE_ERR';
-    HIERARCHY_REQUEST_ERR: Result := 'HIERARCHY_REQUEST_ERR';
-    WRONG_DOCUMENT_ERR: Result := 'WRONG_DOCUMENT_ERR';
-    INVALID_CHARACTER_ERR: Result := 'INVALID_CHARACTER_ERR';
-    NO_DATA_ALLOWED_ERR: Result := 'NO_DATA_ALLOWED_ERR';
-    NO_MODIFICATION_ALLOWED_ERR: Result := 'NO_MODIFICATION_ALLOWED_ERR';
-    NOT_FOUND_ERR: Result := 'NOT_FOUND_ERR';
-    NOT_SUPPORTED_ERR: Result := 'NOT_SUPPORTED_ERR';
-    INUSE_ATTRIBUTE_ERR: Result := 'INUSE_ATTRIBUTE_ERR';
-    INVALID_STATE_ERR: Result := 'INVALID_STATE_ERR';
-    SYNTAX_ERR: Result := 'SYNTAX_ERR';
-    INVALID_MODIFICATION_ERR: Result := 'INVALID_MODIFICATION_ERR';
-    NAMESPACE_ERR: Result := 'NAMESPACE_ERR';
-    INVALID_ACCESS_ERR: Result := 'INVALID_ACCESS_ERR';
+    INDEX_SIZE_ERR: Result := SINDEX_SIZE_ERR;
+    DOMSTRING_SIZE_ERR: Result := SDOMSTRING_SIZE_ERR;
+    HIERARCHY_REQUEST_ERR: Result := SHIERARCHY_REQUEST_ERR;
+    WRONG_DOCUMENT_ERR: Result := SWRONG_DOCUMENT_ERR;
+    INVALID_CHARACTER_ERR: Result := SINVALID_CHARACTER_ERR;
+    NO_DATA_ALLOWED_ERR: Result := SNO_DATA_ALLOWED_ERR;
+    NO_MODIFICATION_ALLOWED_ERR: Result := SNO_MODIFICATION_ALLOWED_ERR;
+    NOT_FOUND_ERR: Result := SNOT_FOUND_ERR;
+    NOT_SUPPORTED_ERR: Result := SNOT_SUPPORTED_ERR;
+    INUSE_ATTRIBUTE_ERR: Result := SINUSE_ATTRIBUTE_ERR;
+    INVALID_STATE_ERR: Result := SINVALID_STATE_ERR;
+    SYNTAX_ERR: Result := SSYNTAX_ERR;
+    INVALID_MODIFICATION_ERR: Result := SINVALID_MODIFICATION_ERR;
+    NAMESPACE_ERR: Result := SNAMESPACE_ERR;
+    INVALID_ACCESS_ERR: Result := SINVALID_ACCESS_ERR;
     20: Result := 'SaveXMLToMemory_ERR';
     22: Result := 'SaveXMLToDisk_ERR';
     100: Result := 'LIBXML2_NULL_POINTER_ERR';
@@ -633,13 +689,19 @@ end;
 
 // Raises an exception with speaking message
 procedure checkError(err: integer; classname: string = 'unknown');
-var location: string;
+var
+  location: string;
+  E: DOMException;
 begin
   if classname = 'unknown'
     then location := ''
     else location := 'in class ' + classname;
-  if err <> 0
-    then raise DomException.Create(ErrorString(err)+location);
+  if err <> 0 then
+  begin
+    E := DomException.Create(ErrorString(err)+location);
+    E.code := err;
+    raise E;
+  end;
 end;
 
 function IsReadOnlyNode(node: xmlNodePtr): boolean;
@@ -1353,6 +1415,18 @@ begin
           then
             // append the new one
             xmlAddPropChild(parent, xmlNewPropNode);
+end;
+
+// *********************************
+// libxml callbacks for internal use
+// *********************************
+
+procedure structuredCallbackImplForTDOMDocument(var userData:pointer; error:xmlErrorPtr);cdecl;
+var
+  Document: TDomDocument;
+begin
+  Document := PDomDocument(@userData)^;
+  Document.fError := TError.Create(error^, Document.fParserCtxtPtr);
 end;
 
 (*
@@ -2984,7 +3058,6 @@ begin
   FPrefixList:=TStringList.Create;
   FUriList:=TStringList.Create;
   FtempXSL := nil;
-
   // check if we need to create a new namespace
   if (namespaceUri = '')
      then ns := nil
@@ -3045,7 +3118,6 @@ begin
   FNsList:=TList.Create;
   FPrefixList:=TStringList.Create;
   FURIList:=TStringList.Create;
-
   if (loadFrom_XmlParserCtx(xmlCreateFileParserCtxt(PAnsiChar(fn))))
      then begin
        FtempXSL := nil;
@@ -3134,13 +3206,25 @@ begin
          FreeAndNil(FNsList);
        end;
 
-
-       if FtempXSL = nil
-         then xmlFreeDoc(getXmlDocument)
-         else begin
-           // this frees the document and the additional stylesheet information
-           xsltFreeStylesheet(FtempXSL);
-         end;
+       if Assigned(fDefaultXSDValidCtxt) then
+         xmlSchemaFreeValidCtxt(fDefaultXSDValidCtxt);
+       if Assigned(fDefaultRelaxNGValidCtxt) then
+         xmlRelaxNGFreeValidCtxt(fDefaultRelaxNGValidCtxt);
+       if Assigned(fParserCtxtPtr) then
+       begin
+         if Assigned(@fParserCtxtPtr.node_seq) then
+           xmlClearNodeInfoSeq(@fParserCtxtPtr.node_seq);
+         xmlFreeParserCtxt(fParserCtxtPtr);
+       end;
+       if Assigned(fDocAsXSDSchema) then
+         xmlSchemaFree(fDocAsXSDSchema);
+       if Assigned(fDocAsRelaxNG) then
+         xmlRelaxNGFree(fDocAsRelaxNG);
+       if Assigned(FtempXSL) then
+         // this frees the document and the additional stylesheet information
+         xsltFreeStylesheet(FtempXSL)
+       else
+         xmlFreeDoc(getXmlDocument);
        fXmlNode:=nil;
        // setup the internal information
        (fDomImpl as IDomDebug).doccount:=(fDomImpl as IDomDebug).doccount-1;
@@ -3426,6 +3510,63 @@ begin
   end;
 end;
 
+function TDomDocument.getAsRelaxNG: xmlRelaxNGPtr;
+var
+  pctxt: xmlRelaxNGParserCtxtPtr;
+  schema: xmlRelaxNGPtr;
+  E: DOMException;
+begin
+  Result := fDocAsRelaxNG;
+  if Assigned(Result) then
+    exit;
+  pctxt := xmlRelaxNGNewDocParserCtxt(xmlDocPtr(fXmlNode));
+  if not Assigned(pctxt) then
+  begin
+    E := DOMException.Create('Error getting schema parser ctxt.');
+    E.code := XML_ERR_INTERNAL_ERROR; // Better solution?
+    raise E;
+  end;
+  xmlRelaxNGSetParserStructuredErrors(pctxt, structuredCallbackImplForTDOMDocument, @self);
+  fDocAsRelaxNG := xmlRelaxNGParse(pctxt);
+  xmlRelaxNGFreeParserCtxt(pctxt);
+  if not Assigned(fDocAsRelaxNG) then
+  if not Assigned(fDocAsXSDSchema) then
+  begin
+    E := DOMException.Create('Error parsing relaxNG: ' + fError.message_);
+    E.code := fError.code;
+    raise E;
+  end;
+  Result := fDocAsRelaxNG;
+end;
+
+function TDomDocument.getAsXSDSchema: xmlSchemaPtr;
+var
+  pctxt: xmlSchemaParserCtxtPtr;
+  schema: xmlSchemaPtr;
+  E: DOMException;
+begin
+  Result := fDocAsXSDSchema;
+  if Assigned(Result) then
+    exit;
+  pctxt := xmlSchemaNewDocParserCtxt(xmlDocPtr(fXmlNode));
+  if not Assigned(pctxt) then
+  begin
+    E := DOMException.Create('Error getting schema parser ctxt.');
+    E.code := XML_ERR_INTERNAL_ERROR; // Better solution?
+    raise E;
+  end;
+  xmlSchemaSetParserStructuredErrors(pctxt, structuredCallbackImplForTDOMDocument, @self);
+  fDocAsXSDSchema := xmlSchemaParse(pctxt);
+  xmlSchemaFreeParserCtxt(pctxt);
+  if not Assigned(fDocAsXSDSchema) then
+  begin
+    E := DOMException.Create('Error parsing schema: ' + fError.message_);
+    E.code := fError.code;
+    raise E;
+  end;
+  Result := fDocAsXSDSchema;
+end;
+
 function TDomDocument.getElementById(const elementId: DOMString): IDomElement;
 var
   AAttr:    xmlAttrPtr;
@@ -3451,9 +3592,29 @@ begin
   Result := fPreserveWhiteSpace;
 end;
 
+function TDomDocument.get_reason: DOMString;
+begin
+  Result := fError.message_;
+end;
+
+function TDomDocument.get_relaxNG: IDOMDocument;
+begin
+  Result := fDefaultRelaxNGDoc;
+end;
+
 function TDomDocument.get_resolveExternals: boolean;
 begin
   Result := fResolveExternals;
+end;
+
+function TDomDocument.get_srcText: DOMString;
+begin
+  Result := fError.srcText;
+end;
+
+function TDomDocument.get_url: DOMString;
+begin
+  Result := fError.file_;
 end;
 
 function TDomDocument.get_validate: boolean;
@@ -3495,6 +3656,14 @@ begin
     else xmlKeepBlanksDefault(0);
 end;
 
+procedure TDomDocument.set_relaxNG(source: IDOMDocument);
+begin
+  if Assigned(fDefaultRelaxNGValidCtxt) then
+    xmlRelaxNGFreeValidCtxt(fDefaultRelaxNGValidCtxt);
+  fDefaultRelaxNGDoc := source;
+  fDefaultRelaxNGValidCtxt := relaxNGValidatorFromDOMDocument(source);
+end;
+
 procedure TDomDocument.set_resolveExternals(Value: boolean);
 begin
   if Value
@@ -3506,6 +3675,25 @@ end;
 procedure TDomDocument.set_validate(Value: boolean);
 begin
   fValidate := Value;
+end;
+
+procedure TDomDocument.set_xmlschema(source: IDOMDocument);
+begin
+  if Assigned(fDefaultXSDValidCtxt) then
+    xmlSchemaFreeValidCtxt(fDefaultXSDValidCtxt);
+  fDefaultXSDSchemaDoc := source;
+  fDefaultXSDValidCtxt := schemaValidatorFromDOMDocument(source);
+end;
+
+function TDomDocument.xsdValidate(source: IDOMDocument; flags: Integer): Boolean;
+var
+  vctxt: xmlSchemaValidCtxtPtr;
+begin
+  vctxt := schemaValidatorFromDOMDocument(source);
+  xmlSchemaSetValidOptions(vctxt, flags);
+  Result := xmlSchemaValidateDoc(vctxt, xmlDocPtr(fXmlNode)) = 0;
+  // if not Result then return collected error message
+  xmlSchemaFreeValidCtxt(vctxt);
 end;
 
 // IDomPersist
@@ -3562,6 +3750,11 @@ begin
     end;
 end;
 
+function TDomDocument.get_xmlschema: IDOMDocument;
+begin
+  Result := fDefaultXSDSchemaDoc;
+end;
+
 function TDomDocument.asyncLoadState: integer;
 begin
   Result := 0;
@@ -3576,11 +3769,16 @@ end;
 function TDomDocument.loadFrom_XmlParserCtx(ctxt: xmlParserCtxtPtr): boolean;
 begin
   Result := False;
-  try
     if Assigned(ctxt)
     then begin
-      // parser validates always
-      ctxt.validate := -1;
+      if Assigned(fParserCtxtPtr) then
+        xmlFreeParserCtxt(fParserCtxtPtr);
+      fParserCtxtPtr := ctxt;
+      ctxt.record_info := 1;
+      if fValidate then
+        ctxt.validate := 1
+      else
+        ctxt.validate := 0;
       // todo: async (separate thread)
 
       // libxml2 keeps the setting of resolveExternals, even if the
@@ -3591,6 +3789,7 @@ begin
       // WARNING: it is not threadsafe, to use different values for
       // this option in different threads
       set_resolveExternals(fResolveExternals);
+      xmlSetStructuredErrorFunc(@self, structuredCallbackImplForTDOMDocument);
       if (xmlParseDocument(ctxt) <> 0{error}) or
          (ctxt.wellFormed = 0{false}) or
          (Fvalidate and (ctxt.valid = 0{false}))
@@ -3609,7 +3808,25 @@ begin
                xsltFreeStylesheet(FtempXSL);
              end;
            inherited Destroy;
-           Result := True;
+           if Assigned(fDefaultXSDSchemaDoc) then
+           begin
+             if not Assigned(fDefaultXSDValidCtxt) then
+               fDefaultXSDValidCtxt := schemaValidatorFromDOMDocument(fDefaultXSDSchemaDoc);
+             if not Assigned(fDefaultXSDValidCtxt) then
+               Result := False
+             else
+               Result := xmlSchemaValidateDoc(fDefaultXSDValidCtxt, xmlDocPtr(ctxt.myDoc)) = 0
+           end else if Assigned(fDefaultRelaxNGDoc) then
+           begin
+             if not Assigned(fDefaultRelaxNGValidCtxt) then
+               fDefaultRelaxNGValidCtxt := relaxNGValidatorFromDOMDocument(fDefaultRelaxNGDoc);
+             if not Assigned(fDefaultRelaxNGValidCtxt) then
+               Result := False
+             else
+               Result := xmlRelaxNGValidateDoc(fDefaultRelaxNGValidCtxt, xmlDocPtr(ctxt.myDoc)) = 0
+           end
+           else
+             Result := True;
            // create an DomDocument with this
            inherited Create(xmlNodePtr(ctxt.myDoc), nil);
 
@@ -3620,10 +3837,6 @@ begin
 
          end;
       end; // if assigned
-  finally
-     // do it always
-     xmlFreeParserCtxt(ctxt);
-  end;
 end;
 
 function TDomDocument.loadxml(const Value: WideString): WordBool;
@@ -3707,6 +3920,40 @@ end;
 procedure TDomDocument.saveToStream(const stream: IStream);
 begin
   checkError(NOT_SUPPORTED_ERR);
+end;
+
+function TDomDocument.schemaValidate(filename: OleVariant;
+  flags: Integer): WordBool;
+var
+  doc: IDOMDocument;
+begin
+  doc := fDomImpl.createDocument('','',nil);
+  (doc as IDOMPersist).load(filename);
+  Result := xsdValidate(doc, flags);
+end;
+
+function TDomDocument.schemaValidateSource(source: DOMString;
+  flags: Integer): WordBool;
+var
+  doc: IDOMDocument;
+begin
+  doc := fDomImpl.createDocument('','',nil);
+  (doc as IDOMPersist).loadxml(source);
+  Result := xsdValidate(doc, flags);
+end;
+
+function TDomDocument.schemaValidatorFromDOMDocument(
+  source: IDOMDocument): xmlSchemaValidCtxtPtr;
+var
+  schema: xmlSchemaPtr;
+begin
+  schema := (source as IDomInternal).getAsXSDSchema;
+  if not Assigned(schema) then
+  begin;
+    Result := nil;
+    Exit;
+  end;
+  Result := xmlSchemaNewValidCtxt(schema);
 end;
 
 procedure TDomDocument.saveToStream(const stream: TStream);
@@ -4230,6 +4477,16 @@ begin
   if node <> nil then FNodeList.Remove(node);
 end;
 
+function TDomDocument.rngValidate(source: IDOMDocument): Boolean;
+var
+  vctxt: xmlRelaxNGValidCtxtPtr;
+begin
+  vctxt := relaxNGValidatorFromDOMDocument(source);
+  Result := xmlRelaxNGValidateDoc(vctxt, xmlDocPtr(fXmlNode)) = 0;
+  // if not Result then return collected error message
+  xmlRelaxNGFreeValidCtxt(vctxt);
+end;
+
 {$ifdef VER130} // Delphi 5
 
 function LeftStr(const AText: AnsiString; const ACount: Integer): AnsiString;
@@ -4400,6 +4657,26 @@ begin
   Result := fEncoding;
 end;
 
+function TDomDocument.get_errorCode: Integer;
+begin
+  Result := fError.code;
+end;
+
+function TDomDocument.get_filepos: Integer;
+begin
+  Result := fError.filePos;
+end;
+
+function TDomDocument.get_line: Integer;
+begin
+  Result := fError.line;
+end;
+
+function TDomDocument.get_linepos: Integer;
+begin
+  Result := fError.linePos;
+end;
+
 function TDomDocument.get_prettyPrint: boolean;
 begin
   Result := fPrettyPrint;
@@ -4429,6 +4706,43 @@ procedure TDomDocument.registerNS(prefix, uri: AnsiString);
 begin
   FPrefixList.Add(prefix);
   FUriList.Add(uri);
+end;
+
+function TDomDocument.relaxNGValidate(filename: OleVariant): WordBool;
+var
+  doc: IDOMDocument;
+begin
+  doc := fDomImpl.createDocument('','',nil);
+  (doc as IDOMPersist).load(filename);
+  Result := rngValidate(doc);
+end;
+
+function TDomDocument.relaxNGValidateSource(source: DOMString): WordBool;
+var
+  doc: IDOMDocument;
+begin
+  doc := fDomImpl.createDocument('','',nil);
+  (doc as IDOMPersist).loadxml(source);
+  Result := rngValidate(doc);
+end;
+
+function TDomDocument.relaxNGValidatorFromDOMDocument(
+  source: IDOMDocument): xmlRelaxNGValidCtxtPtr;
+var
+  schema: xmlRelaxNGPtr;
+begin
+  schema := (source as IDomInternal).getAsRelaxNG;
+  if not Assigned(schema) then
+  begin;
+    Result := nil;
+    Exit;
+  end;
+  Result := xmlRelaxNGNewValidCtxt(schema);
+end;
+
+function TDomDocument.getParserCtxt: xmlParserCtxtPtr;
+begin
+  Result := fParserCtxtPtr;
 end;
 
 function TDomDocument.getPrefixList: TStringList;
@@ -4577,12 +4891,49 @@ end;
 
 function TDOMSafeCallHandler.SafeCallException(ExceptObject: TObject;
   ExceptAddr: Pointer): HRESULT;
-var
-  HelpFile: string;
 begin
-  if ExceptObject is EOleException then
-    HelpFile := (ExceptObject as EOleException).HelpFile;
-  Result := HandleSafeCallException(ExceptObject, ExceptAddr, IDOMNode, '', Helpfile);
+  if ExceptObject is DOMException then
+    DOMException(ExceptObject).HelpContext := DOMException(ExceptObject).code;
+  Result := HandleSafeCallException(ExceptObject, ExceptAddr, IDOMNode, 'libxml2.dll', '');
+end;
+
+{ TError }
+
+constructor TError.Create(xmlError: xmlError; nodeLocator: xmlParserCtxtPtr = nil);
+var
+  posInfoPtr: xmlParserNodeInfoPtr;
+  docLines: TStringList;
+  line, offset: Integer;
+begin
+  self.domain := xmlError.domain;
+  self.code := xmlError.code;
+  self.message_ := xmlError.message_;
+  self.level := xmlError.level;
+  self.file_ := xmlError.file_;
+  self.line := xmlError.line;
+  self.str1 := xmlError.str1;
+  self.str2 := xmlError.str2;
+  self.str3 := xmlError.str3;
+  self.int1 := xmlError.int1;
+  self.linePos := xmlError.int2;
+  self.filePos := -1;
+  self.ctxt := xmlError.ctxt;
+  self.node := xmlError.node;
+  if Assigned(xmlError.node) and Assigned(nodeLocator) and (nodeLocator.myDoc = xmlError.node.doc) then
+  begin
+     posInfoPtr := xmlParserFindNodeInfo(nodeLocator, xmlError.node);
+     self.line := posInfoPtr^.begin_line;
+     self.filePos := posInfoPtr^.begin_pos;
+     self.linePos := -1;
+  end;
+  // lots of naiv assumptions here ...
+  docLines := TStringList.Create;
+  docLines.Text := nodeLocator.input.buf.buffer.content;
+  offset := docLines.Count - nodeLocator.input.line;
+  line := self.line + offset;
+  if line > 0 then
+    self.srcText := docLines[line-1];
+  docLines.Free;
 end;
 
 initialization
@@ -4591,6 +4942,7 @@ initialization
 finalization
   UnRegisterDOMVendor(LIBXML2DOM);
   LIBXML2DOM.Free;
+  xmlCleanupParser;
 
 end.
 

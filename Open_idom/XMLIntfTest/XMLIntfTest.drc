@@ -4,143 +4,157 @@
   Diese Datei enthält vom Compiler erzeugte Ressourcen, die an die ausführbare Datei gebunden wurden. Wenn diese Datei leer ist, dann wurden keine vom Compiler generierten Ressourcen an die erzeugte ausführbare Datei gebunden.
 */
 
-#define XMLConst_SInvalidNodeType 64992
-#define XMLConst_SMismatchedRegItems 64993
-#define XMLConst_SNotSingleTextNode 64994
-#define XMLConst_SNoDOMParseOptions 64995
-#define XMLConst_SMissingItemTag 64996
-#define XMLConst_SNodeReadOnly 64997
-#define XMLConst_SNoRefresh 64998
-#define XMLConst_SMissingFileName 64999
-#define XMLConst_SLine 65000
-#define ComStrs_sInvalidOwner 65008
-#define ComStrs_sRichEditInsertError 65009
-#define ComStrs_sRichEditLoadFail 65010
-#define ComStrs_sRichEditSaveFail 65011
-#define ComStrs_sInvalidComCtl32 65012
-#define OleConst_sNoRunningObject 65013
-#define XMLConst_SDuplicateRegistration 65014
-#define XMLConst_SNoMatchingDOMVendor 65015
-#define XMLConst_SNoDOMNodeEx 65016
-#define XMLConst_SDOMNotSupported 65017
-#define XMLConst_SNodeExpected 65018
-#define XMLConst_SMSDOMNotInstalled 65019
-#define XMLConst_SNotActive 65020
-#define XMLConst_SNodeNotFound 65021
-#define XMLConst_SMissingNode 65022
-#define XMLConst_SNoAttributes 65023
-#define Consts_SInvalidMemoSize 65024
-#define Consts_SInvalidPrinterOp 65025
-#define Consts_SNoDefaultPrinter 65026
-#define Consts_SDuplicateMenus 65027
-#define Consts_SDockedCtlNeedsName 65028
-#define Consts_SDockTreeRemoveError 65029
-#define Consts_SDockZoneNotFound 65030
-#define Consts_SDockZoneHasNoCtl 65031
-#define Consts_SDockZoneVersionConflict 65032
-#define Consts_SMultiSelectRequired 65033
-#define Consts_SSeparator 65034
-#define Consts_SNoGetItemEventHandler 65035
-#define ComStrs_sInvalidLevel 65036
-#define ComStrs_sInvalidLevelEx 65037
-#define ComStrs_sInvalidIndex 65038
-#define ComStrs_sInsertError 65039
-#define Consts_SmkcEnd 65040
-#define Consts_SmkcHome 65041
-#define Consts_SmkcLeft 65042
-#define Consts_SmkcUp 65043
-#define Consts_SmkcRight 65044
-#define Consts_SmkcDown 65045
-#define Consts_SmkcIns 65046
-#define Consts_SmkcDel 65047
-#define Consts_SmkcShift 65048
-#define Consts_SmkcCtrl 65049
-#define Consts_SmkcAlt 65050
-#define Consts_SOutOfRange 65051
-#define Consts_sAllFilter 65052
-#define Consts_SInvalidClipFmt 65053
-#define Consts_SIconToClipboard 65054
-#define Consts_SCannotOpenClipboard 65055
-#define Consts_SMsgDlgCancel 65056
-#define Consts_SMsgDlgHelp 65057
-#define Consts_SMsgDlgAbort 65058
-#define Consts_SMsgDlgRetry 65059
-#define Consts_SMsgDlgIgnore 65060
-#define Consts_SMsgDlgAll 65061
-#define Consts_SMsgDlgNoToAll 65062
-#define Consts_SMsgDlgYesToAll 65063
-#define Consts_SMsgDlgClose 65064
-#define Consts_SmkcBkSp 65065
-#define Consts_SmkcTab 65066
-#define Consts_SmkcEsc 65067
-#define Consts_SmkcEnter 65068
-#define Consts_SmkcSpace 65069
-#define Consts_SmkcPgUp 65070
-#define Consts_SmkcPgDn 65071
-#define Consts_SRetryButton 65072
-#define Consts_SAbortButton 65073
-#define Consts_SAllButton 65074
-#define Consts_SCannotDragForm 65075
-#define Consts_SVMetafiles 65076
-#define Consts_SVEnhMetafiles 65077
-#define Consts_SVIcons 65078
-#define Consts_SVBitmaps 65079
-#define Consts_SVTIFFImages 65080
-#define Consts_SMsgDlgWarning 65081
-#define Consts_SMsgDlgError 65082
-#define Consts_SMsgDlgInformation 65083
-#define Consts_SMsgDlgConfirm 65084
-#define Consts_SMsgDlgYes 65085
-#define Consts_SMsgDlgNo 65086
-#define Consts_SMsgDlgOK 65087
-#define Consts_SNoTimers 65088
-#define Consts_SNotPrinting 65089
-#define Consts_SPrinting 65090
-#define Consts_SPrinterIndexError 65091
-#define Consts_SInvalidPrinter 65092
-#define Consts_SDeviceOnPort 65093
-#define Consts_SGroupIndexTooLow 65094
-#define Consts_SNoMDIForm 65095
-#define Consts_SControlParentSetToSelf 65096
-#define Consts_SOKButton 65097
-#define Consts_SCancelButton 65098
-#define Consts_SYesButton 65099
-#define Consts_SNoButton 65100
-#define Consts_SHelpButton 65101
-#define Consts_SCloseButton 65102
-#define Consts_SIgnoreButton 65103
-#define Consts_SReplaceImage 65104
-#define Consts_SImageIndexError 65105
-#define Consts_SImageReadFail 65106
-#define Consts_SImageWriteFail 65107
-#define Consts_SWindowDCError 65108
-#define Consts_SWindowClass 65109
-#define Consts_SCannotFocus 65110
-#define Consts_SParentRequired 65111
-#define Consts_SParentGivenNotAParent 65112
-#define Consts_SMDIChildNotVisible 65113
-#define Consts_SVisibleChanged 65114
-#define Consts_SCannotShowModal 65115
-#define Consts_SPropertyOutOfRange 65116
-#define Consts_SMenuIndexError 65117
-#define Consts_SMenuReinserted 65118
-#define Consts_SMenuNotFound 65119
+#define XMLConst_SNoDOMParseOptions 64976
+#define XMLConst_SMissingItemTag 64977
+#define XMLConst_SNodeReadOnly 64978
+#define XMLConst_SNoRefresh 64979
+#define XMLConst_SMissingFileName 64980
+#define XMLConst_SLine 64981
+#define OleConst_SOleError 64982
+#define XMLConst_SNO_MODIFICATION_ALLOWED_ERR 64992
+#define XMLConst_SNOT_FOUND_ERR 64993
+#define XMLConst_SNOT_SUPPORTED_ERR 64994
+#define XMLConst_SINUSE_ATTRIBUTE_ERR 64995
+#define XMLConst_SINVALID_STATE_ERR 64996
+#define XMLConst_SSYNTAX_ERR 64997
+#define XMLConst_SINVALID_MODIFICATION_ERR 64998
+#define XMLConst_SNAMESPACE_ERR 64999
+#define XMLConst_SINVALID_ACCESS_ERR 65000
+#define XMLConst_SNotActive 65001
+#define XMLConst_SNodeNotFound 65002
+#define XMLConst_SMissingNode 65003
+#define XMLConst_SNoAttributes 65004
+#define XMLConst_SInvalidNodeType 65005
+#define XMLConst_SMismatchedRegItems 65006
+#define XMLConst_SNotSingleTextNode 65007
+#define ComStrs_sRichEditInsertError 65008
+#define ComStrs_sRichEditLoadFail 65009
+#define ComStrs_sRichEditSaveFail 65010
+#define ComStrs_sInvalidComCtl32 65011
+#define XMLConst_SDuplicateRegistration 65012
+#define XMLConst_SNoMatchingDOMVendor 65013
+#define XMLConst_SNoDOMNodeEx 65014
+#define XMLConst_SDOMNotSupported 65015
+#define XMLConst_SNodeExpected 65016
+#define XMLConst_SMSDOMNotInstalled 65017
+#define XMLConst_SINDEX_SIZE_ERR 65018
+#define XMLConst_SDOMSTRING_SIZE_ERR 65019
+#define XMLConst_SHIERARCHY_REQUEST_ERR 65020
+#define XMLConst_SWRONG_DOCUMENT_ERR 65021
+#define XMLConst_SINVALID_CHARACTER_ERR 65022
+#define XMLConst_SNO_DATA_ALLOWED_ERR 65023
+#define Consts_SInvalidPrinterOp 65024
+#define Consts_SNoDefaultPrinter 65025
+#define Consts_SDuplicateMenus 65026
+#define Consts_SDockedCtlNeedsName 65027
+#define Consts_SDockTreeRemoveError 65028
+#define Consts_SDockZoneNotFound 65029
+#define Consts_SDockZoneHasNoCtl 65030
+#define Consts_SDockZoneVersionConflict 65031
+#define Consts_SMultiSelectRequired 65032
+#define Consts_SSeparator 65033
+#define Consts_SNoGetItemEventHandler 65034
+#define ComStrs_sInvalidLevel 65035
+#define ComStrs_sInvalidLevelEx 65036
+#define ComStrs_sInvalidIndex 65037
+#define ComStrs_sInsertError 65038
+#define ComStrs_sInvalidOwner 65039
+#define Consts_SmkcHome 65040
+#define Consts_SmkcLeft 65041
+#define Consts_SmkcUp 65042
+#define Consts_SmkcRight 65043
+#define Consts_SmkcDown 65044
+#define Consts_SmkcIns 65045
+#define Consts_SmkcDel 65046
+#define Consts_SmkcShift 65047
+#define Consts_SmkcCtrl 65048
+#define Consts_SmkcAlt 65049
+#define Consts_SOutOfRange 65050
+#define Consts_sAllFilter 65051
+#define Consts_SInvalidClipFmt 65052
+#define Consts_SIconToClipboard 65053
+#define Consts_SCannotOpenClipboard 65054
+#define Consts_SInvalidMemoSize 65055
+#define Consts_SMsgDlgHelp 65056
+#define Consts_SMsgDlgAbort 65057
+#define Consts_SMsgDlgRetry 65058
+#define Consts_SMsgDlgIgnore 65059
+#define Consts_SMsgDlgAll 65060
+#define Consts_SMsgDlgNoToAll 65061
+#define Consts_SMsgDlgYesToAll 65062
+#define Consts_SMsgDlgClose 65063
+#define Consts_SmkcBkSp 65064
+#define Consts_SmkcTab 65065
+#define Consts_SmkcEsc 65066
+#define Consts_SmkcEnter 65067
+#define Consts_SmkcSpace 65068
+#define Consts_SmkcPgUp 65069
+#define Consts_SmkcPgDn 65070
+#define Consts_SmkcEnd 65071
+#define Consts_SAbortButton 65072
+#define Consts_SAllButton 65073
+#define Consts_SCannotDragForm 65074
+#define Consts_SVMetafiles 65075
+#define Consts_SVEnhMetafiles 65076
+#define Consts_SVIcons 65077
+#define Consts_SVBitmaps 65078
+#define Consts_SVTIFFImages 65079
+#define Consts_SMsgDlgWarning 65080
+#define Consts_SMsgDlgError 65081
+#define Consts_SMsgDlgInformation 65082
+#define Consts_SMsgDlgConfirm 65083
+#define Consts_SMsgDlgYes 65084
+#define Consts_SMsgDlgNo 65085
+#define Consts_SMsgDlgOK 65086
+#define Consts_SMsgDlgCancel 65087
+#define Consts_SNotPrinting 65088
+#define Consts_SPrinting 65089
+#define Consts_SPrinterIndexError 65090
+#define Consts_SInvalidPrinter 65091
+#define Consts_SDeviceOnPort 65092
+#define Consts_SGroupIndexTooLow 65093
+#define Consts_SNoMDIForm 65094
+#define Consts_SControlParentSetToSelf 65095
+#define Consts_SOKButton 65096
+#define Consts_SCancelButton 65097
+#define Consts_SYesButton 65098
+#define Consts_SNoButton 65099
+#define Consts_SHelpButton 65100
+#define Consts_SCloseButton 65101
+#define Consts_SIgnoreButton 65102
+#define Consts_SRetryButton 65103
+#define Consts_SImageIndexError 65104
+#define Consts_SImageReadFail 65105
+#define Consts_SImageWriteFail 65106
+#define Consts_SWindowDCError 65107
+#define Consts_SWindowClass 65108
+#define Consts_SCannotFocus 65109
+#define Consts_SParentRequired 65110
+#define Consts_SParentGivenNotAParent 65111
+#define Consts_SMDIChildNotVisible 65112
+#define Consts_SVisibleChanged 65113
+#define Consts_SCannotShowModal 65114
+#define Consts_SPropertyOutOfRange 65115
+#define Consts_SMenuIndexError 65116
+#define Consts_SMenuReinserted 65117
+#define Consts_SMenuNotFound 65118
+#define Consts_SNoTimers 65119
 #define ComConst_SVarNotObject 65120
 #define ComConst_STooManyParams 65121
-#define ComConst_SDCOMNotInstalled 65122
-#define Consts_SInvalidBitmap 65123
-#define Consts_SInvalidIcon 65124
-#define Consts_SInvalidMetafile 65125
-#define Consts_SInvalidPixelFormat 65126
-#define Consts_SInvalidImage 65127
-#define Consts_SChangeIconSize 65128
-#define Consts_SChangeWicSize 65129
-#define Consts_SUnknownExtension 65130
-#define Consts_SUnknownClipboardFormat 65131
-#define Consts_SOutOfResources 65132
-#define Consts_SNoCanvasHandle 65133
-#define Consts_SInvalidImageSize 65134
-#define Consts_SInvalidImageList 65135
+#define Consts_SInvalidBitmap 65122
+#define Consts_SInvalidIcon 65123
+#define Consts_SInvalidMetafile 65124
+#define Consts_SInvalidPixelFormat 65125
+#define Consts_SInvalidImage 65126
+#define Consts_SChangeIconSize 65127
+#define Consts_SChangeWicSize 65128
+#define Consts_SUnknownExtension 65129
+#define Consts_SUnknownClipboardFormat 65130
+#define Consts_SOutOfResources 65131
+#define Consts_SNoCanvasHandle 65132
+#define Consts_SInvalidImageSize 65133
+#define Consts_SInvalidImageList 65134
+#define Consts_SReplaceImage 65135
 #define JclResources_RsIntelCacheDescrEC 65136
 #define JclResources_RsIntelCacheDescrF0 65137
 #define JclResources_RsIntelCacheDescrF1 65138
@@ -543,32 +557,45 @@
 #define SysConst_SUnderflow 65535
 STRINGTABLE
 BEGIN
-	XMLConst_SInvalidNodeType,	"Ungültiger Knotentyp"
-	XMLConst_SMismatchedRegItems,	"Nicht übereinstimmende Parameter bei RegisterChildNodes"
-	XMLConst_SNotSingleTextNode,	"Element \"%s\" enthält keinen einzelnen Textknoten"
 	XMLConst_SNoDOMParseOptions,	"DOM-Implementierung unterstützt nicht IDOMParseOptions"
 	XMLConst_SMissingItemTag,	"Die Eigenschaft ItemTag ist nicht initialisiert"
 	XMLConst_SNodeReadOnly,	"Knoten ist schreibgeschützt"
 	XMLConst_SNoRefresh,	"Aktualisierung wird nur unterstützt, wenn die Eigenschaften FileName oder XML gesetzt sind"
 	XMLConst_SMissingFileName,	"FileName muss angegeben werden"
 	XMLConst_SLine,	"Zeile"
-	ComStrs_sInvalidOwner,	"Ungültiger Besitzer"
+	OleConst_SOleError,	"OLE-Fehler %.8x"
+	XMLConst_SNO_MODIFICATION_ALLOWED_ERR,	"Änderung nicht zulässig (schreibgeschützte Daten)"
+	XMLConst_SNOT_FOUND_ERR,	"Knoten nicht gefunden"
+	XMLConst_SNOT_SUPPORTED_ERR,	"Nicht unterstützt"
+	XMLConst_SINUSE_ATTRIBUTE_ERR,	"Attribut bereits einem anderen Element zugeordnet"
+	XMLConst_SINVALID_STATE_ERR,	"Ungültiger Status"
+	XMLConst_SSYNTAX_ERR,	"Ungültige Syntax"
+	XMLConst_SINVALID_MODIFICATION_ERR,	"Ungültige Änderung"
+	XMLConst_SNAMESPACE_ERR,	"Ungültige Namespace-Anforderung"
+	XMLConst_SINVALID_ACCESS_ERR,	"Ungültiger Zugriff"
+	XMLConst_SNotActive,	"Kein aktives Dokument"
+	XMLConst_SNodeNotFound,	"Knoten \"%s\" nicht gefunden"
+	XMLConst_SMissingNode,	"IDOMNode erforderlich"
+	XMLConst_SNoAttributes,	"Attribute werden bei diesem Knotentyp nicht unterstützt"
+	XMLConst_SInvalidNodeType,	"Ungültiger Knotentyp"
+	XMLConst_SMismatchedRegItems,	"Nicht übereinstimmende Parameter bei RegisterChildNodes"
+	XMLConst_SNotSingleTextNode,	"Element \"%s\" enthält keinen einzelnen Textknoten"
 	ComStrs_sRichEditInsertError,	"Fehler beim Einfügen einer Zeile in RichEdit"
 	ComStrs_sRichEditLoadFail,	"Stream konnte nicht geladen werden"
 	ComStrs_sRichEditSaveFail,	"Stream konnte nicht gespeichert werden"
 	ComStrs_sInvalidComCtl32,	"Dieses Element benötigt COMCTL32.DLL in der Version 4.70 oder höher"
-	OleConst_sNoRunningObject,	"Es kann kein Zeiger auf ein ausgeführtes Objekt geholt werden, dass mit OLE für %s/%s registriert ist"
 	XMLConst_SDuplicateRegistration,	"DOM-Implementierung \"%s\" bereits registriert"
 	XMLConst_SNoMatchingDOMVendor,	"Kein entsprechender DOM-Hersteller: \"%s\""
 	XMLConst_SNoDOMNodeEx,	"Der gewählte DOM-Hersteller unterstützt diese Eigenschaft oder Methode nicht"
 	XMLConst_SDOMNotSupported,	"Eigenschaft oder Methode \"%s\" wird vom DOM-Hersteller \"%s\" nicht unterstützt"
 	XMLConst_SNodeExpected,	"Knoten kann nicht Null sein"
 	XMLConst_SMSDOMNotInstalled,	"Microsoft MSXML ist nicht installiert"
-	XMLConst_SNotActive,	"Kein aktives Dokument"
-	XMLConst_SNodeNotFound,	"Knoten \"%s\" nicht gefunden"
-	XMLConst_SMissingNode,	"IDOMNode erforderlich"
-	XMLConst_SNoAttributes,	"Attribute werden bei diesem Knotentyp nicht unterstützt"
-	Consts_SInvalidMemoSize,	"Text überschreitet Memo-Kapazität"
+	XMLConst_SINDEX_SIZE_ERR,	"Ungültiges String-Offset"
+	XMLConst_SDOMSTRING_SIZE_ERR,	"Ungültige DOMString-Größe"
+	XMLConst_SHIERARCHY_REQUEST_ERR,	"Untergeordneter Knoten kann nicht eingefügt werden"
+	XMLConst_SWRONG_DOCUMENT_ERR,	"Knoten gehört zu einem anderen Dokument"
+	XMLConst_SINVALID_CHARACTER_ERR,	"Ungültiges Zeichen im Namen"
+	XMLConst_SNO_DATA_ALLOWED_ERR,	"Keine Daten zulässig"
 	Consts_SInvalidPrinterOp,	"Operation auf ausgewähltem Drucker nicht verfügbar"
 	Consts_SNoDefaultPrinter,	"Zur Zeit ist kein Standard-Drucker gewählt"
 	Consts_SDuplicateMenus,	"Menü '%s' wird bereits von einem anderen Formular benutzt"
@@ -584,7 +611,7 @@ BEGIN
 	ComStrs_sInvalidLevelEx,	"Ungültige Ebene (%d) für Eintrag \"%s\""
 	ComStrs_sInvalidIndex,	"Ungültiger Index"
 	ComStrs_sInsertError,	"Eintrag kann nicht eingefügt werden"
-	Consts_SmkcEnd,	"Ende"
+	ComStrs_sInvalidOwner,	"Ungültiger Besitzer"
 	Consts_SmkcHome,	"Pos1"
 	Consts_SmkcLeft,	"Links"
 	Consts_SmkcUp,	"Auf"
@@ -600,7 +627,7 @@ BEGIN
 	Consts_SInvalidClipFmt,	"Ungültiges Zwischenablagenformat"
 	Consts_SIconToClipboard,	"Zwischenablage unterstützt keine Symbole"
 	Consts_SCannotOpenClipboard,	"Zwischenablage kann nicht geöffnet werden: %s"
-	Consts_SMsgDlgCancel,	"Abbrechen"
+	Consts_SInvalidMemoSize,	"Text überschreitet Memo-Kapazität"
 	Consts_SMsgDlgHelp,	"&Hilfe"
 	Consts_SMsgDlgAbort,	"&Abbrechen"
 	Consts_SMsgDlgRetry,	"&Wiederholen"
@@ -616,7 +643,7 @@ BEGIN
 	Consts_SmkcSpace,	"Leertaste"
 	Consts_SmkcPgUp,	"BildAuf"
 	Consts_SmkcPgDn,	"BildAb"
-	Consts_SRetryButton,	"&Wiederholen"
+	Consts_SmkcEnd,	"Ende"
 	Consts_SAbortButton,	"Abbruch"
 	Consts_SAllButton,	"&Alle"
 	Consts_SCannotDragForm,	"Formulare können nicht gezogen werden"
@@ -632,7 +659,7 @@ BEGIN
 	Consts_SMsgDlgYes,	"&Ja"
 	Consts_SMsgDlgNo,	"&Nein"
 	Consts_SMsgDlgOK,	"OK"
-	Consts_SNoTimers,	"Nicht genügend Timer verfügbar"
+	Consts_SMsgDlgCancel,	"Abbrechen"
 	Consts_SNotPrinting,	"Der Drucker druckt aktuell nicht"
 	Consts_SPrinting,	"Der Druckvorgang läuft"
 	Consts_SPrinterIndexError,	"Druckerindex außerhalb des zulässigen Bereichs"
@@ -648,7 +675,7 @@ BEGIN
 	Consts_SHelpButton,	"&Hilfe"
 	Consts_SCloseButton,	"&Schließen"
 	Consts_SIgnoreButton,	"&Ignorieren"
-	Consts_SReplaceImage,	"Bild kann nicht ersetzt werden"
+	Consts_SRetryButton,	"&Wiederholen"
 	Consts_SImageIndexError,	"Ungültiger Bilderlistenindex"
 	Consts_SImageReadFail,	"ImageList-Daten konnten nicht aus dem Stream gelesen werden"
 	Consts_SImageWriteFail,	"ImageList-Daten konnten nicht in den Stream geschrieben werden"
@@ -664,9 +691,9 @@ BEGIN
 	Consts_SMenuIndexError,	"Menüindex außerhalb des zulässigen Bereichs"
 	Consts_SMenuReinserted,	"Menü zweimal eingefügt"
 	Consts_SMenuNotFound,	"Untermenü ist nicht im Menü"
+	Consts_SNoTimers,	"Nicht genügend Timer verfügbar"
 	ComConst_SVarNotObject,	"Variante referenziert kein Automatisierungsobjekt"
 	ComConst_STooManyParams,	"Dispatch-Methoden unterstützen maximal 64 Parameter."
-	ComConst_SDCOMNotInstalled,	"DCOM ist nicht installiert"
 	Consts_SInvalidBitmap,	"Bitmap ist ungültig"
 	Consts_SInvalidIcon,	"Ungültiges Symbol"
 	Consts_SInvalidMetafile,	"Metadatei ist ungültig"
@@ -680,6 +707,7 @@ BEGIN
 	Consts_SNoCanvasHandle,	"Leinwand/Bild erlaubt kein Zeichnen"
 	Consts_SInvalidImageSize,	"Ungültige Bildgröße"
 	Consts_SInvalidImageList,	"Ungültige Bilderliste"
+	Consts_SReplaceImage,	"Bild kann nicht ersetzt werden"
 	JclResources_RsIntelCacheDescrEC,	"3rd-level cache: 24 MByte, 24-way set associative, 64 byte line size"
 	JclResources_RsIntelCacheDescrF0,	"64-Byte Prefetching"
 	JclResources_RsIntelCacheDescrF1,	"128-Byte Prefetching"
@@ -1083,9 +1111,9 @@ BEGIN
 END
 
 /* c:\program files (x86)\embarcadero\rad studio\7.0\lib\Debug\Character.res */
-/* D:\Users\osiam\Documents\RAD Studio\Projekte\jcl\jcl\source\common\JclUnicode.res */
+/* D:\Users\osiam\Documents\RAD Studio\Projekte\jcl\jcl\lib\d14\debug\JclUnicode.res */
 /* c:\program files (x86)\embarcadero\rad studio\7.0\lib\controls.res */
 /* c:\program files (x86)\embarcadero\rad studio\7.0\lib\buttons.res */
-/* D:\Users\simar\Documents\RAD Studio\Projekte\dUnit\src\GUITestRunner.dfm */
+/* D:\Users\osiam\Documents\RAD Studio\Projekte\dUnit\src\GUITestRunner.dfm */
 /* D:\Users\osiam\Documents\RAD Studio\Projekte\idom2-pas\Open_idom\XMLIntfTest\XMLIntfTest.res */
 /* D:\Users\osiam\Documents\RAD Studio\Projekte\idom2-pas\Open_idom\XMLIntfTest\XMLIntfTest.drf */

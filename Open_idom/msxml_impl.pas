@@ -819,14 +819,16 @@ begin
   if not freeThreaded then
     begin
       result := tryObjectCreate(
-              [CLASS_DOMDocument40,
+              [CLASS_DOMDocument60,
+               CLASS_DOMDocument40,
                CLASS_msDOMDocument30,
                CLASS_msDOMDocument26]) as IXMLDOMDocument;
     end
   else
     begin
       result := tryObjectCreate(
-              [CLASS_FreeThreadedDOMDocument40,
+              [CLASS_FreeThreadedDOMDocument60,
+               CLASS_FreeThreadedDOMDocument40,
                CLASS_msFreeThreadedDOMDocument30,
                CLASS_msFreeThreadedDOMDocument26]) as IXMLDOMDocument;
     end;

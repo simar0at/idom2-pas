@@ -29,7 +29,7 @@ type
    * Callback called when a validity error is found. This is a message
    * oriented function similar to an *printf function.
    *)
-  xmlValidityErrorFunc = procedure(ctx: Pointer; msg: PChar); cdecl; {$IFDEF VER140} {[pk] varargs;} {$ENDIF}
+  xmlValidityErrorFunc = procedure(ctx: Pointer; msg: PChar); cdecl varargs;
   (**
    * xmlValidityWarningFunc:
    * @ctx:  an xmlValidCtxtPtr validity error context
@@ -39,7 +39,7 @@ type
    * Callback called when a validity warning is found. This is a message
    * oriented function similar to an *printf function.
    *)
-  xmlValidityWarningFunc = procedure(ctx: Pointer; msg: PChar); cdecl; {$IFDEF VER140} {[pk] varargs;} {$ENDIF}
+  xmlValidityWarningFunc = procedure(ctx: Pointer; msg: PChar); cdecl varargs;
 
   (**
    * xmlValidCtxt:
@@ -116,8 +116,8 @@ procedure xmlDumpNotationTable(buf: xmlBufferPtr; table: xmlNotationTablePtr); c
 function  xmlNewElementContent(name: PxmlChar; aType: xmlElementContentType): xmlElementContentPtr; cdecl; external LIBXML2_SO;
 function  xmlCopyElementContent(content: xmlElementContentPtr): xmlElementContentPtr; cdecl; external LIBXML2_SO;
 procedure xmlFreeElementContent(cur: xmlElementContentPtr); cdecl; external LIBXML2_SO;
-procedure xmlSnprintfElementContent(buf: PChar; size: Integer; content: xmlElementContentPtr; glob: Longint); cdecl; external LIBXML2_SO; {$IFDEF VER140} deprecated; {$ENDIF}
-procedure xmlSprintfElementContent(buf: PChar; content: xmlElementContentPtr; glob: Longint); cdecl; external LIBXML2_SO; {$IFDEF VER140} deprecated; {$ENDIF}
+procedure xmlSnprintfElementContent(buf: PChar; size: Integer; content: xmlElementContentPtr; glob: Longint); cdecl; external LIBXML2_SO; deprecated;
+procedure xmlSprintfElementContent(buf: PChar; content: xmlElementContentPtr; glob: Longint); cdecl; external LIBXML2_SO; deprecated;
 
 (* Element *)
 function  xmlAddElementDecl(ctxt: xmlValidCtxtPtr; dtd: xmlDtdPtr; name: PxmlChar; aType: xmlElementTypeVal; content: xmlElementContentPtr): xmlElementPtr; cdecl; external LIBXML2_SO;

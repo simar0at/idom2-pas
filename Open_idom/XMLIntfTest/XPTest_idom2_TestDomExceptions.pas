@@ -4,8 +4,7 @@ interface
 
 uses
   TestFrameWork,
-  idom2,
-  idom2_ext,
+  xmldom,
   domSetup,
   SysUtils,
   XPTest_idom2_Shared,
@@ -154,134 +153,9 @@ type
 
 implementation
 
-{ TTestDomExceptions }
+uses
+  OleAuto;
 
-procedure TTestDomExceptions.ClearUp;
-begin
-  elem := nil;
-  nnmap := nil;
-  attr := nil;
-  node := nil;
-  select := nil;
-  nodelist := nil;
-  pci := nil;
-  entref := nil;
-  ent := nil;
-  nota := nil;
-  cdata := nil;
-  text := nil;
-  doc := nil;
-  doc1 := nil;
-  check(GetDoccount(impl) = 0,'doccount<>0');
-  impl := nil;
-  prefix := '';
-  Name := '';
-  nsuri := '';
-  Data := '';
-  noex := false;
-end;
-
-procedure TTestDomExceptions.SetUp;
-begin
-  // reset all
-  ClearUp;
-
-  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
-  doc := impl.createDocument('', '', nil);
-  (doc as IDomPersist).loadxml(xmlstr);
-  doc1 := impl.createDocument('', '', nil);
-  (doc1 as IDomPersist).loadxml(xmlstr1);
-  nsuri := 'http://ns.4commerce.de';
-  prefix := 'ct';
-  Name := 'test';
-  Data := 'Dies ist ein Beispiel-Text.';
-  noex := False;
-end;
-
-procedure TTestDomExceptions.TearDown;
-begin
-  // reset all
-  ClearUp;
-end;
-
-function TTestDomExceptions.getFqname: string;
-begin
-  if prefix = '' then Result := Name
-  else Result := prefix + ':' + Name;
-end;
-
-procedure TTestDomExceptions.unknown_selectNodes3;
-begin
-  select := doc.documentElement as IDomNodeSelect;
-  try
-    nodelist := select.selectNodes('"');
-    noex := True;
-  except
-    on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = SYNTAX_ERR,
-          'wrong exception raised: ' + E.Message);
-      end else begin
-        fail('wrong exception: ' + E.Message);
-      end;
-    end;
-  end;
-  if noex then fail('exception not raised');
-end;
-
-procedure TTestDomExceptions.hierarchy_AppendAttribute;
-var
-  attr: IDomAttr;
-begin
-  attr := doc.createAttribute('test');
-  try
-    // HIERARCHY_REQUEST_ERR
-    doc.documentElement.appendChild(attr);
-    fail('There should have been an EDomException');
-  except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
-  end;
-end;
-
-procedure TTestDomExceptions.unknown_AppendNilNode;
-begin
-  try
-    doc.documentElement.appendChild(nil);
-    fail('There should have been an EDomError');
-  except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
-  end;
-end;
-
-procedure TTestDomExceptions.unknown_InsertNilNode;
-var
-  node: IDomNode;
-begin
-  node := doc.createElement('sub1');
-  doc.documentElement.appendChild(node);
-  try
-    doc.documentElement.insertBefore(nil, node);
-    fail('There should have been an EDomError');
-  except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
-  end;
-end;
-
-procedure TTestDomExceptions.hierarchy_InsertAnchestor;
-var 
-  node1, node2: IDomNode;
-begin
-  node1 := doc.createElement('sub1');
-  node2 := doc.createElement('sub2');
-  node1.appendChild(node2);
-  doc.documentElement.appendChild(node1);
-  try
-    node1.insertBefore(doc.documentElement, node2);
-    fail('There should have been an EDomError');
-  except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
-  end;
-end;
 
 function getCodeStr(code: integer): string;
 begin
@@ -315,12 +189,173 @@ var
   expected,found: string;
 begin
   result := 'error';
-  if e is EDomException then begin
+  if E.ClassName = 'EOleException' then begin
     expected := getCodeStr(code);
-    found    := getCodeStr((E as EDomException).code);
+    found    := getCodeStr( EOleException(E).HelpContext);
     result := Format('wrong exception raised - expected "%s" found "%s"', [expected,found]);
   end else begin
     result := Format('wrong exception raised: %s "%s"',[E.ClassName,E.Message]);
+  end;
+end;
+
+{ TTestDomExceptions }
+
+procedure TTestDomExceptions.ClearUp;
+begin
+  elem := nil;
+  nnmap := nil;
+  attr := nil;
+  node := nil;
+  select := nil;
+  nodelist := nil;
+  pci := nil;
+  entref := nil;
+  ent := nil;
+  nota := nil;
+  cdata := nil;
+  text := nil;
+  doc := nil;
+  doc1 := nil;
+//  check(GetDoccount(impl) = 0,'doccount<>0');
+  impl := nil;
+  prefix := '';
+  Name := '';
+  nsuri := '';
+  Data := '';
+  noex := false;
+end;
+
+procedure TTestDomExceptions.SetUp;
+begin
+  // reset all
+  ClearUp;
+
+  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation;
+  doc := impl.createDocument('', '', nil);
+  (doc as IDomPersist).loadxml(xmlstr);
+  doc1 := impl.createDocument('', '', nil);
+  (doc1 as IDomPersist).loadxml(xmlstr1);
+  nsuri := 'http://ns.4commerce.de';
+  prefix := 'ct';
+  Name := 'test';
+  Data := 'Dies ist ein Beispiel-Text.';
+  noex := False;
+end;
+
+procedure TTestDomExceptions.TearDown;
+begin
+  // reset all
+  ClearUp;
+end;
+
+function TTestDomExceptions.getFqname: string;
+begin
+  if prefix = '' then Result := Name
+  else Result := prefix + ':' + Name;
+end;
+
+procedure TTestDomExceptions.unknown_selectNodes3;
+begin
+  select := doc.documentElement as IDomNodeSelect;
+  try
+    nodelist := select.selectNodes('"');
+    noex := True;
+  except
+    on E: Exception do begin
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = SYNTAX_ERR,
+          'wrong exception raised: ' + E.Message);
+      end else begin
+        fail(getErrStr(E));
+      end;
+    end;
+  end;
+  if noex then fail('exception not raised');
+end;
+
+procedure TTestDomExceptions.hierarchy_AppendAttribute;
+var
+  attr: IDomAttr;
+begin
+  attr := doc.createAttribute('test');
+  try
+    // HIERARCHY_REQUEST_ERR
+    doc.documentElement.appendChild(attr);
+    fail('There should have been an DOMException');
+  except
+    on E: DOMException do
+    begin
+      Status(E.Message);
+    end;
+    on E: EOleException do
+    begin
+      Status(E.Message);
+    end;
+    on E: Exception do
+      Fail('Warning: Wrong exception type!');
+  end;
+end;
+
+procedure TTestDomExceptions.unknown_AppendNilNode;
+begin
+  try
+    doc.documentElement.appendChild(nil);
+    fail('There should have been an EDomError');
+  except
+    on E: DOMException do
+    begin
+      Status(E.Message);
+    end;
+    on E: EOleException do
+    begin
+      Status(E.Message);
+    end;
+    on E: Exception do
+      Fail('Warning: Wrong exception type!');
+  end;
+end;
+
+procedure TTestDomExceptions.unknown_InsertNilNode;
+var
+  node: IDomNode;
+begin
+  node := doc.createElement('sub1');
+  doc.documentElement.appendChild(node);
+  try
+    doc.documentElement.insertBefore(nil, node);
+    fail('There should have been an EDomError');
+  except
+    on E: DOMException do
+    begin
+      Status(E.Message);
+    end;
+    on E: EOleException do
+    begin
+      Status(E.Message);
+    end;
+    on E: Exception do
+      Fail('Warning: Wrong exception type!');
+  end;
+end;
+
+procedure TTestDomExceptions.hierarchy_InsertAnchestor;
+var 
+  node1, node2: IDomNode;
+begin
+  node1 := doc.createElement('sub1');
+  node2 := doc.createElement('sub2');
+  node1.appendChild(node2);
+  doc.documentElement.appendChild(node1);
+  try
+    node1.insertBefore(doc.documentElement, node2);
+    fail('There should have been an EDomError');
+  except
+    on E: EOleException do
+    begin
+      Status(E.Message);
+    end;
+    on Ex: Exception do
+      Fail(getErrStr(Ex));
   end;
 end;
 
@@ -333,8 +368,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end;
     end;
   end;
@@ -351,10 +386,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -370,10 +405,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -394,10 +429,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -417,10 +452,10 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -441,10 +476,10 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -465,10 +500,10 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -489,10 +524,10 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -513,10 +548,10 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -537,10 +572,10 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -562,8 +597,8 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
           fail(getErrStr(E));
         end;
@@ -587,8 +622,8 @@ begin
       noex := True;
     except
       on E: Exception do begin
-        if E is EDomException then begin
-          check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
+        if E.ClassName = 'EOleException' then begin
+          check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
           fail(getErrStr(E));
         end;
@@ -606,10 +641,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -625,10 +660,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -644,10 +679,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -663,10 +698,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -684,10 +719,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -708,10 +743,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -726,10 +761,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -745,10 +780,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -763,10 +798,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -782,10 +817,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -802,10 +837,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -826,10 +861,10 @@ begin
     //noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INVALID_CHARACTER_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -847,10 +882,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -869,10 +904,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -890,10 +925,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -910,10 +945,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -932,10 +967,10 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -952,8 +987,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -971,8 +1006,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -991,8 +1026,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1014,8 +1049,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1036,8 +1071,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1056,8 +1091,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1077,8 +1112,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1099,8 +1134,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1121,8 +1156,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1144,8 +1179,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1170,8 +1205,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INUSE_ATTRIBUTE_ERR, getErrStr(E,INUSE_ATTRIBUTE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INUSE_ATTRIBUTE_ERR, getErrStr(E,INUSE_ATTRIBUTE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1194,8 +1229,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1219,8 +1254,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1243,8 +1278,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1269,8 +1304,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code =  INUSE_ATTRIBUTE_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext =  INUSE_ATTRIBUTE_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1293,8 +1328,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1318,8 +1353,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1338,8 +1373,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1358,8 +1393,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1377,8 +1412,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1396,8 +1431,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1416,8 +1451,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1435,8 +1470,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1455,8 +1490,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1474,8 +1509,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1493,8 +1528,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1513,8 +1548,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1532,8 +1567,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1551,8 +1586,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NOT_FOUND_ERR, getErrStr(E,NOT_FOUND_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1570,8 +1605,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1589,8 +1624,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1608,8 +1643,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1627,8 +1662,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1648,8 +1683,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1672,8 +1707,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1695,8 +1730,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INUSE_ATTRIBUTE_ERR, getErrStr(E,INUSE_ATTRIBUTE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INUSE_ATTRIBUTE_ERR, getErrStr(E,INUSE_ATTRIBUTE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1717,8 +1752,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1740,8 +1775,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INUSE_ATTRIBUTE_ERR, getErrStr(E,INUSE_ATTRIBUTE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INUSE_ATTRIBUTE_ERR, getErrStr(E,INUSE_ATTRIBUTE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1759,8 +1794,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1779,8 +1814,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = INDEX_SIZE_ERR, getErrStr(E,INDEX_SIZE_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1827,7 +1862,7 @@ begin
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
   //debugAttributes(nnmap);
-  attr := nnmap.namedItem['attr-fixed'] as IDOMAttr;
+  attr := nnmap.getNamedItem('attr-fixed') as IDOMAttr;
   check(attr <> nil, 'attribute is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised when the node is readonly
@@ -1835,8 +1870,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1850,7 +1885,7 @@ begin
   check((doc as IDOMPersist).loadxml(xmlstr4),'parse error');
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
-  attr := nnmap.namedItem['attr-fixed'] as IDOMAttr;
+  attr := nnmap.getNamedItem('attr-fixed') as IDOMAttr;
   check(attr <> nil, 'attribute is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised when the node is readonly
@@ -1858,8 +1893,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1873,7 +1908,7 @@ begin
   check((doc as IDOMPersist).loadxml(xmlstr4),'parse error');
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
-  node := nnmap.namedItem['attr-fixed'] as IDOMNode;
+  node := nnmap.getNamedItem('attr-fixed') as IDOMNode;
   check(node <> nil, 'node is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised when the node is readonly
@@ -1881,8 +1916,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1897,7 +1932,7 @@ begin
   nnmap := doc.docType.entities;
   check(nnmap <> nil, 'entities are nil');
   check(nnmap.length = 2, 'wrong length');
-  ent := nnmap.namedItem['ct'] as IDOMEntity;
+  ent := nnmap.getNamedItem('ct') as IDOMEntity;
   check(ent <> nil, 'entity is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised if this map is readonly
@@ -1905,8 +1940,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1921,7 +1956,7 @@ begin
   nnmap := doc.docType.notations;
   check(nnmap <> nil, 'notations are nil');
   check(nnmap.length = 1, 'wrong length');
-  nota := nnmap.namedItem['type2'] as IDOMNotation;
+  nota := nnmap.getNamedItem('type2') as IDOMNotation;
   check(nota <> nil, 'notation is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised if this map is readonly
@@ -1929,8 +1964,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1953,8 +1988,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -1968,7 +2003,7 @@ begin
   check((doc as IDOMPersist).loadxml(xmlstr4),'parse error');
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
-  attr := nnmap.namedItem['attr-fixed'] as IDOMAttr;
+  attr := nnmap.getNamedItem('attr-fixed') as IDOMAttr;
   check(attr <> nil, 'attribute is nil');
   attr := doc.createAttribute('attr-fixed');
   attr.value := 'non-fixed-value';
@@ -1978,8 +2013,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2015,8 +2050,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2031,7 +2066,7 @@ begin
   check((doc as IDOMPersist).loadxml(xmlstr4),'parse error');
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
-  attr := nnmap.namedItem['attr-fixed'] as IDOMAttr;
+  attr := nnmap.getNamedItem('attr-fixed') as IDOMAttr;
   check(attr <> nil, 'attribute is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly
@@ -2039,8 +2074,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2063,8 +2098,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2078,7 +2113,7 @@ begin
   check((doc as IDOMPersist).loadxml(xmlstr4),'parse error');
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
-  attr := nnmap.namedItem['attr-fixed'] as IDOMAttr;
+  attr := nnmap.getNamedItem('attr-fixed') as IDOMAttr;
   check(attr <> nil, 'attribute is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly
@@ -2086,8 +2121,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2101,7 +2136,7 @@ begin
   check((doc as IDOMPersist).loadxml(xmlstr4),'parse error');
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
-  attr := nnmap.namedItem['attr-fixed'] as IDOMAttr;
+  attr := nnmap.getNamedItem('attr-fixed') as IDOMAttr;
   check(attr <> nil, 'attribute is nil');
   try
     // NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly
@@ -2109,8 +2144,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2133,8 +2168,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2148,7 +2183,7 @@ begin
   check((doc as IDOMPersist).loadxml(xmlstr4),'parse error');
   nnmap := doc.documentElement.attributes;
   check(nnmap.length = 3, 'wrong length');
-  attr := nnmap.namedItem['attr-fixed'] as IDOMAttr;
+  attr := nnmap.getNamedItem('attr-fixed') as IDOMAttr;
   check(attr <> nil, 'attribute is nil');
   attr := doc.createAttribute('attr-fixed');
   attr.value := 'non-fixed-value';
@@ -2158,8 +2193,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2200,8 +2235,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;
@@ -2236,8 +2271,8 @@ begin
     noex := True;
   except
     on E: Exception do begin
-      if E is EDomException then begin
-        check((E as EDomException).code = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
+      if E.ClassName = 'EOleException' then begin
+        check( EOleException(E).HelpContext = NO_MODIFICATION_ALLOWED_ERR, getErrStr(E,NO_MODIFICATION_ALLOWED_ERR));
       end else begin
         fail(getErrStr(E));
       end;

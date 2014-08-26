@@ -19,13 +19,13 @@ uses
   (* add new tests to uses class *)
 
   XPTest_idom2_TestDOM2Methods,
-//  XPTest_idom2_TestDomExceptions,
+  XPTest_idom2_TestDomExceptions,
 //  XPTest_idom2_TestMemoryLeaks,
   XPTest_idom2_TestXPath,
-  XPTest_idom2_TestXSLT;
-//  XPTest_idom2_TestPersist,
-//  DomImplementationTests,
-//  DomDocumentTests;
+  XPTest_idom2_TestXSLT,
+  XPTest_idom2_TestPersist,
+  DomImplementationTests,
+  DomDocumentTests;
 
 (*
  * Returns a TestSuite made up of all individual test suits. This will be used
@@ -43,13 +43,13 @@ begin
   (* add all test suits to the allTestSuite *)
 
   allTestSuite.addSuite(TTestDOM2Methods.Suite);
-//  allTestSuite.addSuite(TTestDomExceptions.Suite);
+  allTestSuite.addSuite(TTestDomExceptions.Suite);
 //  allTestSuite.addSuite(TTestMemoryLeaks.Suite);
   allTestSuite.addSuite(TTestXPath.Suite);
   allTestSuite.addSuite(TTestXSLT.Suite);
-//  allTestSuite.addSuite(TTestPersist.Suite);
-//  allTestSuite.addSuite(TDomImplementationFundamentalTests.Suite);
-//  allTestSuite.addSuite(TDomDocumentFundamentalTests.Suite);
+  allTestSuite.addSuite(TTestPersist.Suite);
+  allTestSuite.addSuite(TDomImplementationFundamentalTests.Suite);
+  allTestSuite.addSuite(TDomDocumentFundamentalTests.Suite);
 
   Result := allTestSuite;
 end;

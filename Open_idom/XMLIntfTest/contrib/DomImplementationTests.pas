@@ -11,7 +11,7 @@ interface
 
 uses
   TestFrameWork,
-  idom2,
+  xmldom,
   DomSetup;
 
 type
@@ -54,12 +54,12 @@ type
 implementation
 
 uses
-  SysUtils;
+  SysUtils, ComObj;
 
 procedure TDomImplementationFundamentalTests.setup;
 begin
   fDomImplementation :=
-          DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
+          DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation;
 end;
 
 procedure TDomImplementationFundamentalTests.tearDown;
@@ -168,17 +168,17 @@ begin
   try
     document := fDomImplementation.createDocument(
             namespaceURI, qualifiedName, nil);
-    fail('EDomException NAMESPACE_ERR should have been thrown but was not');
+    fail('DOMException NAMESPACE_ERR should have been thrown but was not');
   except
-    on e : EDomException do
-      check(e.code = NAMESPACE_ERR,
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR,
               'NAMESPACE_ERR should be thrown but was: ' + e.message);
   end;
 end;
 
 (*
  * checks if creating a document with qualified name but nameSpaceURI = ''
- * results in EDomException etNamespaceErr
+ * results in DOMException etNamespaceErr
  * (converted from: domimplementationCreateDocNullXMLNS.js)
 *)
 procedure TDomImplementationFundamentalTests.createDocNullXMLNSTest;
@@ -192,10 +192,10 @@ begin
   try
     document := fDomImplementation.createDocument(
             namespaceURI, qualifiedName, nil);
-    fail('EDomException NAMESPACE_ERR should have been thrown but was not');
+    fail('DOMException NAMESPACE_ERR should have been thrown but was not');
   except
-    on e : EDomException do
-      check(e.code = NAMESPACE_ERR,
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR,
               'NAMESPACE_ERR should be thrown but was: ' + e.message);
   end;
 end;
@@ -203,7 +203,7 @@ end;
 
 (*
  * checks if creating a document with a docType belonging to another document
- * results in EDomException etWrongDocumentErr
+ * results in DOMException etWrongDocumentErr
  * (converted from: domimplementationCreateDocXMLNSDifferentDoc.js)
  *)
 procedure TDomImplementationFundamentalTests.createDocXMLNSDifferentDocTest;
@@ -225,7 +225,8 @@ begin
          '  ]>' +
          '  <testDoc>some text</testDoc>';
   {parse the xml so a new document will be created}
-  document1 := DomSetup.getCurrentDomSetup.getDocumentBuilder.parse(xml);
+  document1 := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation.createDocument('', '', nil);
+  (document1 as IDOMPersist).loadxml(xml);
   docType   := document1.docType;
   check(docType.ownerDocument as IUnknown = document1 as IUnknown);
   try
@@ -233,10 +234,10 @@ begin
     document2 := fDomImplementation.createDocument(
             namespaceURI, qualifiedName, docType);
     fail(
-        'EDomException WRONG_DOCUMENT_ERR should have been thrown but was not');
+        'DOMException WRONG_DOCUMENT_ERR should have been thrown but was not');
   except
-    on e : EDomException do
-      check(e.code = WRONG_DOCUMENT_ERR,
+    on e: EOleException do
+      check(e.HelpContext = WRONG_DOCUMENT_ERR,
               'WRONG_DOCUMENT_ERR should be thrown but was: ' + e.message);
   end;
 end;
@@ -264,7 +265,7 @@ end;
 
 (*
  * checks if creating a documentType with a malformed qualified name results in
- * EDomException etNamespaceErr
+ * DOMException etNamespaceErr
  * (converted from: domimplementationCreateDocTypeMalFormedXMLNS.js)
 *)
 procedure TDomImplementationFundamentalTests.createDocTypeMalFormedXMLNSTest;
@@ -281,17 +282,17 @@ begin
   try
     docType := fDomImplementation.createDocumentType(
                        malformedName, publicId, systemId);
-    fail('EDomException NAMESPACE_ERR should have been thrown but was not');
+    fail('DOMException NAMESPACE_ERR should have been thrown but was not');
   except
-    on e : EDomException do
-      check(e.code = NAMESPACE_ERR,
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR,
               'NAMESPACE_ERR should be thrown but was: ' + e.message);
   end;
 end;
 
 (*
  * checks if creating a documentType with a qualified name using illegal chars
- * results in EDomException etInvalidCharacterErr
+ * results in DOMException etInvalidCharacterErr
  * (converted from: domimplementationCreateDocTypeXMLNSIllegalChar.js)
 *)
 procedure TDomImplementationFundamentalTests.ceateDocTypeXMLNSIllegalCharTest;
@@ -312,11 +313,11 @@ begin
       qualifiedName := prefix + DomSetup.illegalChars[i];
       docType := fDomImplementation.createDocumentType(
                          qualifiedName, publicId, systemId);
-      fail('EDomException INVALID_CHARACTER_ERR should have been thrown ' +
+      fail('DOMException INVALID_CHARACTER_ERR should have been thrown ' +
            'but was not');
     except
-      on e : EDomException do
-        check(e.code = INVALID_CHARACTER_ERR,
+      on e: EOleException do
+        check(e.HelpContext = INVALID_CHARACTER_ERR,
                 'INVALID_CHARACTER_ERR should be thrown but was: ' + e.message);
     end;
   end;
@@ -325,7 +326,7 @@ end;
 
 (*
  * checks if creating a document with a qualified name using illegal chars
- * results in EDomException etInvalidCharacterErr
+ * results in DOMException etInvalidCharacterErr
  * (converted from: domimplementationCreateDocXMLNSIllegalName.js)
 *)
 procedure TDomImplementationFundamentalTests.createDocXMLNSIllegalName;
@@ -344,11 +345,11 @@ begin
       qualifiedName := prefix + DomSetup.illegalChars[i];
       document := fDomImplementation.createDocument(
                          namespaceURI, qualifiedName, nil);
-      fail('EDomException INVALID_CHARACTER_ERR should have been thrown ' +
+      fail('DOMException INVALID_CHARACTER_ERR should have been thrown ' +
            'but was not');
     except
-      on e : EDomException do
-        check(e.code = INVALID_CHARACTER_ERR,
+      on e: EOleException do
+        check(e.HelpContext = INVALID_CHARACTER_ERR,
                 'INVALID_CHARACTER_ERR should be thrown but was: ' + e.message);
     end;
   end;
@@ -370,10 +371,10 @@ begin
   try
     document := fDomImplementation.createDocument(
             namespaceURI, qualifiedName, nil);
-    fail('EDomException NAMESPACE_ERR should have been thrown but was not');
+    fail('DOMException NAMESPACE_ERR should have been thrown but was not');
   except
-    on e : EDomException do
-      check(e.code = NAMESPACE_ERR,
+    on e: EOleException do
+      check(e.HelpContext = NAMESPACE_ERR,
               'NAMESPACE_ERR should be thrown but was: ' + e.message);
   end;
 end;

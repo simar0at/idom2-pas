@@ -78,6 +78,8 @@ type
 {$I libxml_globals.inc}
 {$I libxml_threads.inc}
 {$I libxml_c14n.inc}
+{$I libxml_xmlschemas.inc}
+{$I libxml_relaxng.inc}
 
 {$IFDEF WIN32}
 { this function should release memory using the same mem.manager that libxml2

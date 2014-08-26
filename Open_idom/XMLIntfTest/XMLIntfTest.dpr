@@ -14,8 +14,6 @@ uses
   Windows,
   Forms,
   GUITestRunner,
-  msxml_impl,
-  libxmldom,
   libxslt,
   Main in 'Main.pas',
   XPTest_idom2_Shared in 'XPTest_idom2_Shared.pas',
@@ -24,7 +22,9 @@ uses
   xmldom_ext in 'xmldom_ext.pas',
   libxml2xmldom in '..\..\Open_libxml2\libxml2xmldom.pas',
   XPTest_idom2_TestXPath in 'XPTest_idom2_TestXPath.pas',
-  XPTest_idom2_TestXSLT in 'XPTest_idom2_TestXSLT.pas';
+  XPTest_idom2_TestXSLT in 'XPTest_idom2_TestXSLT.pas',
+  DomDocumentTests in 'contrib\DomDocumentTests.pas',
+  DomImplementationTests in 'contrib\DomImplementationTests.pas';
 
 {$ifndef linux}
 

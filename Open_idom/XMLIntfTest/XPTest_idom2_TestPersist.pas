@@ -4,8 +4,8 @@ interface
 
 uses
   TestFrameWork,
-  idom2,
-  idom2_ext,
+  xmldom,
+  xmldom_ext,
   SysUtils,
   XPTest_idom2_Shared,
   Classes,
@@ -44,7 +44,7 @@ type
     procedure fileEncoding;
     procedure stringPrettyPrint;
     procedure filePrettyPrint;
-    procedure LoadFiles;
+//    procedure LoadFiles;
     procedure LoadFilesII;
     procedure loadXmlUml;
     procedure loadXmlUnicode;
@@ -193,36 +193,36 @@ begin
   end;
 end;
 
-procedure TTestPersist.LoadFiles;
-var
-  builder: IDomDocumentBuilder;
-  mydoc:   IDomDocument;
-  fd:      string; // file directory
-  fn:      string; // file name
-  sr:      TSearchRec;
-  rv:      integer; // returned value
-  cnt:     integer; // tested file counter
-begin
-  fd := datapath;
-  try
-    cnt := 0;
-    rv := FindFirst(fd + '/*.xml', faAnyFile, sr);
-    while (rv = 0) do begin
-      Inc(cnt);
-      builder := getDocumentBuilderFactory(DomVendor).newDocumentBuilder;
-      fn := fd + '/' + sr.Name;
-      mydoc := builder.load(fn);
-      check(mydoc <> nil, fn + ': document not loaded');
-      check(mydoc.documentElement <> nil, fn + ': documentElement is nil');
-      rv := FindNext(sr);
-    end;
-    if (cnt = 0) then begin
-      check(False, 'No XML file available for testing in directory ' + fd);
-    end;
-  finally
-    FindClose(sr);
-  end;
-end;
+//procedure TTestPersist.LoadFiles;
+//var
+//  builder: IDomDocumentBuilder;
+//  mydoc:   IDomDocument;
+//  fd:      string; // file directory
+//  fn:      string; // file name
+//  sr:      TSearchRec;
+//  rv:      integer; // returned value
+//  cnt:     integer; // tested file counter
+//begin
+//  fd := datapath;
+//  try
+//    cnt := 0;
+//    rv := FindFirst(fd + '/*.xml', faAnyFile, sr);
+//    while (rv = 0) do begin
+//      Inc(cnt);
+//      builder := getDocumentBuilderFactory(DomVendor).newDocumentBuilder;
+//      fn := fd + '/' + sr.Name;
+//      mydoc := builder.load(fn);
+//      check(mydoc <> nil, fn + ': document not loaded');
+//      check(mydoc.documentElement <> nil, fn + ': documentElement is nil');
+//      rv := FindNext(sr);
+//    end;
+//    if (cnt = 0) then begin
+//      check(False, 'No XML file available for testing in directory ' + fd);
+//    end;
+//  finally
+//    FindClose(sr);
+//  end;
+//end;
 
 procedure TTestPersist.LoadFilesII;
 var
@@ -263,7 +263,7 @@ begin
   impl := nil;
   pe := nil;
 
-  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
+  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.DOMDocument.domImplementation;
   doc := impl.createDocument('', '', nil);
   (doc as IDomPersist).loadxml(xmlstr);
   doc1 := impl.createDocument('', '', nil);

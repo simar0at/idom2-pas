@@ -154,6 +154,54 @@ type
 
 implementation
 
+uses
+  ComObj;
+
+function getCodeStr(code: integer): string;
+begin
+  result := 'error';
+  case code of
+    INDEX_SIZE_ERR                : Result := 'INDEX_SIZE_ERR';
+    DOMSTRING_SIZE_ERR            : Result := 'DOMSTRING_SIZE_ERR';
+    HIERARCHY_REQUEST_ERR         : Result := 'HIERARCHY_REQUEST_ERR';
+    WRONG_DOCUMENT_ERR            : Result := 'WRONG_DOCUMENT_ERR';
+    INVALID_CHARACTER_ERR         : Result := 'INVALID_CHARACTER_ERR';
+    NO_DATA_ALLOWED_ERR           : Result := 'NO_DATA_ALLOWED_ERR';
+    NO_MODIFICATION_ALLOWED_ERR   : Result := 'NO_MODIFICATION_ALLOWED_ERR';
+    NOT_FOUND_ERR                 : Result := 'NOT_FOUND_ERR';
+    NOT_SUPPORTED_ERR             : Result := 'NOT_SUPPORTED_ERR';
+    INUSE_ATTRIBUTE_ERR           : Result := 'INUSE_ATTRIBUTE_ERR';
+    INVALID_STATE_ERR             : Result := 'INVALID_STATE_ERR';
+    SYNTAX_ERR                    : Result := 'SYNTAX_ERR';
+    INVALID_MODIFICATION_ERR      : Result := 'INVALID_MODIFICATION_ERR';
+    NAMESPACE_ERR                 : Result := 'NAMESPACE_ERR';
+    INVALID_ACCESS_ERR            : Result := 'INVALID_ACCESS_ERR';
+    20                            : Result := 'SaveXMLToMemory_ERR';
+    22                            : Result := 'SaveXMLToDisk_ERR';
+    100                           : Result := 'LIBXML2_NULL_POINTER_ERR';
+    101                           : Result := 'INVALID_NODE_SET_ERR';
+    else                            Result := 'unknown error no: ' + IntToStr(code);
+  end;
+end;
+
+function getErrStr(e: Exception; code: integer = 0): string;
+var
+  expected,found: string;
+  EOle: EOleException;
+begin
+  result := 'error';
+  if e is EDomException then begin
+    expected := getCodeStr(code);
+    found    := getCodeStr((E as EDomException).code);
+    result := Format('wrong exception raised - expected "%s" found "%s"', [expected,found]);
+  end else if e is EOleException then begin
+    EOle := EOleException(E);
+    result := Format('wrong exception raised: %s %x: "%s", "%s"',[EOle.Source, EOle.ErrorCode, EOle.Message, EOle.HelpFile]);
+  end else begin
+    result := Format('wrong exception raised: %s "%s"',[E.ClassName,E.Message]);
+  end;
+end;
+
 { TTestDomExceptions }
 
 procedure TTestDomExceptions.ClearUp;
@@ -222,7 +270,7 @@ begin
         check((E as EDomException).code = SYNTAX_ERR,
           'wrong exception raised: ' + E.Message);
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -239,7 +287,7 @@ begin
     doc.documentElement.appendChild(attr);
     fail('There should have been an EDomException');
   except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
+    on E: Exception do Check(E is EDomException, getErrStr(E));
   end;
 end;
 
@@ -249,7 +297,7 @@ begin
     doc.documentElement.appendChild(nil);
     fail('There should have been an EDomError');
   except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
+    on E: Exception do Check(E is EDomException, getErrStr(E));
   end;
 end;
 
@@ -263,7 +311,7 @@ begin
     doc.documentElement.insertBefore(nil, node);
     fail('There should have been an EDomError');
   except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
+    on E: Exception do Check(E is EDomException, getErrStr(E));
   end;
 end;
 
@@ -279,48 +327,7 @@ begin
     node1.insertBefore(doc.documentElement, node2);
     fail('There should have been an EDomError');
   except
-    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
-  end;
-end;
-
-function getCodeStr(code: integer): string;
-begin
-  result := 'error';
-  case code of
-    INDEX_SIZE_ERR                : Result := 'INDEX_SIZE_ERR';
-    DOMSTRING_SIZE_ERR            : Result := 'DOMSTRING_SIZE_ERR';
-    HIERARCHY_REQUEST_ERR         : Result := 'HIERARCHY_REQUEST_ERR';
-    WRONG_DOCUMENT_ERR            : Result := 'WRONG_DOCUMENT_ERR';
-    INVALID_CHARACTER_ERR         : Result := 'INVALID_CHARACTER_ERR';
-    NO_DATA_ALLOWED_ERR           : Result := 'NO_DATA_ALLOWED_ERR';
-    NO_MODIFICATION_ALLOWED_ERR   : Result := 'NO_MODIFICATION_ALLOWED_ERR';
-    NOT_FOUND_ERR                 : Result := 'NOT_FOUND_ERR';
-    NOT_SUPPORTED_ERR             : Result := 'NOT_SUPPORTED_ERR';
-    INUSE_ATTRIBUTE_ERR           : Result := 'INUSE_ATTRIBUTE_ERR';
-    INVALID_STATE_ERR             : Result := 'INVALID_STATE_ERR';
-    SYNTAX_ERR                    : Result := 'SYNTAX_ERR';
-    INVALID_MODIFICATION_ERR      : Result := 'INVALID_MODIFICATION_ERR';
-    NAMESPACE_ERR                 : Result := 'NAMESPACE_ERR';
-    INVALID_ACCESS_ERR            : Result := 'INVALID_ACCESS_ERR';
-    20                            : Result := 'SaveXMLToMemory_ERR';
-    22                            : Result := 'SaveXMLToDisk_ERR';
-    100                           : Result := 'LIBXML2_NULL_POINTER_ERR';
-    101                           : Result := 'INVALID_NODE_SET_ERR';
-    else                            Result := 'unknown error no: ' + IntToStr(code);
-  end;
-end;
-
-function getErrStr(e: Exception; code: integer = 0): string;
-var
-  expected,found: string;
-begin
-  result := 'error';
-  if e is EDomException then begin
-    expected := getCodeStr(code);
-    found    := getCodeStr((E as EDomException).code);
-    result := Format('wrong exception raised - expected "%s" found "%s"', [expected,found]);
-  end else begin
-    result := Format('wrong exception raised: %s "%s"',[E.ClassName,E.Message]);
+    on E: Exception do Check(E is EDomException, getErrStr(E));
   end;
 end;
 
@@ -354,7 +361,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -373,7 +380,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -397,7 +404,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -420,7 +427,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -444,7 +451,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -468,7 +475,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -492,7 +499,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -516,7 +523,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -540,7 +547,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail('wrong exception: ' + E.Message);
+          fail(getErrStr(E));
         end;
       end;
     end;
@@ -609,7 +616,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -628,7 +635,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -647,7 +654,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -666,7 +673,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -687,7 +694,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -711,7 +718,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -729,7 +736,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -748,7 +755,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -766,7 +773,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -785,7 +792,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -805,7 +812,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -829,7 +836,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -850,7 +857,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -872,7 +879,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -893,7 +900,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -913,7 +920,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
@@ -935,7 +942,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
-        fail('wrong exception: ' + E.Message);
+        fail(getErrStr(E));
       end;
     end;
   end;
