@@ -188,7 +188,6 @@ function  xmlIsChar(c: Longint): LongBool; cdecl; external LIBXML2_SO;
  *)
 function  xmlCreateFileParserCtxt(filename: PAnsiChar): xmlParserCtxtPtr; cdecl; external LIBXML2_SO;
 function  xmlCreateMemoryParserCtxt(buffer: PAnsiChar; size: Longint): xmlParserCtxtPtr; cdecl; external LIBXML2_SO;
-function  xmlNewParserCtxt: xmlParserCtxtPtr; cdecl; external LIBXML2_SO;
 function  xmlCreateEntityParserCtxt(URL: PxmlChar; ID: PxmlChar; base: PxmlChar): xmlParserCtxtPtr; cdecl; external LIBXML2_SO;
 function  xmlSwitchEncoding(ctxt: xmlParserCtxtPtr; enc: xmlCharEncoding): Longint; cdecl; external LIBXML2_SO;
 function  xmlSwitchToEncoding(ctxt: xmlParserCtxtPtr; handler: xmlCharEncodingHandlerPtr): Longint; cdecl; external LIBXML2_SO;

@@ -1425,8 +1425,57 @@ procedure structuredCallbackImplForTDOMDocument(var userData:pointer; error:xmlE
 var
   Document: TDomDocument;
 begin
-  Document := PDomDocument(@userData)^;
-  Document.fError := TError.Create(error^, Document.fParserCtxtPtr);
+  if Assigned(userData) then
+  begin
+    Document := PDomDocument(@userData)^;
+    Document.fError := TError.Create(error^, Document.fParserCtxtPtr);
+  end
+  else
+  begin
+    // do something here?
+  end;
+end;
+
+function xsltDocLoader(URI:PxmlChar; dict:xmlDictPtr; options:longint; ctxt:pointer; _type:xsltLoadType):xmlDocPtr;cdecl;
+var
+  InputReader: TStream;
+  xmlstring: TStringStream;
+  pctxt: xmlParserCtxtPtr;
+begin
+  if Assigned(GlobalURIResolver) then
+  begin
+    InputReader := GlobalURIResolver.resolveURI(URI);
+    if Assigned(InputReader) then
+    begin
+      Result := nil;
+      pctxt := xmlNewParserCtxt;
+      if not Assigned(pctxt) then
+      begin
+        Result := nil;
+        Exit;
+      end;
+      if Assigned(dict) then
+      begin
+        if Assigned(pctxt.dict) then
+          xmlDictFree(pctxt.dict);
+        pctxt.dict := dict;
+      end;
+      xmlCtxtUseOptions(pctxt, options);
+      xmlstring := TStringStream.Create;
+      try
+        xmlstring.CopyFrom(InputReader, 0);
+        Result := xmlCtxtReadMemory(pctxt, @UTF8Encode(xmlstring.DataString)[1], Length(UTF8Encode(xmlstring.DataString)), URI, 'UTF-8', options);
+      finally
+        xmlstring.Free;
+        InputReader.Free;
+        xmlFreeParserCtxt(pctxt);
+      end;
+    end
+    else
+      Result := xsltDocDefaultLoader(URI, dict, options, ctxt, _type);
+  end
+  else
+    Result := xsltDocDefaultLoader(URI, dict, options, ctxt, _type);
 end;
 
 (*
@@ -4516,6 +4565,7 @@ var
   meta:      widestring;
   doctype:   integer;
   element:   xmlNodePtr;
+  outputIndent: IDOMNode;
 begin
   doc := fXmlNode.doc;
   styleNode := GetXmlNode(stylesheet);
@@ -4532,7 +4582,7 @@ begin
   doctype := outputDoc.type_;
   element := xmlDocGetRootElement(outputDoc);
   encoding := outputDoc.encoding;
-  xmlDocDumpMemoryEnc(outputDoc, CString, @length1, outputDoc.encoding);
+  xmlDocDumpFormatMemoryEnc(outputDoc, CString, @length1, outputDoc.encoding, 1);
   output := CString;
   // free the document as a string is returned, and not the document
   xmlFreeDoc(outputDoc);
@@ -4936,13 +4986,16 @@ begin
   docLines.Free;
 end;
 
+
 initialization
   LIBXML2DOM := TLibXML2ImplementationFactory.Create(False);
   RegisterDOMVendor(LIBXML2DOM);
+  xsltSetLoaderFunc(xsltDocLoader);
 finalization
   UnRegisterDOMVendor(LIBXML2DOM);
   LIBXML2DOM.Free;
   xmlCleanupParser;
+  xsltCleanupGlobals;
 
 end.
 

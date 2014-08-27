@@ -203,6 +203,70 @@ type
     loadsubset: Longint;                  (* should the external subset be loaded  *)
     linenumbers: Longint;                 (* set line number in element content *)
     catalogs: Pointer;                    (* document's own catalog *)
+    recovery: Longint;                    { run in recovery mode  }
+    progressive: Longint;                 { is this a progressive parsing  }
+    dict: xmlDictPtr;                     { dictionnary for the parser  }
+    atts: ^PxmlChar;                      { array for the attributes callbacks  }
+    maxatts: Longint;                     { the size of the array  }
+    docdict: Longint;                     { use strings from dict to build tree  }
+    {
+     * pre-interned strings
+    }
+    str_xml: PxmlChar;
+    str_xmlns: PxmlChar;
+    str_xml_ns: PxmlChar;
+    {
+     * Everything below is used only by the new SAX mode
+    }
+    sax2: Longint;                        { operating in the new SAX mode  }
+    nsNr: Longint;                        { the number of inherited namespaces  }
+    nsMax: Longint;                       { the size of the arrays  }
+    nsTab: ^PxmlChar;                     { the array of prefix/namespace name  }
+    attallocs: pLongint;                  { which attribute were allocated  }
+    pushTab: ^Pointer;                    { array of data for push  }
+    attsDefault: xmlHashTablePtr;         { defaulted attributes if any  }
+    attsSpecial: xmlHashTablePtr;         { non-CDATA attributes if any  }
+    nsWellFormed: Longint;                { is the document XML Nanespace okay  }
+    options: Longint;                     { Extra options  }
+    {
+     * Those fields are needed only for treaming parsing so far
+    }
+    { Use dictionary names for the tree  }
+    { number of freed element nodes  }
+    { List of freed element nodes  }
+    { number of freed attributes nodes  }
+    { List of freed attributes nodes  }
+    dictNames: Longint;
+    freeElemsNr: Longint;
+    freeElems: xmlNodePtr;
+    freeAttrsNr: Longint;
+    freeAttrs: xmlAttrPtr;
+    {
+     * the complete error informations for the last error.
+    }
+    { the parser mode  }
+    { number of entities references  }
+    { size of parsed entities  }
+    { for use by HTML non-recursive parser  }
+(*    lastError: xmlError;  // depends on this to be defined. How to do this in Delphi?
+    parseMode: xmlParserMode;
+    nbentities: Longword;
+    sizeentities: Longword;
+    {
+     * for use by HTML non-recursive parser
+    }
+    { Current NodeInfo  }
+    { Depth of the parsing stack  }
+    { Max depth of the parsing stack  }
+    { array of nodeInfos  }
+    { we need to label inputs  }
+    { volume of entity copy  }
+    nodeInfo: PxmlParserNodeInfo;
+    nodeInfoNr: Longint;
+    nodeInfoMax: Longint;
+    nodeInfoTab: PxmlParserNodeInfo;
+    input_id: Longint;
+    sizeentcopy: Longword; *)
   end;
 
   (**
@@ -673,6 +737,7 @@ function  xmlParseCtxtExternalEntity(ctx: xmlParserCtxtPtr; URL: PxmlChar; ID: P
 (*
  * Parser contexts handling.
  *)
+function xmlNewParserCtxt: xmlParserCtxtPtr; cdecl; external LIBXML2_SO;
 procedure xmlInitParserCtxt(ctxt: xmlParserCtxtPtr); cdecl; external LIBXML2_SO;
 procedure xmlClearParserCtxt(ctxt: xmlParserCtxtPtr); cdecl; external LIBXML2_SO;
 procedure xmlFreeParserCtxt(ctxt: xmlParserCtxtPtr); cdecl; external LIBXML2_SO;
@@ -713,4 +778,138 @@ procedure xmlParserAddNodeInfo(ctxt: xmlParserCtxtPtr; info: xmlParserNodeInfoPt
 procedure xmlSetExternalEntityLoader(f: xmlExternalEntityLoader); cdecl; external LIBXML2_SO;
 function  xmlGetExternalEntityLoader: xmlExternalEntityLoader; cdecl; external LIBXML2_SO;
 function  xmlLoadExternalEntity(URL: PChar; ID: PChar; context: xmlParserCtxtPtr): xmlParserInputPtr; cdecl; external LIBXML2_SO;
+
+{
+ * Index lookup, actually implemented in the encoding module
+  }
+function xmlByteConsumed(ctxt:xmlParserCtxtPtr):Longint;cdecl;external LIBXML2_SO;
+{
+ * New set of simpler/more flexible APIs
+  }
+{*
+ * xmlParserOption:
+ *
+ * This is the set of XML parser options that can be passed down
+ * to the xmlReadDoc() and similar calls.
+  }
+{ recover on errors  }
+{ substitute entities  }
+{ load the external subset  }
+{ default DTD attributes  }
+{ validate with the DTD  }
+{ suppress error reports  }
+{ suppress warning reports  }
+{ pedantic error reporting  }
+{ remove blank nodes  }
+{ use the SAX1 interface internally  }
+{ Implement XInclude substitition   }
+{ Forbid network access  }
+{ Do not reuse the context dictionnary  }
+{ remove redundant namespaces declarations  }
+{ merge CDATA as text nodes  }
+{ do not generate XINCLUDE START/END nodes  }
+{ compact small text nodes; no modification of
+                                   the tree allowed afterwards (will possibly
+				   crash if you try to modify the tree)  }
+{ parse using XML-1.0 before update 5  }
+{ do not fixup XINCLUDE xml:base uris  }
+{ relax any hardcoded limit from the parser  }
+{ parse using SAX2 interface before 2.7.0  }
+{ ignore internal document encoding hint  }
+{ Store big lines numbers in text PSVI field  }
+type
+  xmlParserOption =  Longint;
+  Const
+    XML_PARSE_RECOVER = 1 shl 0;
+    XML_PARSE_NOENT = 1 shl 1;
+    XML_PARSE_DTDLOAD = 1 shl 2;
+    XML_PARSE_DTDATTR = 1 shl 3;
+    XML_PARSE_DTDVALID = 1 shl 4;
+    XML_PARSE_NOERROR = 1 shl 5;
+    XML_PARSE_NOWARNING = 1 shl 6;
+    XML_PARSE_PEDANTIC = 1 shl 7;
+    XML_PARSE_NOBLANKS = 1 shl 8;
+    XML_PARSE_SAX1 = 1 shl 9;
+    XML_PARSE_XINCLUDE = 1 shl 10;
+    XML_PARSE_NONET = 1 shl 11;
+    XML_PARSE_NODICT = 1 shl 12;
+    XML_PARSE_NSCLEAN = 1 shl 13;
+    XML_PARSE_NOCDATA = 1 shl 14;
+    XML_PARSE_NOXINCNODE = 1 shl 15;
+    XML_PARSE_COMPACT = 1 shl 16;
+    XML_PARSE_OLD10 = 1 shl 17;
+    XML_PARSE_NOBASEFIX = 1 shl 18;
+    XML_PARSE_HUGE = 1 shl 19;
+    XML_PARSE_OLDSAX = 1 shl 20;
+    XML_PARSE_IGNORE_ENC = 1 shl 21;
+    XML_PARSE_BIG_LINES = 1 shl 22;
+
+
+procedure xmlCtxtReset(ctxt:xmlParserCtxtPtr);cdecl;external LIBXML2_SO;
+function xmlCtxtResetPush(ctxt:xmlParserCtxtPtr; chunk:PAnsiChar; size:longint; filename:PAnsiChar; encoding:PAnsiChar):longint;cdecl;external LIBXML2_SO;
+function xmlCtxtUseOptions(ctxt:xmlParserCtxtPtr; options:longint):longint;cdecl;external LIBXML2_SO;
+function xmlReadDoc(cur:PxmlChar; URL:PAnsiChar; encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlReadFile(URL:PAnsiChar; encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlReadMemory(buffer:PAnsiChar; size:longint; URL:PAnsiChar; encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlReadFd(fd:longint; URL:PAnsiChar; encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlReadIO(ioread:xmlInputReadCallback; ioclose:xmlInputCloseCallback; var ioctx:pointer; URL:PAnsiChar; encoding:PAnsiChar;
+           options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlCtxtReadDoc(ctxt:xmlParserCtxtPtr; cur:PxmlChar; URL:PAnsiChar; encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlCtxtReadFile(ctxt:xmlParserCtxtPtr; filename:PAnsiChar; encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlCtxtReadMemory(ctxt:xmlParserCtxtPtr; buffer:PAnsiChar; size:longint; URL:PAnsiChar; encoding:PAnsiChar;
+           options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlCtxtReadFd(ctxt:xmlParserCtxtPtr; fd:longint; URL:PAnsiChar; encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+function xmlCtxtReadIO(ctxt:xmlParserCtxtPtr; ioread:xmlInputReadCallback; ioclose:xmlInputCloseCallback; var ioctx:pointer; URL:PAnsiChar;
+           encoding:PAnsiChar; options:longint):xmlDocPtr;cdecl;external LIBXML2_SO;
+{
+ * Library wide options
+  }
+{*
+ * xmlFeature:
+ *
+ * Used to examine the existance of features that can be enabled
+ * or disabled at compile-time.
+ * They used to be called XML_FEATURE_xxx but this clashed with Expat
+  }
+{ just to be sure of allocation size  }
+type
+  xmlFeature =  Longint;
+  Const
+    XML_WITH_THREAD = 1;
+    XML_WITH_TREE = 2;
+    XML_WITH_OUTPUT = 3;
+    XML_WITH_PUSH = 4;
+    XML_WITH_READER = 5;
+    XML_WITH_PATTERN = 6;
+    XML_WITH_WRITER = 7;
+    XML_WITH_SAX1 = 8;
+    XML_WITH_FTP = 9;
+    XML_WITH_HTTP = 10;
+    XML_WITH_VALID = 11;
+    XML_WITH_HTML = 12;
+    XML_WITH_LEGACY = 13;
+    XML_WITH_C14N = 14;
+    XML_WITH_CATALOG = 15;
+    XML_WITH_XPATH = 16;
+    XML_WITH_XPTR = 17;
+    XML_WITH_XINCLUDE = 18;
+    XML_WITH_ICONV = 19;
+    XML_WITH_ISO8859X = 20;
+    XML_WITH_UNICODE = 21;
+    XML_WITH_REGEXP = 22;
+    XML_WITH_AUTOMATA = 23;
+    XML_WITH_EXPR = 24;
+    XML_WITH_SCHEMAS = 25;
+    XML_WITH_SCHEMATRON = 26;
+    XML_WITH_MODULES = 27;
+    XML_WITH_DEBUG = 28;
+    XML_WITH_DEBUG_MEM = 29;
+    XML_WITH_DEBUG_RUN = 30;
+    XML_WITH_ZLIB = 31;
+    XML_WITH_ICU = 32;
+    XML_WITH_LZMA = 33;
+    XML_WITH_NONE = 99999;
+
+
+function xmlHasFeature(feature:xmlFeature):longint;cdecl;external LIBXML2_SO;
 

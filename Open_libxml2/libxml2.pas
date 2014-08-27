@@ -46,15 +46,13 @@ type
 {$DEFINE LIBXML_DOCB_ENABLED}
 
 {TODO: $I libxml_xmlversion.inc}
-{$ifndef VER130} // Delphi 5
-  {$I libxml_xmlwin32version.inc}
-{$endif}
-
+{$I libxml_xmlwin32version.inc}
 {$I libxml_xmlmemory.inc}
 {$I libxml_tree.inc}
 {$I libxml_encoding.inc}
 {$I libxml_xmlIO.inc}
 {$I libxml_hash.inc}
+{$I libxml_dict.inc}
 {$I libxml_entities.inc}
 {$I libxml_list.inc}
 {$I libxml_valid.inc}
