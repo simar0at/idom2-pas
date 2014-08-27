@@ -48,8 +48,6 @@
     }
   procedure xsltApplyStripSpaces(ctxt:xsltTransformContextPtr; node:xmlNodePtr);cdecl;external LIBXSLT_SO;
 
-  function xsltExtElementLookup(ctxt:xsltTransformContextPtr; name:PxmlChar; URI:PxmlChar):xsltTransformFunction;cdecl;external LIBXSLT_SO;
-
   function xsltApplyStylesheet(style:xsltStylesheetPtr; doc:xmlDocPtr; params:PPchar):xmlDocPtr;cdecl;external LIBXSLT_SO;
 
   function xsltProfileStylesheet(style:xsltStylesheetPtr; doc:xmlDocPtr; params:PPchar; output:PFILE):xmlDocPtr;cdecl;external LIBXSLT_SO;

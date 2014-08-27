@@ -4566,6 +4566,7 @@ var
   doctype:   integer;
   element:   xmlNodePtr;
   outputIndent: IDOMNode;
+  formatIndent: integer;
 begin
   doc := fXmlNode.doc;
   styleNode := GetXmlNode(stylesheet);
@@ -4582,7 +4583,10 @@ begin
   doctype := outputDoc.type_;
   element := xmlDocGetRootElement(outputDoc);
   encoding := outputDoc.encoding;
-  xmlDocDumpFormatMemoryEnc(outputDoc, CString, @length1, outputDoc.encoding, 1);
+  formatIndent := 0;
+  if tempXSL.indent > 0 then
+    formatIndent := tempXSL.indent;
+  xmlDocDumpFormatMemoryEnc(outputDoc, CString, @length1, outputDoc.encoding, formatIndent);
   output := CString;
   // free the document as a string is returned, and not the document
   xmlFreeDoc(outputDoc);

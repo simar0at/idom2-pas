@@ -136,8 +136,17 @@ type
     SCHEMA_VALIDATE_FLAGS_INJECT_DEFAULTS = 1 shl 0; // = XML_SCHEMA_VAL_VC_I_CREATE
 // 1 shl 1 = XML_SCHEMA_VAL_XSI_ASSEMBLE
 
+type
+  IURIResolver = interface
+    ['{2092A16A-33AD-48A9-B3A3-57C253F7AE18}']
+    function resolveURI(URI: string): TStream;
+  end;
+
 procedure registerNS(doc: IDOMDocument; prefix, namespaceuri: DOMString);
 procedure setXSDSchema(doc, xsd: IDOMDocument);
+
+var
+  GlobalURIResolver: IURIResolver;
 
 implementation
 

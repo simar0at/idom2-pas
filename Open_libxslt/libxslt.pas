@@ -62,7 +62,13 @@ unit libxslt;
   {$I libxslt_imports.inc}
   {$I libxslt_variables.inc}
 
+  var
+    xsltDocDefaultLoader: xsltDocLoaderFunc;
+
 Implementation
+
+uses
+  Windows;
 
   function XSLT_NAMESPACE : PxmlChar;
   begin
@@ -71,6 +77,18 @@ Implementation
 
   {$I libxslt_extra.imp}
 
+  { the loader may be needed by extension libraries so it is exported  }
+
+  var
+    LibHandle: THandle;
+    xsltDocDefaultLoaderPtr : PxsltDocLoaderFunc;
+  initialization
+    LibHandle := LoadLibrary(LIBXSLT_SO);
+    if LibHandle <> 0 then
+    begin
+      xsltDocDefaultLoaderPtr := GetProcAddress(LibHandle, 'xsltDocDefaultLoader');
+      xsltDocDefaultLoader := xsltDocDefaultLoaderPtr^;
+    end;
 
 end.
 
