@@ -4572,6 +4572,9 @@ begin
   styleNode := GetXmlNode(stylesheet);
   styleDoc := styleNode.doc;
   if (styleDoc = nil) or (doc = nil) then exit;
+  // the userData passed to the error func is not what i expected. need to check
+  // how to set that correctly.
+  xmlSetStructuredErrorFunc(nil, nil);
   tempXSL := xsltParseStyleSheetDoc(styleDoc);
   if tempXSL = nil then exit;
   // mark the document as stylesheetdocument;
@@ -4628,6 +4631,9 @@ begin
   styleNode := GetXmlNode(stylesheet);
   styleDoc := styleNode.doc;
   if (styleDoc = nil) or (doc = nil) then exit;
+  // the userData passed to the error func is not what i expected. need to check
+  // how to set that correctly.
+  xmlSetStructuredErrorFunc(nil, nil);
   tempXSL := xsltParseStyleSheetDoc(styleDoc);
   if tempXSL = nil then exit;
   // mark the document as stylesheetdocument;
