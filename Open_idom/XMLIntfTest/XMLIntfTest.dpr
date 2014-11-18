@@ -7,7 +7,7 @@ program XMLIntfTest;
 
 uses
   FastMM4 in 'FastMM4.pas',
-  TestModules,
+//  TestModules,
   TestFramework,
   TextTestRunner,
   SysUtils,
@@ -52,7 +52,7 @@ begin
       writeln;
       for i := 1 to ParamCount do begin
         if not (ParamStr(i)[1] in SwitchChars) then begin
-          RegisterModuleTests(ParamStr(i));
+//          RegisterModuleTests(ParamStr(i));
         end;
       end;
       // how to handle errors
