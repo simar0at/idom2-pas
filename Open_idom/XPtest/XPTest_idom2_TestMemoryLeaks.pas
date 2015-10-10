@@ -1337,7 +1337,7 @@ end;
 
 procedure TTestMemoryLeaks.xsltTransformToString1000Times;
 var
-  Text:     widestring;
+  Text:     DOMString;
   i:        integer;
   xml:      IDomDocument;
   xsl:      IDomDocument;

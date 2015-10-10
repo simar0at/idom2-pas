@@ -9,6 +9,9 @@ uses
   idom2_ext,
   sysutils,
   TestFrameWork,
+  {$IFDEF FPC}
+  TestFrameworkIfaces,
+  {$ENDIF}
   Classes,
   Dialogs;
 
@@ -149,16 +152,16 @@ function getCurMemory: cardinal;
 function getDataPath: string;
 function domvendor: string;
 function myIsSameNode(node1, node2: IDomNode): boolean;
-function Unify(xml: widestring; removeEncoding: boolean = True): widestring;
+function Unify(xml: UnicodeString; removeEncoding: boolean = True): UnicodeString;
 function GetHeader(xml: string): string;
-function StrCompare(str1, str2: WideString): integer;
+function StrCompare(str1, str2: UnicodeString): integer;
 function DupeString(const AText: string; ACount: Integer): string;
 function IncludeTrailingPathDelimiter(const S: string): string;
-function getUnicodeStr(mode: integer = 0): WideString;
+function getUnicodeStr(mode: integer = 0): UnicodeString;
 function GetDoccount(impl:IDomImplementation):integer;
 procedure debugDom(doc: IDOMDocument;bUnify: boolean=false);
 procedure debugAttributes(attributes: IDOMNamedNodeMap; entities: boolean = False);
-function PrettyPrint(text: WideString): WideString;
+function PrettyPrint(text: UnicodeString): UnicodeString;
 function getEnabledTests(suite: ITestSuite;domVendor,className:string): TStrings;
 
 var
@@ -217,7 +220,7 @@ begin
   end;
 end;
 
-function PrettyPrint(text: WideString): WideString;
+function PrettyPrint(text: UnicodeString): UnicodeString;
 // text: a wellformed xml document
 // adds spaces and crlfs to make the document better readable for humans
 const
@@ -342,7 +345,7 @@ begin
   {$endif}
 end;
 
-function getUnicodeStr(mode: integer = 0): WideString;
+function getUnicodeStr(mode: integer = 0): DOMString;
   // this function returns an unicode string
 var
   i: integer;
@@ -403,7 +406,7 @@ begin
   Result := domSetup.getCurrentDomSetup.getVendorID;
 end;
 
-function Unify(xml: widestring; removeEncoding: boolean = True): widestring;
+function Unify(xml: UnicodeString; removeEncoding: boolean = True): UnicodeString;
 // this procedure unifies the result of the method xml of IDomPersist
 // todo: unify doesn't handle unicode correctly!
 var
@@ -413,8 +416,8 @@ begin
   xml := StringReplace(xml, #10, '', [rfReplaceAll]);
   xml := StringReplace(xml, #9, '', [rfReplaceAll]);
   if removeEncoding then
-    if pos(WideString('<?xml'),xml) > 0 then begin
-      len := Pos(WideString('>'),xml) + 1;
+    if pos(UnicodeString('<?xml'),xml) > 0 then begin
+      len := Pos(UnicodeString('>'),xml) + 1;
       xml := Copy(xml,len,length(xml)-len+1);
     end;
   result := xml;
@@ -430,7 +433,7 @@ begin
   result:=leftstr(xml,pos('>',xml));
 end;
 
-function StrCompare(str1, str2: WideString): integer;
+function StrCompare(str1, str2: UnicodeString): integer;
   // compares two strings
   // if they are equal, zero is the return value
   // if they are unqual, it returns the position,

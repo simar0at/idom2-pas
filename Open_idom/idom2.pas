@@ -223,7 +223,7 @@ const
 
 type
 
-  DomString    = WideString;
+  DomString    = UnicodeString;
   DomTimeStamp = Int64;
 
   DomNodeType  = Integer;
