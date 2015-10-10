@@ -52,7 +52,7 @@ uses
   {$endif}
   windows,
   Variants,
-  ComObj,
+  {$IFDEF VER300} System.Win.ComObj, {$ELSE} ComObj, {$ENDIF}
   idom2,
   idom2_ext;
 

@@ -76,7 +76,7 @@ unit MSXML2_TLB;
 {$VARPROPSETTER ON}
 interface
 
-uses Windows, ActiveX, Classes, Graphics, OleServer, StdVCL, Variants;
+uses Windows, ActiveX, Classes, Graphics, OleServer, {$IFDEF VER300} System.Win.StdVCL,{$ELSE} StdVCL,{$ENDIF} Variants;
   
 
 // *********************************************************************//
@@ -8859,7 +8859,7 @@ resourcestring
 
 implementation
 
-uses ComObj;
+uses {$IFDEF VER300} System.Win.ComObj; {$ELSE} ComObj; {$ENDIF}
 
 class function ComsDOMDocument.Create: IXMLDOMDocument2;
 begin
