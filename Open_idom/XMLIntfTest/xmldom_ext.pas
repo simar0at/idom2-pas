@@ -36,9 +36,57 @@ interface
  *
 *)
 
-uses xmldom, classes;
+uses xmldom, classes, SysUtils;
+
+const
+  (*
+   * The DOM specs state:
+   *    Note: Other numeric codes are reserved for W3C for possible future use.
+   * which is problematic if new (non standard) exception codes should be added.
+   * We therfore choose to have our own exception codes >= 1000 in the hope it
+   * will not break future DOM specs. To minimize any inconveniance in the
+   * future you should make sure not to rely on the numeric constant value but
+   * always use the constant name declaration so the numeric value can be
+   * changed without breaking existing code.
+  *)
+
+  PARSE_ERR = 1000;
+
+  (*
+   * If a File couldn't be written
+   *)
+  WRITE_ERR = 1001;
+
+  (*
+   * if a parameter, that was passed, was nil, but must not
+   *)
+  NULL_PTR_ERR = 1002;
+
+  (*
+   * URI for prefix "xml"
+   *)
+  XML_NAMESPACE_URI   = 'http://www.w3.org/XML/1998/namespace';
+  (*
+   * URI for prefix "xmlns" and namespace node declarations
+   *)
+  XMLNS_NAMESPACE_URI = 'http://www.w3.org/2000/xmlns/';
 
 type
+
+  DomExceptionType = Integer;
+
+  EDomException = class(Exception)
+    private
+      fCode : DomExceptionType;
+    public
+      constructor create(code : DomExceptionType; const msg : DomString); overload;
+      constructor createFmt(
+              code       : DomExceptionType;
+              const msg  : string;
+              const args : array of const); overload;
+      property code : DomExceptionType read fCode;
+  end;
+
 
   { IDomNodeCompare }
 
@@ -51,11 +99,14 @@ type
     function IsSameNode(node: IDomNode): boolean;
   end;
 
-  { IDomNodeExt }
+   { IDomNodeExt }
 
-  // this interface is similar to the interface IDomNodeEx from Borland,
+  // This interface is similar to the interface IDomNodeEx from Borland,
   // but not the same, therefore a slightly different name is used
-  // it provides methods for xslt transformation (transformNode)
+  // main difference:
+  // The method transformnode creates the output document itself,
+  // instead of getting it passed. Therefore the var directive is needed.
+  // It provides methods for xslt transformation (transformNode)
   // for accessing the text-value of an element (similar to textcontent in dom3)
   // and for obtaining the string-value of a node (property xml)
 
@@ -77,6 +128,18 @@ type
     { Properties }
     property xml: DomString read get_xml;
   end;
+  
+  { IDOMPersistHTML }
+
+  IDomPersistHTML = interface
+    ['{2FB54CBC-9300-4DA9-9B4D-5FD9C249EF79}']
+
+    {property setters/getters}
+    function get_html : DOMString;
+
+    {properties}
+    property html : DomString read get_html;
+  end;
 
   {IDomOutputOptions}
 
@@ -87,18 +150,32 @@ type
     ['{B2ECC3F1-CC9B-4445-85C6-3D62638F7835}']
     { Property Acessors }
     function get_prettyPrint: boolean;
-    function get_encoding: DomString;
+    function get_encoding1: DomString;
     function get_parsedEncoding: DomString;
     function get_compressionLevel: integer;
     procedure set_prettyPrint(prettyPrint: boolean);
-    procedure set_encoding(encoding: DomString);
+    procedure set_encoding1(encoding: DomString);
     procedure set_compressionLevel(compressionLevel: integer);
     { methods }
     { Properties }
     property prettyPrint: boolean read get_prettyPrint write set_prettyPrint;
-    property encoding: DomString read get_encoding write set_encoding;
+    property encoding: DomString read get_encoding1 write set_encoding1;
     property parsedEncoding: DomString read get_parsedEncoding;
     property compressionLevel: integer read get_compressionLevel write set_compressionLevel;
+  end;
+  
+  // this interface makes it possible to switch between the old libxmldom
+  // behaviour, not to expose namespace declaration attributes and the
+  // dom2 compliant way of doing so
+  IDOMImplOptions = interface
+    ['{FB0436A1-155B-4CBF-AE41-1E24260BCCA2}']
+    { Property Acessors }
+    function  get_exposeNsDefAttribs: boolean;
+    procedure set_exposeNsDefAttribs(value: boolean);
+    { Properties }
+    property exposeNsDefAttribs: boolean read  get_exposeNsDefAttribs
+                                         write set_exposeNsDefAttribs;
+
   end;
 
   {IDomDebug}
@@ -130,6 +207,103 @@ type
     function relaxNGValidateSource (source: DOMString): WordBool; safecall;
     property relaxNG: IDOMDocument read get_relaxNG write set_relaxNG;
     property xmlschema: IDOMDocument read get_xmlschema write set_xmlschema;
+  end;
+
+  (****************************************************************************
+   *   following interfaces are not part of the DOM spec. but are needed to   *
+   *   maintain vendor independence in an easy way.                           *
+   ****************************************************************************)
+
+  (*
+   * Defines the interface to obtain DOM Document instances.
+   *)
+  IDomDocumentBuilder = interface
+    ['{92724EDA-8951-4E46-8415-84221EAE0044}']
+    {property setters/getters}
+    (* true if DOM supports namespace *)
+    function  get_IsNamespaceAware : Boolean;
+    (* true if DOM is a validating parser *)
+    function  get_IsValidating : Boolean;
+
+    (* true if IDomPersist provides async support *)
+    function  get_HasAsyncSupport : Boolean;
+
+    (*
+     * true if asbsolute URLs are supported, false if only relative or local
+     * URLs are supported
+    *)
+    function get_HasAbsoluteURLSupport : Boolean;
+
+    {methods}
+
+    function  get_DomImplementation : IDomImplementation;
+    function  newDocument : IDomDocument;
+
+    (*
+     * Parses the given XML string
+     * @Param XML The xml to parse
+     * @Returns The newly created document
+     * @Raises DomException
+     *)
+    function  parse(const xml : DomString) : IDomDocument;
+
+    (*
+     * Loads and parses XML from url and returns a new document.
+     *)
+    function load(const url : DomString) : IDomDocument;
+
+    property domImplementation : IDomImplementation read get_DomImplementation;
+    (* true if DOM supports namespace *)
+    property isNamespaceAware : Boolean read get_IsNamespaceAware;
+    (* true if DOM is a validating parser *)
+    property isValidating : Boolean read get_IsValidating;
+    (* true if IDomPersist provides async support*)
+    property hasAsyncSupport : Boolean read get_HasAsyncSupport;
+    (*
+     * true if asbsolute URLs are supported, false if only relative or local
+     * URLs are supported
+     *)
+    property hasAbsoluteURLSupport : Boolean read get_HasAbsoluteURLSupport;
+  end;
+
+  (*
+   * DomDocumentBuilder Factory for creating Vendor specified DocumentBuilder.
+   *)
+  IDomDocumentBuilderFactory = interface
+    ['{27E9F2B1-98D6-49D0-AAE4-2B0D2DF128BE}']
+    {property setters/getters}
+    (* returns the vendorID under which this factory is registered *)
+    function get_VendorID : DomString;
+
+    {methods}
+    (* creates a new IDomDocumentBuilder *)
+    function newDocumentBuilder : IDomDocumentBuilder;
+
+    (* the vendorID under which this factory is registered *)
+    property vendorID : DomString read get_VendorID;
+  end;
+
+
+  (**
+   * Interface for enumerating vendors.
+   *)
+  IDomVendorList = interface
+    ['{2739F26E-98D6-49D0-AAE4-2B0D2DF128BE}']
+
+    (**
+     * @return  number of registered vendors
+     *)
+    function  get_Count: integer;
+
+    (**
+     * Get one of the registered vendors
+     * @param aIndex  zero-based index of the factory to retrieve
+     * @return  a document builder factory
+     *)
+    function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
+
+    property Count: integer read get_Count;
+    property Item[const aIndex: integer]: IDomDocumentBuilderFactory read get_Item;
   end;
 
   const // see http://stackoverflow.com/questions/15948847/injecting-xml-schema-defaults-into-documents-with-php
@@ -254,6 +428,22 @@ begin
     msxmldoc := msxmlnodewrapper.GetXMLDOMNode as IXMLDomDocument2;
     msxmldoc.setProperty('AllowXsltScript', true);
   end;
+end;
+
+
+constructor EDomException.create(code : DomExceptionType; const msg : DomString);
+begin
+  inherited create(msg);
+  fCode := code;
+end;
+
+constructor EDomException.createFmt(
+        code       : DomExceptionType;
+        const msg  : string;
+        const args : array of const);
+begin
+  inherited createFmt(msg, args);
+  fCode := code;
 end;
 
 end.
