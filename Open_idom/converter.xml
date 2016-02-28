@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- template for creation of libxml.pas based on libxmldom.pas -->
+<changes>
+  <!-- latest changes -->
+  <replace line="  (self as IDomImplOptions).ExposeNsDefAttribs   := false;"
+           with="  (self as IDomImplOptions).ExposeNsDefAttribs   := true;" />
+  <replace line="      IDomPersist, IDomPersistHTML, IDomInternal, IDomOutputOptions, IDomParseError)"
+           with="      IDomPersist, IDomPersistHTML, IDomInternal, IDomOutputOptions, IDomParseError, IDOMXMLProlog)"/>
+  <insert before="    // not bound to an interface">
+  <![CDATA[    // IDOMXMLProlog
+    function get_Encoding: DOMString; safecall;
+    function get_Standalone: DOMString; safecall;
+    function get_Version: DOMString; safecall;
+    procedure set_Encoding(const Value: DOMString); safecall;
+    procedure set_Standalone(const Value: DOMString); safecall;
+    procedure set_Version(const Value: DOMString); safecall;
+  ]]>
+  </insert>
+  <!-- end of latest changes -->
+  <replace line="unit libxmldom;">
+  <![CDATA[unit libxml;
+
+  ]]>
+  </replace>
+  <replace line="   It implements the interfaces defined in idom2.pas and idom2_ext.pas .">
+  <![CDATA[   It implements the interfaces defined in xmldom.pas from Borland and the
+   extensions defined in xmldom_ext.pas.
+  ]]>
+  </replace>
+  <insert before="  // Partly supported by libxml2:">
+  <![CDATA[  // !!! This version is created automatically from libxmldom.pas
+  // !!! using the template converter.xml.
+  // !!! If you want to make persistant changes, apply them to libxmldom.pas
+  // !!! or to converter.xml, not to this file directly.
+
+]]>
+  </insert>
+  <replace>
+  <![CDATA[  classes,
+  idom2,
+  idom2_ext,
+  libxml2,
+  libxslt,
+  sysutils;
+]]>
+  <!-- width -->
+  <![CDATA[{$ifdef WIN32}
+  activex,
+{$else}
+  types,
+{$endif}
+  classes,
+  xmldom,
+  xmldom_ext,
+  libxml2,
+  libxslt,
+  sysutils;
+  ]]>
+  </replace>
+  <insert before="implementation">
+  <![CDATA[
+// code for registration with Borland TXMLDocument
+type
+
+{ TMSDOMImplementationFactory }
+
+  TDOMImplementationFactory = class(TDOMVendor)
+  public
+    function DOMImplementation: IDOMImplementation; override;
+    function Description: String; override;
+  end;
+
+
+var
+  LIBXML_DOM: TDOMImplementationFactory;
+
+  ]]>
+  </insert>
+  <replace line="    function hasFeature(const feature, version: DOMString): boolean;"
+           with="    function hasFeature(const feature, version: DOMString): WordBool;"/>
+  <replace line="      systemId: DOMString): IDomDocumentType;"
+           with="      systemId: DOMString): IDomDocumentType; safecall;"/>
+  <replace line="      doctype: IDomDocumentType): IDomDocument;"
+           with="      doctype: IDomDocumentType): IDomDocument; safecall;" />
+  <replace line="    function get_nodeName: DOMString;"
+           with="    function get_nodeName: DOMString; safecall;" />
+  <replace line="    function get_nodeValue: DOMString;"
+           with="    function get_nodeValue: DOMString; safecall;" />
+  <replace line="    procedure set_nodeValue(const Value: DOMString);"
+           with="    procedure set_nodeValue(Value: DOMString); safecall;" />
+  <replace line="    function get_nodeType: DOMNodeType;"
+           with="    function get_nodeType: DOMNodeType; safecall;" />
+  <replace line="    function get_parentNode: IDomNode;"
+           with="    function get_parentNode: IDomNode; safecall;" />
+  <replace line="    function get_childNodes: IDomNodeList;"
+           with="    function get_childNodes: IDomNodeList; safecall;" />;
+  <replace line="    function get_firstChild: IDomNode;"
+           with="    function get_firstChild: IDomNode; safecall;" />;
+  <replace line="    function get_lastChild: IDomNode;"
+           with="    function get_lastChild: IDomNode;safecall;" />;
+  <replace line="    function get_previousSibling: IDomNode;"
+           with="    function get_previousSibling: IDomNode; safecall;" />;
+  <replace line="    function get_nextSibling: IDomNode;"
+           with="    function get_nextSibling: IDomNode; safecall;" />;
+  <replace line="    function get_attributes: IDomNamedNodeMap;"
+           with="    function get_attributes: IDomNamedNodeMap; safecall;" />;
+  <replace line="    function get_ownerDocument: IDomDocument;"
+           with="    function get_ownerDocument: IDomDocument; safecall;" />;
+  <replace line="    function get_namespaceURI: DOMString;"
+           with="    function get_namespaceURI: DOMString; safecall;" />;
+  <replace line="    function get_prefix: DOMString;"
+           with="    function get_prefix: DOMString; safecall;" />;
+  <replace line="    procedure set_Prefix(const prefix: DomString);"
+           with="    procedure set_Prefix(const prefix: DomString); safecall;" />;
+  <replace line="    function get_localName: DOMString;"
+           with="    function get_localName: DOMString; safecall;" />;
+  <replace line="    function insertBefore(const newChild, refChild: IDomNode): IDomNode;"
+           with="    function insertBefore(const newChild, refChild: IDomNode): IDomNode; safecall;" />;
+  <replace line="    function replaceChild(const newChild, oldChild: IDomNode): IDomNode;"
+           with="    function replaceChild(const newChild, oldChild: IDomNode): IDomNode; safecall;" />;
+  <replace line="    function removeChild(const childNode: IDomNode): IDomNode;"
+           with="    function removeChild(const childNode: IDomNode): IDomNode; safecall;" />;
+  <replace line="    function appendChild(const newChild: IDomNode): IDomNode;"
+           with="    function appendChild(const newChild: IDomNode): IDomNode; safecall;" />;
+  <replace line="    function hasChildNodes: boolean;"
+           with="    function hasChildNodes: WordBool; safecall;" />;
+  <replace line="    function hasAttributes: boolean;"
+           with="    function hasAttributes: WordBool; safecall;" />;
+  <replace line="    function cloneNode(deep: boolean): IDomNode;"
+           with="    function cloneNode(deep: WordBool): IDomNode; safecall;" />;
+  <replace line="    procedure normalize;"
+           with="    procedure normalize; safecall;" />;
+  <replace line="    function IsSupported(const feature, version: DOMString): boolean;"
+           with="    function supports(const feature, version: DOMString): WordBool;" />;
+  <replace line="    function selectNode(const nodePath: WideString): IDomNode;"
+           with="    function selectNode(const nodePath: WideString): IDomNode; safecall;" />;
+  <replace line="    function selectNodes(const nodePath: WideString): IDomNodeList;"
+           with="    function selectNodes(const nodePath: WideString): IDomNodeList; safecall;" />;
+  <replace line="    function get_item(index: integer): IDomNode;"
+           with="    function get_item(index: integer): IDomNode; safecall;" />;
+  <replace line="    function get_length: integer;"
+           with="    function get_length: integer;  safecall;" />;
+  <replace line="    function get_item(index: integer): IDomNode;"
+           with="    function get_item(index: integer): IDomNode;  safecall;" />;
+  <replace line="    function get_length: integer;"
+           with="    function get_length: integer; safecall;" />;
+  <replace line="    function getNamedItem(const Name: DOMString): IDomNode;"
+           with="    function getNamedItem(const Name: DOMString): IDomNode;  safecall;" />;
+  <replace line="    function setNamedItem(const newItem: IDomNode): IDomNode;"
+           with="    function setNamedItem(const newItem: IDomNode): IDomNode;  safecall;" />;
+  <replace line="    function removeNamedItem(const Name: DOMString): IDomNode;"
+           with="    function removeNamedItem(const Name: DOMString): IDomNode;  safecall;" />;
+  <replace line="    function getNamedItemNS(const namespaceURI, localName: DOMString): IDomNode;"
+           with="    function getNamedItemNS(const namespaceURI, localName: DOMString): IDomNode;  safecall;" />;
+  <replace line="    function setNamedItemNS(const newItem: IDomNode): IDomNode;"
+           with="    function setNamedItemNS(const newItem: IDomNode): IDomNode;  safecall;" />;
+  <replace line="    function removeNamedItemNS(const namespaceURI, localName: DOMString): IDomNode;"
+           with="    function removeNamedItemNS(const namespaceURI, localName: DOMString): IDomNode;  safecall;" />;
+  <replace line="    function get_name: DOMString;"
+           with="    function get_name: DOMString; safecall;" />;
+  <replace line="    function get_specified: boolean;"
+           with="    function get_specified: WordBool; safecall;" />;
+  <replace line="    function get_value: DOMString;"
+           with="    function get_value: DOMString; safecall;" />;
+  <replace line="    procedure set_value(const attributeValue: DOMString);"
+           with="    procedure set_value(const attributeValue: DOMString); safecall;" />;
+  <replace line="    function get_ownerElement: IDomElement;"
+           with="    function get_ownerElement: IDomElement; safecall;" />;
+  <replace line="    function get_data: DOMString;"
+           with="    function get_data: DOMString; safecall;" />;
+  <replace line="    procedure set_data(const Data: DOMString);"
+           with="    procedure set_data(const Data: DOMString); safecall;" />;
+  <replace line="    function get_length: integer;"
+           with="    function get_length: integer; safecall;" />;
+  <replace line="    function substringData(offset, Count: integer): DOMString;"
+           with="    function substringData(offset, Count: integer): DOMString; safecall;" />;
+  <replace line="    procedure appendData(const Data: DOMString);"
+           with="    procedure appendData(const Data: DOMString); safecall;" />;
+  <replace line="    procedure insertData(offset: integer; const Data: DOMString);"
+           with="    procedure insertData(offset: integer; const Data: DOMString); safecall;" />;
+  <replace line="    procedure deleteData(offset, Count: integer);"
+           with="    procedure deleteData(offset, Count: integer); safecall;" />;
+  <replace line="    procedure replaceData(offset, Count: integer; const Data: DOMString);"
+           with="    procedure replaceData(offset, Count: integer; const Data: DOMString); safecall;" />;
+  <replace line="    function get_tagName: DOMString;"
+           with="    function get_tagName: DOMString;  safecall;" />;
+  <replace line="    function getAttribute(const Name: DOMString): DOMString;"
+           with="    function getAttribute(const Name: DOMString): DOMString;  safecall;" />;
+  <replace line="    procedure setAttribute(const Name, Value: DOMString);"
+           with="    procedure setAttribute(const Name, Value: DOMString); safecall;" />;
+  <replace line="    procedure removeAttribute(const Name: DOMString);"
+           with="    procedure removeAttribute(const Name: DOMString); safecall;" />;
+  <replace line="    function getAttributeNode(const Name: DOMString): IDomAttr;"
+           with="    function getAttributeNode(const Name: DOMString): IDomAttr;  safecall;" />;
+  <replace line="    function setAttributeNode(const newAttr: IDomAttr): IDomAttr;"
+           with="    function setAttributeNode(const newAttr: IDomAttr): IDomAttr;  safecall;" />;
+  <replace line="    function removeAttributeNode(const oldAttr: IDomAttr): IDomAttr;"
+           with="    function removeAttributeNode(const oldAttr: IDomAttr): IDomAttr;  safecall;" />;
+  <replace line="    function getElementsByTagName(const Name: DOMString): IDomNodeList;"
+           with="    function getElementsByTagName(const Name: DOMString): IDomNodeList; safecall;" />;
+  <replace line="    function getAttributeNS(const namespaceURI, localName: DOMString): DOMString;"
+           with="    function getAttributeNS(const namespaceURI, localName: DOMString): DOMString; safecall;" />;
+  <replace line="    procedure setAttributeNS(const namespaceURI, qualifiedName, Value: DOMString);"
+           with="    procedure setAttributeNS(const namespaceURI, qualifiedName, Value: DOMString); safecall;" />;
+  <replace line="    procedure removeAttributeNS(const namespaceURI, localName: DOMString);"
+           with="    procedure removeAttributeNS(const namespaceURI, localName: DOMString); safecall;" />;
+  <replace line="    function getAttributeNodeNS(const namespaceURI, localName: DOMString): IDomAttr;"
+           with="    function getAttributeNodeNS(const namespaceURI, localName: DOMString): IDomAttr; safecall;" />;
+  <replace line="    function setAttributeNodeNS(const newAttr: IDomAttr): IDomAttr;"
+           with="    function setAttributeNodeNS(const newAttr: IDomAttr): IDomAttr; safecall;" />;
+  <replace line="      localName: DOMString): IDomNodeList;"
+           with="      localName: DOMString): IDomNodeList; safecall;" />;
+  <replace line="    function hasAttribute(const Name: DOMString): boolean;"
+           with="    function hasAttribute(const Name: DOMString): WordBool; safecall;" />;
+  <replace line="    function hasAttributeNS(const namespaceURI, localName: DOMString): boolean;"
+           with="    function hasAttributeNS(const namespaceURI, localName: DOMString): WordBool; safecall;" />;
+  <replace line="    procedure normalize;"
+           with="    procedure normalize; safecall;" />;
+  <replace line="    function splitText(offset: integer): IDomText;"
+           with="    function splitText(offset: integer): IDomText; safecall;" />;
+  <replace line="    function get_name: DOMString;"
+           with="    function get_name: DOMString; safecall;" />;
+  <replace line="    function get_entities: IDomNamedNodeMap;"
+           with="    function get_entities: IDomNamedNodeMap; safecall;" />;
+  <replace line="    function get_notations: IDomNamedNodeMap;"
+           with="    function get_notations: IDomNamedNodeMap; safecall;" />;
+  <replace line="    function get_publicId: DOMString;"
+           with="    function get_publicId: DOMString; safecall;" />;
+  <replace line="    function get_systemId: DOMString;"
+           with="    function get_systemId: DOMString; safecall;" />;
+  <replace line="    function get_internalSubset: DOMString;"
+           with="    function get_internalSubset: DOMString; safecall;" />;
+  <replace line="    function get_publicId: DOMString;"
+           with="    function get_publicId: DOMString; safecall;" />;
+  <replace line="    function get_publicId: DOMString;"
+           with="    function get_publicId: DOMString; safecall;" />;
+  <replace line="    function get_systemId: DOMString;"
+           with="    function get_systemId: DOMString; safecall;" />;
+  <replace line="    function get_systemId: DOMString;"
+           with="    function get_systemId: DOMString; safecall;" />;
+  <replace line="    function get_notationName: DOMString;"
+           with="    function get_notationName: DOMString; safecall;" />;
+  <replace line="    function get_target: DOMString;"
+           with="    function get_target: DOMString; safecall;" />;
+  <replace line="    function get_data: DOMString;"
+           with="    function get_data: DOMString; safecall;" />;
+  <replace line="    procedure set_data(const Value: DOMString);"
+           with="    procedure set_data(const data: DOMString); safecall;" />;
+  <replace line="    function get_doctype: IDomDocumentType;"
+           with="    function get_doctype: IDomDocumentType; safecall;" />;
+  <replace line="    function get_domImplementation: IDomImplementation;"
+           with="    function get_domImplementation: IDomImplementation; safecall;" />;
+  <replace line="    function get_documentElement: IDomElement;"
+           with="    function get_documentElement: IDomElement; safecall;" />;
+  <replace line="    procedure set_documentElement(const IDomElement: IDomElement);"
+           with="    procedure set_documentElement(const Element: IDomElement); safecall;" />;
+  <replace line="    function createElement(const tagName: DOMString): IDomElement;"
+           with="    function createElement(const tagName: DOMString): IDomElement; safecall;" />;
+  <replace line="    function createDocumentFragment: IDomDocumentFragment;"
+           with="    function createDocumentFragment: IDomDocumentFragment; safecall;" />;
+  <replace line="    function createTextNode(const Data: DOMString): IDomText;"
+           with="    function createTextNode(const Data: DOMString): IDomText; safecall;" />;
+  <replace line="    function createComment(const Data: DOMString): IDomComment;"
+           with="    function createComment(const Data: DOMString): IDomComment; safecall;" />;
+  <replace line="    function createCDATASection(const Data: DOMString): IDomCDATASection;"
+           with="    function createCDATASection(const Data: DOMString): IDomCDATASection; safecall;" />;
+  <replace line="      Data: DOMString): IDomProcessingInstruction;"
+           with="      Data: DOMString): IDomProcessingInstruction; safecall;" />;
+  <replace line="    function createAttribute(const Name: DOMString): IDomAttr;"
+           with="    function createAttribute(const Name: DOMString): IDomAttr; safecall;" />;
+  <replace line="    function createEntityReference(const Name: DOMString): IDomEntityReference;"
+           with="    function createEntityReference(const Name: DOMString): IDomEntityReference; safecall;" />;
+  <replace line="    function getElementsByTagName(const tagName: DOMString): IDomNodeList;"
+           with="    function getElementsByTagName(const tagName: DOMString): IDomNodeList; safecall;" />;
+  <replace line="    function importNode(importedNode: IDomNode; deep: boolean): IDomNode;"
+           with="    function importNode(importedNode: IDomNode; deep: WordBool): IDomNode; safecall;" />;
+  <replace line="      qualifiedName: DOMString): IDomElement;"
+           with="      qualifiedName: DOMString): IDomElement; safecall;" />;
+  <replace line="      qualifiedName: DOMString): IDomAttr;"
+           with="      qualifiedName: DOMString): IDomAttr; safecall;" />;
+  <replace line="      localName: DOMString): IDomNodeList;"
+           with="      localName: DOMString): IDomNodeList; safecall;" />;
+  <replace line="    function getElementById(const elementId: DOMString): IDomElement;"
+           with="    function getElementById(const elementId: DOMString): IDomElement; safecall;" />;
+  <replace line="    function get_async: boolean;"
+           with="    function get_async: boolean; safecall;" />;
+  <replace line="    function get_preserveWhiteSpace: boolean;"
+           with="    function get_preserveWhiteSpace: boolean; safecall;" />;
+  <replace line="    function get_resolveExternals: boolean;"
+           with="    function get_resolveExternals: boolean; safecall;" />;
+  <replace line="    function get_validate: boolean;"
+           with="    function get_validate: boolean; safecall;" />;
+  <replace line="    procedure set_async(Value: boolean);"
+           with="    procedure set_async(Value: boolean); safecall;" />;
+  <replace line="    procedure set_preserveWhiteSpace(Value: boolean);"
+           with="    procedure set_preserveWhiteSpace(Value: boolean); safecall;" />;
+  <replace line="    procedure set_resolveExternals(Value: boolean);"
+           with="    procedure set_resolveExternals(Value: boolean); safecall;" />;
+  <replace line="    procedure set_validate(Value: boolean);"
+           with="    procedure set_validate(Value: boolean); safecall;" />;
+  <replace line="    function get_xml: DOMString; //IDomPersist"
+           with="    function get_xml: DOMString; safecall;" />
+  <replace line="    function asyncLoadState: integer;"
+           with="    function asyncLoadState: integer; safecall;" />
+  <replace line="    function load(Source: DOMString): boolean;"
+           with="    function load(Source: OleVariant): WordBool; safecall;" />
+  <replace line="    function loadFromStream(const stream: TStream): boolean;">
+  <![CDATA[
+    function loadFromStream(const stream: TStream): WordBool; overload; safecall;
+    function loadFromStream(const stream: IStream): WordBool; overload; safecall;
+  ]]>
+  </replace>
+  <replace line="    function loadxml(const Value: DOMString): boolean;"
+           with="    function loadxml(const Value: DOMString): WordBool; safecall;" />
+  <replace line="    procedure save(Source: DOMString);"
+           with="    procedure save(Source: OleVariant); safecall;" />
+  <replace line="    procedure saveToStream(const stream: TStream);">
+  <![CDATA[
+    procedure saveToStream(const stream: TStream); overload; safecall;
+    procedure saveToStream(const stream: IStream); overload; safecall;
+  ]]>
+  </replace>
+  <replace line="      EventHandler: TAsyncEventHandler);"
+           with="      EventHandler: TAsyncEventHandler); safecall;" />
+  <replace line="    function get_errorCode: Integer;"
+           with="    function get_errorCode: Integer; safecall;" />
+  <replace line="    function get_line: Integer;"
+           with="    function get_line: Integer; safecall;" />
+  <replace line="    function get_linepos: Integer;"
+           with="    function get_linepos: Integer; safecall;" />
+  <replace line="    function get_filepos: Integer;"
+           with="    function get_filepos: Integer; safecall;" />;
+  <replace line="function TDomImplementation.hasFeature(const feature, version: DOMString): boolean;"
+           with="function TDomImplementation.hasFeature(const feature, version: DOMString): WordBool;" />;
+  <replace line="procedure TDomNode.set_nodeValue(const Value: DOMString);"
+           with="procedure TDomNode.set_nodeValue(Value: DOMString);" />
+  <replace line="function TDomNode.hasChildNodes: boolean;"
+           with="function TDomNode.hasChildNodes: WordBool;" />
+  <replace line="function TDomNode.hasAttributes: boolean;"
+           with="function TDomNode.hasAttributes: WordBool;" />
+  <replace line="function TDomNode.cloneNode(deep: boolean): IDomNode;"
+           with="function TDomNode.cloneNode(deep: WordBool): IDomNode;" />
+  <replace line="function TDomNode.IsSupported(const feature, version: DOMString): boolean;"
+           with="function TDomNode.Supports(const feature, version: DOMString): WordBool;" />
+  <replace line="function TDomAttr.get_specified: boolean;"
+           with="function TDomAttr.get_specified: WordBool;" />
+  <replace line="function TDomElement.hasAttribute(const Name: DOMString): boolean;"
+           with="function TDomElement.hasAttribute(const Name: DOMString): WordBool;" />
+  <replace line="function TDomElement.hasAttributeNS(const namespaceURI, localName: DOMString): boolean;"
+           with="function TDomElement.hasAttributeNS(const namespaceURI, localName: DOMString): WordBool;" />;
+  <replace line="procedure TDomDocument.set_documentElement(const IDomElement: IDomElement);"
+           with="procedure TDomDocument.set_documentElement(const Element: IDomElement);" />
+  <replace line="function TDomDocument.importNode(importedNode: IDomNode; deep: boolean): IDomNode;"
+           with="function TDomDocument.importNode(importedNode: IDomNode; deep: WordBool): IDomNode;" />;
+  <replace line="function TDomDocument.loadxml(const Value: DOMString): boolean;"
+           with="function TDomDocument.loadxml(const Value: DOMString): WordBool;" />
+  <replace line="function TDomDocument.loadFromStream(const stream: TStream): boolean;"
+           with="function TDomDocument.loadFromStream(const stream: TStream): WordBool;" />
+  <replace line="function TDomDocument.load(Source: DOMString): boolean;"
+           with="function TDomDocument.load(Source: OleVariant): WordBool;" />
+  <replace line="procedure TDomDocument.save(Source: DOMString);"
+           with="procedure TDomDocument.save(Source: OleVariant);" />
+  <replace line="procedure TDomProcessingInstruction.set_data(const Value: DOMString);"
+           with="procedure TDomProcessingInstruction.set_data(const data: DOMString);" />
+  <replace line="  inherited set_nodeValue(Value);"
+           with="  inherited set_nodeValue(data);" />
+  <insert before="initialization">
+  <![CDATA[
+{ TDOMImplementationFactory }
+
+function TDOMImplementationFactory.Description: String;
+begin
+  result:=SLIBXML;
+end;
+
+// the following code comes from idom2.pas
+
+type
+
+ TDomVendorRegister = class(TInterfacedObject, IDomVendorList)
+    private
+      (* list of DocumentBuilderFactories *)
+      fFactoryList : TInterfaceList;
+    protected //IDomVendorList
+      function  get_Count: integer;
+      function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
+    public
+      constructor Create;
+      destructor Destroy; override;
+
+      (*
+       * add a new DocumentBuilderFactory to the list.
+       * Pre-condition:
+       *   - vendorID must be set
+       *   - vendorID must be unique (if not EDomVendorRegisterException)
+      *)
+      procedure add(domDocumentBuilderFactory : IDomDocumentBuilderFactory);
+
+      (*
+       * returns the DomDocumentBuilderFactory with id vendorId
+       * if vendorId is not found then result := nil
+      *)
+      function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
+  end;
+
+var
+  (*
+   * global TDomVendorRegister. Used to register the domDocumentBuilderFactories
+  *)
+  gDomVendorRegister : TDomVendorRegister;
+
+(******************************************************************************)
+
+{ TDomVendorRegister }
+
+constructor TDomVendorRegister.Create;
+begin
+  inherited Create;
+  fFactoryList := TInterfaceList.Create;
+  _AddRef; // one extra lock needed
+end;
+
+destructor TDomVendorRegister.Destroy;
+begin
+  fFactoryList.Free;
+  inherited Destroy;
+end;
+
+procedure TDomVendorRegister.add(
+        domDocumentBuilderFactory : IDomDocumentBuilderFactory);
+begin
+  {check if a factory with same VendorID is already registered}
+  if get_Factory(domDocumentBuilderFactory.vendorID) <> nil then
+    Raise Exception.create('Vendor ID already present');
+  fFactoryList.add(domDocumentBuilderFactory);
+end;
+
+function TDomVendorRegister.get_Count: integer;
+begin
+  Result := fFactoryList.Count;
+end;
+
+function TDomVendorRegister.get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
+var
+  i : Integer;
+begin
+  for i := 0 to fFactoryList.Count - 1 do begin
+    Result := fFactoryList.items[i] as IDomDocumentBuilderFactory;
+    {check the name}
+    if (Result.vendorID = vendorID) then exit;
+  end;
+  Result := nil;
+end;
+
+function TDomVendorRegister.get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
+begin
+  Result := fFactoryList[aIndex] as IDomDocumentBuilderFactory;
+end;
+
+
+function get_DomVendorRegisterSingleton : TDomVendorRegister;
+begin
+  if gDomVendorRegister = nil then
+  begin
+    gDomVendorRegister := TDomVendorRegister.create;
+  end;
+  result := gDomVendorRegister;
+end;
+
+function getDomVendorList: IDomVendorList;
+begin
+  Result := get_DomVendorRegisterSingleton as IDomVendorList;
+end;
+
+(******************************************************************************)
+
+procedure registerDomVendorFactory(factory : IDomDocumentBuilderFactory);
+begin
+  get_DomVendorRegisterSingleton.add(factory);
+end;
+
+function getDocumentBuilderFactory(
+        vendorID : DomString) : IDomDocumentBuilderFactory;
+var
+  factory : IDomDocumentBuilderFactory;
+begin
+  factory := get_DomVendorRegisterSingleton.get_Factory(vendorID);
+  if factory = nil then
+    Raise Exception.createFmt(
+            'Vendor ID: %s not present', [vendorID]);
+
+  result := factory;
+end;
+
+function TDOMImplementationFactory.DOMImplementation: IDOMImplementation;
+begin
+  result:=getDocumentBuilderFactory(SLIBXML).
+      newDocumentBuilder.DOMImplementation;
+end;
+
+function TDomDocument.loadFromStream(const stream: IStream): WordBool;
+begin
+
+end;
+
+procedure TDomDocument.saveToStream(const stream: IStream);
+begin
+
+end;
+  function TDomDocument.get_Encoding: DOMString;
+begin
+  result:=self.get_encoding1;
+end;
+
+function TDomDocument.get_Standalone: DOMString;
+begin
+
+end;
+
+function TDomDocument.get_Version: DOMString;
+begin
+
+end;
+
+procedure TDomDocument.set_Encoding(const Value: DOMString);
+begin
+  self.set_encoding1(Value);
+end;
+
+procedure TDomDocument.set_Standalone(const Value: DOMString);
+begin
+
+end;
+
+procedure TDomDocument.set_Version(const Value: DOMString);
+begin
+
+end;
+
+]]>
+  </insert>
+  <insert before="finalization">
+  <![CDATA[
+  LIBXML_DOM := TDOMImplementationFactory.Create;
+  RegisterDOMVendor(LIBXML_DOM);
+]]>
+  </insert>
+  <insert before="end.">
+  <![CDATA[
+  UnRegisterDOMVendor(LIBXML_DOM);
+  LIBXML_DOM.Free;
+]]>
+  </insert>
+
+</changes>

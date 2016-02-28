@@ -158,9 +158,9 @@ end;
 
 constructor TConverter.create;
 begin
-  fInputFileName  := 'libxmldom.pas';
-  fOutputFileName := 'libxml.pas';
-  fTemplateName   := 'converter.xml';
+  fInputFileName  := '../../libxmldom.pas';
+  fOutputFileName := '../../libxml.pas';
+  fTemplateName   := '../../converter.xml';
   fInputFile      := TStringList.create;
   fImpl           := getDom(SLIBXML);
 end;
