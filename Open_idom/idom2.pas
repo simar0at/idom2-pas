@@ -1027,11 +1027,28 @@ implementation
 
 type
 
+  IDomVendorRegister = interface
+  ['{7066DA54-8AC1-42A3-8456-DDE9C527A1FD}']
+      (*
+       * add a new DocumentBuilderFactory to the list.
+       * Pre-condition:
+       *   - vendorID must be set
+       *   - vendorID must be unique (if not EDomVendorRegisterException)
+      *)
+      procedure add(domDocumentBuilderFactory : IDomDocumentBuilderFactory);
+
+      (*
+       * returns the DomDocumentBuilderFactory with id vendorId
+       * if vendorId is not found then result := nil
+      *)
+      function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
+  end;
+
   (*
    * Register for registering different DocumentBuilderFactories. Each
    * DocumentBuilderFactory is identified by a vendorID.
    *)
-  TDomVendorRegister = class(TInterfacedObject, IDomVendorList)
+  TDomVendorRegister = class(TInterfacedObject, IDomVendorList, IDomVendorRegister)
     private
       (* list of DocumentBuilderFactories *)
       fFactoryList : TInterfaceList;

@@ -584,6 +584,8 @@ type
     function  findNamespaceNode(const ns: xmlNsPtr): boolean;
     function  findOrCreateNewNamespace(const node: xmlNodePtr; const ns: xmlNsPtr): xmlNsPtr; overload;
     function  findOrCreateNewNamespace(const node: xmlNodePtr; const namespaceURI, prefix: PAnsiChar): xmlNsPtr; overload;
+    procedure setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
+    procedure setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
   public
     // to create an empty document or a document with a documentElement node
     // this constructor is used:
@@ -814,7 +816,7 @@ end;
 
 function MakeNode(Node: xmlNodePtr; ADocument: IDomDocument): IDomNode;
 const
-  NodeClasses: array[xmlElementType] of TDomNodeClass =
+  NodeClasses: array[XML_ELEMENT_NODE .. XML_DOCB_DOCUMENT_NODE] of TDomNodeClass =
     (TDomElement, TDomAttr, TDomText, TDomCDataSection,
     TDomEntityReference, TDomEntity, TDomProcessingInstruction,
     TDomComment, TDomDocument, TDomDocumentType, TDomDocumentFragment,
@@ -1047,17 +1049,6 @@ end;
 function split_localName(const qualifiedName: DOMString): DOMString;
 begin
   Result := Copy(qualifiedName, Pos(':', qualifiedName) + 1, MAXINT);
-end;
-
-function UTF8Decode(const s: PAnsiChar): DOMString;
-begin
-  if Assigned(s)
-  {$ifdef VER130} // Delphi 5
-     then Result := jclUnicode.UTF8Decode(s)
-  {$else}
-     then Result := System.UTF8Decode(s)
-  {$endif}
-     else Result := '';
 end;
 
 function check_IsSupported(const feature, version: DOMString): boolean;
@@ -1621,7 +1612,7 @@ end;
  *)
 function xmlXPathNodeSetItem(ns: xmlNodeSetPtr; index: Integer): xmlNodePtr;
 var
-  p: xmlNodePtrPtr;
+  p: PxmlNodePtr;
 begin
   Result := nil;
   if ns = nil then exit;
@@ -4188,7 +4179,7 @@ var
   AAttr:    xmlAttrPtr;
   AElement: xmlNodePtr;
 begin
-  AAttr := xmlGetID(getXmlDocument, PAnsiChar(UTF8Encode(elementID)));
+  AAttr := xmlGetID(GetXmlDocPtr, PAnsiChar(UTF8Encode(elementID)));
   if AAttr <> nil
     then AElement := AAttr^.parent
     else AElement := nil;
@@ -4296,7 +4287,7 @@ begin
         cleanNsDef(xmlDocGetRootElement(GetXmlDocPtr),true);
    
         // Dump this to my memory
-        xmlDocDumpFormatMemoryEnc(GetXmlDocPtr, @CString, @length, encoding, format);
+        xmlDocDumpFormatMemoryEnc(GetXmlDocPtr, CString, @length, encoding, format);
 
         try
           // check decoding
@@ -4626,7 +4617,7 @@ begin
   sSource := Source;
 
   // now save it to Sourec
-  bytes := xmlSaveFormatFileEnc(PAnsiChar(sSource), GetXmlDocPtr, encoding, format);
+  bytes := xmlSaveFormatFileEnc(PAnsiChar(sSource), GetXmlDocPtr, PAnsiChar(encoding), format);
 
   // check result of operation
   if bytes < 0 then CheckError(WRITE_ERR);
@@ -5381,7 +5372,7 @@ begin
   // get the right encoder
   if not isEncodingUTF8(encoding)
     then
-      encoder:=xmlFindCharEncodingHandler(encoding)
+      encoder:=xmlFindCharEncodingHandler(PAnsiChar(encoding))
     else
       encoder:=nil;
 

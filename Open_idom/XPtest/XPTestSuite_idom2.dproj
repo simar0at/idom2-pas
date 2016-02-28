@@ -7,7 +7,7 @@
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
-        <ProjectVersion>18.0</ProjectVersion>
+        <ProjectVersion>18.1</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
     </PropertyGroup>
@@ -22,6 +22,12 @@
     <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_2)'!=''">
         <Cfg_2>true</Cfg_2>
         <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
+        <Cfg_2_Win32>true</Cfg_2_Win32>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
@@ -53,22 +59,14 @@
         <DCC_Optimize>false</DCC_Optimize>
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <ILINK_MapFileType>DetailedSegments</ILINK_MapFileType>
+    </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="FastMM4.pas"/>
-        <DCCReference Include="Main.pas"/>
-        <DCCReference Include="XPTest_idom2_Shared.pas"/>
-        <DCCReference Include="XPTest_idom2_TestDOM2Methods.pas"/>
-        <DCCReference Include="XPTest_idom2_TestDomExceptions.pas"/>
-        <DCCReference Include="XPTest_idom2_TestMemoryLeaks.pas"/>
-        <DCCReference Include="XPTest_idom2_TestPersist.pas"/>
-        <DCCReference Include="XPTest_idom2_TestXPath.pas"/>
-        <DCCReference Include="XPTest_idom2_TestXSLT.pas"/>
-        <DCCReference Include="domSetup.pas"/>
-        <DCCReference Include="contrib\DomDocumentTests.pas"/>
-        <DCCReference Include="contrib\DomImplementationTests.pas"/>
         <BuildConfiguration Include="Debug">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

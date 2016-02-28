@@ -47,7 +47,7 @@ uses
     {$ifdef MSXML3}
       MSXML3,
     {$else}
-      MSXML_TLB,
+      MSXML2_TLB,
     {$endif}
   {$endif}
   windows,
@@ -824,6 +824,10 @@ function createDOMDocument(freeThreaded : Boolean) : IXMLDOMDocument;
 const
  CLASS_DOMDocument40 : TGUID = '{88D969C0-F192-11D4-A65F-0040963251E5}';
  CLASS_FreeThreadedDOMDocument40 : TGUID = '{00000000-0000-0000-0000-000000000000}';
+ CLASS_DOMDocument26: TGUID = '{F5078F1B-C551-11D3-89B9-0000F81FE221}';
+ CLASS_DOMDocument30: TGUID = '{F5078F32-C551-11D3-89B9-0000F81FE221}';
+ CLASS_FreeThreadedDOMDocument26: TGUID = '{F5078F1C-C551-11D3-89B9-0000F81FE221}';
+ CLASS_FreeThreadedDOMDocument30: TGUID = '{F5078F33-C551-11D3-89B9-0000F81FE221}';
  // XXX TO-DO add correct free threaded 40 GUID !!!!
 begin
   if not freeThreaded then
