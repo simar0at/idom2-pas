@@ -384,7 +384,7 @@ end;
 function getDataPath: string;
   // this function returns the path to the sample files
 const
-  cDefault = 'data';
+  cDefault = '../../data';
 var
   ini: TIniFile;
 begin

@@ -45,7 +45,7 @@
   sysutils;
 ]]>
   <!-- width -->
-  <![CDATA[{$ifdef WIN32}
+  <![CDATA[{$ifdef MSWINDOWS}
   activex,
 {$else}
   types,

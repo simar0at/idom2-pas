@@ -154,7 +154,7 @@ type
 implementation
 
 uses
-  OleAuto;
+  ComObj;
 
 
 function getCodeStr(code: integer): string;
