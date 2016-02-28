@@ -655,7 +655,7 @@ function IsXmlChars(const S: DOMString): boolean; forward;
 
 
 const
-  {$ifdef win32}
+  {$ifdef mswindows}
     crlf=#13#10;
   {$else}
     crlf=#10;
@@ -3761,7 +3761,7 @@ var
   fn:     string;
 begin
   fDomImpl := DOMImpl;
-  {$ifdef WIN32}
+  {$ifdef mswindows}
   // libxml accepts only '/' as path delimiter
   fn := UTF8Encode(StringReplace(aUrl, '\', '/', [rfReplaceAll]));
   {$else}
@@ -4577,7 +4577,7 @@ function TDomDocument.load(Source: DOMString): boolean;
 // Load dom from file
 var fn, fn1:   AnsiString;
 begin
-  {$ifdef WIN32}
+  {$ifdef mswindows}
   // libxml accepts only '/' as path delimiter
   fn1 := (StringReplace(Source, '\', '/', [rfReplaceAll]));
   // escape spaces

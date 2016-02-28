@@ -26,7 +26,7 @@ uses
   QForms,
   KylixGUITestRunner,
 {$endif}
-{$ifdef win32}
+{$ifdef mswindows}
   Windows,
   Forms,
   GUITestRunner,
@@ -35,7 +35,7 @@ uses
   libxmldom,
   libxslt;
 
-{$ifdef WIN32}
+{$ifdef mswindows}
 {$R *.res}
 {$endif}
 
@@ -50,7 +50,7 @@ var
 begin
   try
     try
-      {$ifdef WIN32}
+      {$ifdef mswindows}
       if not IsConsole then begin
          Windows.AllocConsole;
       end;
@@ -128,13 +128,13 @@ begin
       on e: Exception do Writeln(Format('%s: %s', [e.ClassName, e.Message]));
     end;
   finally
-    {$ifdef WIN32}
+    {$ifdef mswindows}
     if not IsConsole then begin
     {$endif}
       writeln;
       write  ('Press <RETURN> to exit.');
       readln;
-    {$ifdef WIN32}
+    {$ifdef mswindows}
     end;
     {$endif}
   end;

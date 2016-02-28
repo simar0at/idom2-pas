@@ -40,10 +40,10 @@ unit msxml_impl;
 *)
 
 interface
-{off $define MSXML3}
+{off $define MSXML3} // -> MSXML 6.0
 
 uses
-  {$ifdef win32}
+  {$ifdef mswindows}
     {$ifdef MSXML3}
       MSXML3,
     {$else}

@@ -85,7 +85,7 @@ function PrettyPrint(text: DOMString): DOMString;
 // text: a wellformed xml document
 // adds spaces and crlfs to make the document better readable for humans
 const
-  {$ifdef win32}
+  {$ifdef mswindows}
   CRLF=#13#10;
   {$else}
   CRLF=#10;

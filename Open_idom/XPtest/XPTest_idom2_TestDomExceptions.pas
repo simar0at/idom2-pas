@@ -2257,7 +2257,7 @@ end;
 initialization
   datapath := getDataPath;
 
-  {$ifdef win32}
+  {$ifdef mswindows}
   CoInitialize(nil);
   {$endif}
   {$ifdef linux}
