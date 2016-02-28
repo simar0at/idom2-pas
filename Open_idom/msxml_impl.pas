@@ -40,19 +40,18 @@ unit msxml_impl;
 *)
 
 interface
-{off $define MSXML3}
 
 uses
-  {$ifdef win32}
-    {$ifdef MSXML3}
-      MSXML3,
-    {$else}
-      MSXML2_TLB,
-    {$endif}
-  {$endif}
-  windows,
-  Variants,
-  ComObj,
+  {$IFDEF MSWINDOWS}
+    MSXML2_TLB,
+    windows,
+    Variants,
+    {$IFDEF VER300}
+    System.Win.ComObj,
+    {$ELSE}
+    ComObj,
+    {$ENDIF}
+  {$ENDIF}
   idom2,
   idom2_ext;
 

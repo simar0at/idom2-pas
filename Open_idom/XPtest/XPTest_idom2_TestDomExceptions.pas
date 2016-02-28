@@ -155,7 +155,13 @@ type
 implementation
 
 uses
-  ComObj;
+  {$IFDEF MSWINDOWS}
+    {$IFDEF VER300}
+    System.Win.ComObj;
+    {$ELSE}
+    ComObj;
+    {$ENDIF}
+  {$ENDIF}
 
 function getCodeStr(code: integer): string;
 begin
