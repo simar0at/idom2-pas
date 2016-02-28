@@ -7,7 +7,7 @@ program XMLIntfTest;
 
 uses
   FastMM4 in 'FastMM4.pas',
-//  TestModules,
+  TestModules,
   TestFramework,
   TextTestRunner,
   SysUtils,
