@@ -135,7 +135,6 @@ begin
   (xnode as IDomNodeExt).transformNode(snode, Text);
   Text := Unify(Text);
   CheckEquals(outstr, Text, 'wrong content');
-//  check(Text = outstr, 'wrong content');
 end;
 
 // libxmldom wrapper currently does not support html documents
@@ -359,7 +358,7 @@ var
 begin
   teststr := getunicodestr(1);
   rootstr := '<root><text>'+teststr+'</text><text>ÄÖÜ</text></root>';
-  parsestr := '<?xml version="1.0" encoding="utf8"?>'+ rootstr;
+  parsestr := '<?xml version="1.0" encoding="'+cUTF8+'"?>'+ rootstr; // used to be: utf8
 
   check((xml as IDOMPersist).loadxml(parsestr),'parse error');
   check(xml.documentElement.hasChildNodes, 'has no childNodes');

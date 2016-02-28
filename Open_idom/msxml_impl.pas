@@ -47,7 +47,7 @@ uses
     {$ifdef MSXML3}
       MSXML3,
     {$else}
-      MSXML2_TLB,
+      MSXML_TLB,
     {$endif}
   {$endif}
   windows,
@@ -86,8 +86,14 @@ implementation
 uses
   SysUtils,
   Classes,
+  {$ifdef VER140} {delphi6}
+    variants,
+  {$endif}
+  {$ifdef VER150} {delphi7}
+    variants,
+  {$endif}
   ActiveX;
-
+  
 type
 
   TMSXMLDocumentBuilderFactory = class(TInterfacedObject, IDomDocumentBuilderFactory)
@@ -815,22 +821,26 @@ begin
 end;
 
 function createDOMDocument(freeThreaded : Boolean) : IXMLDOMDocument;
+const
+ CLASS_DOMDocument40 : TGUID = '{88D969C0-F192-11D4-A65F-0040963251E5}';
+ CLASS_FreeThreadedDOMDocument40 : TGUID = '{00000000-0000-0000-0000-000000000000}';
+ // XXX TO-DO add correct free threaded 40 GUID !!!!
 begin
   if not freeThreaded then
     begin
       result := tryObjectCreate(
               [CLASS_DOMDocument60,
                CLASS_DOMDocument40,
-               CLASS_msDOMDocument30,
-               CLASS_msDOMDocument26]) as IXMLDOMDocument;
+               CLASS_DOMDocument30,
+               CLASS_DOMDocument26]) as IXMLDOMDocument;
     end
   else
     begin
       result := tryObjectCreate(
               [CLASS_FreeThreadedDOMDocument60,
                CLASS_FreeThreadedDOMDocument40,
-               CLASS_msFreeThreadedDOMDocument30,
-               CLASS_msFreeThreadedDOMDocument26]) as IXMLDOMDocument;
+               CLASS_FreeThreadedDOMDocument30,
+               CLASS_FreeThreadedDOMDocument26]) as IXMLDOMDocument;
     end;
   if not assigned(result) then
     raise EDOMException.create(NOT_FOUND_ERR,'MSDOM not installed!');
@@ -1551,9 +1561,15 @@ var
   msNewChild : IXMLDOMNode;
   msRefChild : IXMLDOMNode;
 begin
-  msNewChild := (newChild as IMSXMLExtDomNode).getOrgInterface;
-  msRefChild := (refChild as IMSXMLExtDomNode).getOrgInterface;
-  result := domCreateNode(fMSDomNode.insertBefore(msNewChild, msRefChild));
+  if refChild = nil then begin
+    // If refChild is null, insert newChild
+    // at the end of the list of children. (w3c.org)
+    result := appendChild(newChild);
+  end else begin
+    msNewChild := (newChild as IMSXMLExtDomNode).getOrgInterface;
+    msRefChild := (refChild as IMSXMLExtDomNode).getOrgInterface;
+    result := domCreateNode(fMSDomNode.insertBefore(msNewChild, msRefChild));
+  end;
 end;
 
 function TMSXMLNode.replaceChild(
@@ -2048,6 +2064,8 @@ end;
 
 function TMSXMLAttr.get_OwnerElement : IDomElement;
 begin
+  result := get_ParentNode as IDOMElement;  // why not ?
+  exit;
   (* not supported *)
   raise EDomException.create(
           NOT_SUPPORTED_ERR, 'GetOwnerElement is not supported');

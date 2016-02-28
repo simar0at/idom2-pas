@@ -8,14 +8,29 @@ uses
   idom2,
   idom2_ext,
   sysutils,
+{$ifdef linux}
+  libc,
+  QForms,
+  QStdCtrls,
+  QControls,
+{$else}
+  Forms,
+  StdCtrls,
+  Controls,
+{$endif}
   TestFrameWork,
   {$IFDEF FPC}
   TestFrameworkIfaces,
   {$ENDIF}
   Classes,
+{$ifdef VER130} // Delphi5
   Dialogs;
+{$else}
+  QDialogs;
+{$endif}
 
 const
+  cUTF8   = 'utf-8'; // utf-8
   CRLF    = #13#10;
   xmlns   = 'http://www.w3.org/2000/xmlns/';
   xmldecl = '<?xml version="1.0" encoding="iso-8859-1"?>';
@@ -104,7 +119,6 @@ const
             '<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
             '                version="1.0">' +
             '  <xsl:output method="text"' +
-            //'              omit-xml-declaration="yes"'+
             '              encoding="ISO-8859-1" />' +
             '  <xsl:template match="/*">' +
             '    <xsl:value-of select="name()" />' +
@@ -124,7 +138,7 @@ const
             '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">' +
             '<html xmlns="http://www.w3.org/1999/xhtml">' +
             '<head>' +
-            '<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />' +
+            '<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />'+
             '<title>test</title>' +
             '</head>' +
             '<body>' +
@@ -163,6 +177,7 @@ procedure debugDom(doc: IDOMDocument;bUnify: boolean=false);
 procedure debugAttributes(attributes: IDOMNamedNodeMap; entities: boolean = False);
 function PrettyPrint(text: UnicodeString): UnicodeString;
 function getEnabledTests(suite: ITestSuite;domVendor,className:string): TStrings;
+procedure showXml(msg: string);
 
 var
   datapath: string = '';
@@ -171,6 +186,35 @@ implementation
 
 const
   PathDelim  = {$IFNDEF LINUX} '\'; {$ELSE} '/'; {$ENDIF}
+
+procedure showXml(msg: string);
+// display a message similar to showMessage, but in a memo field,
+// so that you can copy the result to the Zwischenablage
+var
+  lForm: TForm;
+  lMemo: TMemo;
+  lButton: TButton;
+begin
+  lForm := TForm.Create(nil);
+  lForm.Caption := 'info';
+  lMemo := TMemo.Create(lForm);
+  lMemo.Parent := lForm;
+  lMemo.Top := 4;
+  lMemo.Left := 4;
+  lMemo.Width := lForm.ClientWidth - 8;
+  lMemo.Height := lForm.ClientHeight - 4 - 29;
+  lMemo.Text := prettyPrint(msg);
+  lButton := TButton.Create(lForm);
+  lButton.Parent := lForm;
+  lButton.Top := lForm.ClientHeight - 25;
+  lButton.Left := (lForm.ClientWidth div 2) - (lButton.Width div 2);
+  lButton.Caption := 'OK';
+  lButton.ModalResult := mrOK;
+  lButton.Default := true;
+  lForm.Position := poMainFormCenter;
+  lForm.ShowModal;
+  lForm.Free;
+end;
 
 function getEnabledTests(suite: ITestSuite;domVendor,className:string): TStrings;
 // returns a stringlist with the names of the enabled tests

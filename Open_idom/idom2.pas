@@ -154,6 +154,16 @@ const
 
   PARSE_ERR = 1000;
 
+  (*
+   * If a File couldn't be written
+   *)
+  WRITE_ERR = 1001;
+
+  (*
+   * if a parameter, that was passed, was nil, but must not
+   *)
+  NULL_PTR_ERR = 1002;
+
 
   (*
    * The official DOM specs works with Integer values for Node Types.
@@ -616,8 +626,8 @@ type
      * @Param LocalName [in]
     *)
     function  getAttributeNS(
-            const _namespaceURI : DomString;
-            const _localName    : DomString) : DomString;
+            const namespaceURI : DomString;
+            const localName    : DomString) : DomString;
 
     (*
      * @Param NamespaceURI [in]
@@ -626,7 +636,7 @@ type
      * @Raises EDomException
     *)
     procedure setAttributeNS(
-            const _namespaceURI  : DomString;
+            const namespaceURI  : DomString;
             const qualifiedName : DomString;
             const value         : DomString);
 
@@ -636,15 +646,15 @@ type
      * @Raises EDomException
     *)
     procedure removeAttributeNS(
-            const _namespaceURI : DomString;
-            const _localName    : DomString);
+            const namespaceURI : DomString;
+            const localName    : DomString);
     (*
      * @Param NamespaceURI [in]
      * @Param LocalName [in]
     *)
     function  getAttributeNodeNS(
-            const _namespaceURI : DomString;
-            const _localName    : DomString) : IDomAttr;
+            const namespaceURI : DomString;
+            const localName    : DomString) : IDomAttr;
 
     (*
      * @Param NewAttr [in]
@@ -657,8 +667,8 @@ type
      * @Param LocalName [in]
     *)
     function  getElementsByTagNameNS(
-            const _namespaceURI : DomString;
-            const _localName    : DomString) : IDomNodeList;
+            const namespaceURI : DomString;
+            const localName    : DomString) : IDomNodeList;
 
     (*
      * @Param Name [in]
@@ -670,8 +680,8 @@ type
      * @Param LocalName [in]
     *)
     function  hasAttributeNS(
-            const _namespaceURI : DomString;
-            const _localName    : DomString) : Boolean;
+            const namespaceURI : DomString;
+            const localName    : DomString) : Boolean;
 
     {properties}
     property tagName : DomString  read get_TagName;
@@ -849,7 +859,7 @@ type
      * @Raises EDomException
     *)
     function  createElementNS(
-            const _namespaceURI  : DomString;
+            const namespaceURI  : DomString;
             const qualifiedName : DomString) : IDomElement;
 
     (*
@@ -858,7 +868,7 @@ type
      * @Raises EDomException
     *)
     function  createAttributeNS(
-            const _namespaceURI  : DomString;
+            const namespaceURI  : DomString;
             const qualifiedName : DomString) : IDomAttr;
 
     (*
@@ -867,8 +877,8 @@ type
      * @Raises EDomException
     *)
     function  getElementsByTagNameNS(
-            const _namespaceURI : DomString;
-            const _localName    : DomString) : IDomNodeList; //FE
+            const namespaceURI : DomString;
+            const localName    : DomString) : IDomNodeList; //FE
 
     (*
      * @Param ElementId [in]
@@ -963,7 +973,7 @@ type
   (**
    * Interface for enumerating vendors.
    *)
-  IDomVendorList = interface(IInterface)
+  IDomVendorList = interface
     ['{2739F26E-98D6-49D0-AAE4-2B0D2DF128BE}']
 
     (**
@@ -1017,8 +1027,21 @@ implementation
 
 type
 
-  IDomVendorRegister = interface (IInterface)
-  ['{7066DA54-8AC1-42A3-8456-DDE9C527A1FD}']
+  (*
+   * Register for registering different DocumentBuilderFactories. Each
+   * DocumentBuilderFactory is identified by a vendorID.
+   *)
+  TDomVendorRegister = class(TInterfacedObject, IDomVendorList)
+    private
+      (* list of DocumentBuilderFactories *)
+      fFactoryList : TInterfaceList;
+    protected //IDomVendorList
+      function  get_Count: integer;
+      function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
+    public
+      constructor Create;
+      destructor Destroy; override;
+
       (*
        * add a new DocumentBuilderFactory to the list.
        * Pre-condition:
@@ -1032,24 +1055,6 @@ type
        * if vendorId is not found then result := nil
       *)
       function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
-  end;
-
-  (*
-   * Register for registering different DocumentBuilderFactories. Each
-   * DocumentBuilderFactory is identified by a vendorID.
-   *)
-  TDomVendorRegister = class(TInterfacedObject, IDomVendorRegister, IDomVendorList)
-    private
-      (* list of DocumentBuilderFactories *)
-      fFactoryList : TInterfaceList;
-    protected //IDomVendorList
-      function  get_Count: integer;
-      function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
-      procedure add(domDocumentBuilderFactory : IDomDocumentBuilderFactory);
-      function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
-    public
-      constructor Create;
-      destructor Destroy; override;
   end;
 
 var
@@ -1171,10 +1176,3 @@ begin
 end;
 
 end.
-
-
-
-
-
-
-

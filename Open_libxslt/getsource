@@ -1,4 +1,4 @@
 #!/bin/bash
-cp ../../../libxslt/*.inc .
-cp ../../../libxslt/*.pas .
-cp ../../../libxslt/*.imp .
+cp ../../headers/src/libxslt*.inc .
+cp ../../headers/src/libexslt*.inc .
+cp ../../headers/src/libxslt*.pas .
