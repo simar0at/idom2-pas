@@ -161,7 +161,7 @@ type
   TDomNodeClass = class of TDomNode;
 
   TDomNode = class(TInterfacedObject, IDomNode, IXMLDOMNodeRef, IDomNodeSelect,
-      IDomNodeExt, IDomNodeCompare)
+      IDomNodeEx, IDomNodeEx2, IDomNodeCompare)
   private
     // this field helps to manage the lifetime of the OwnerDocument:
     // the document won't be freed, as long as a node exists, that
@@ -206,15 +206,16 @@ type
     { IDomNodeSelect }
     function selectNode(const nodePath: DOMString): IDomNode;
     function selectNodes(const nodePath: DOMString): IDomNodeList;
-    procedure RegisterNS(const prefix, URI: DomString);
-    { IDomNodeExt }
+    { IDomNodeEx }
     procedure transformNode(const stylesheet: IDomNode; var output: DomString); overload;
-    procedure transformNode(const stylesheet: IDomNode; var output: IDomDocument); overload;
+    procedure transformNode(const stylesheet: IDomNode; const output: IDomDocument); overload;
     function get_text: DomString;
     procedure set_text(const Value: DomString);
     function get_xml: DOMString;
     { IDomNodeCompare }
     function IsSameNode(node: IDomNode): boolean;
+    { IDomNodeEx2}
+    procedure RegisterNS(const prefix, URI: DomString);
   public
     constructor Create(ANode: xmlNodePtr; ADocument: IDomDocument);
     destructor Destroy; override;
@@ -451,7 +452,13 @@ type
     function  getUriList:TStringList;
 
     // managing stylesheets, that must be freed differently
+    procedure set_fXsltStylesheet(XSL: xsltStylesheetPtr);
+
+    // managing stylesheets, that must be freed differently
     function getXsltStylesheetPtr: xsltStylesheetPtr;
+
+    // doc element injection for XSLT transform.
+    procedure injectDifferentDocElement(docElement: xmlDocPtr);
 
     property reason: DomString read get_reason write set_reason;
 
@@ -557,10 +564,12 @@ type
     function  getNewNamespace(const namespaceURI, prefix: DOMString): xmlNsPtr;
     procedure registerNS(prefix,uri: AnsiString);
     function getXsltStylesheetPtr: xsltStylesheetPtr;
+    procedure set_fXsltStylesheet(XSL: xsltStylesheetPtr);
     function  getPrefixList:TStringList;
     function  getUriList:TStringList;
     procedure set_reason(aReason: DomString);
     procedure removeWhitespace;
+    procedure injectDifferentDocElement(docElement: xmlDocPtr);
     // IDomOutputOptions
     function get_prettyPrint: boolean;
     function get_encoding1: DomString;
@@ -2678,7 +2687,7 @@ begin
   // cyle trough the nodelist
   for i:=0 to self.get_length-1 do begin
     // append the xml of the current node to the result
-    result:=result+delim+(self.get_item(i) as IDomNodeExt).xml;
+    result:=result+delim+(self.get_item(i) as IDomNodeEx).xml;
   end;
 end;
 
@@ -4123,6 +4132,12 @@ begin
      end;
 end;
 
+procedure TDomDocument.injectDifferentDocElement(docElement: xmlDocPtr);
+begin
+  xmlFreeDoc(GetXmlDocPtr());
+  fXmlNode := xmlNodePtr(docElement);
+end;
+
 function TDomDocument.createAttributeNS(const namespaceURI,
   qualifiedName: DOMString): IDomAttr;
 var
@@ -5256,7 +5271,7 @@ var
 begin
   output:='';
 
-  if not Supports(stylesheet, IDomDocument, styleDoc)
+  if not SysUtils.Supports(stylesheet, IDomDocument, styleDoc)
     then
       styleDoc:=stylesheet.ownerDocument;
   if styleDoc = nil then Exit;
@@ -5288,40 +5303,45 @@ begin
     //insert the meta tag for html output after the head tag
     meta := '<META http-equiv="Content-Type" content="text/html; charset=' +
       encoding + '">';
-    len := pos(DOMString('<head>'), output) + 6 - 1;
+    len := pos(DOMString('<head>'), string(output)) + 6 - 1;
     output := leftstr(output, len) + meta + rightstr(output, length(output) - len);
   end;
   xmlFree(CString);
 end;
 
-procedure TDomNode.transformNode(const stylesheet: IDomNode; var output: IDomDocument);
+procedure TDomNode.transformNode(const stylesheet: IDomNode; const output: IDomDocument);
 var
   doc:       xmlDocPtr;
-  styleDoc:  IDomDocument;
+  styleDoc:  xmlDocPtr;
   outputDoc: xmlDocPtr;
+  styleNode: xmlNodePtr;
   tempXSL:   xsltStylesheetPtr;
   impl:      IDomImplementation;
 begin
-  output:=nil;
-
-  if not Supports(stylesheet, IDomDocument, styleDoc)
-    then
-      styleDoc:=stylesheet.ownerDocument;
-  if styleDoc = nil then Exit;
-
-  Doc:=fXmlNode.doc;
-  if Doc = nil then Exit;
-
-  tempXSL:=(styleDoc as IDomInternal).getXsltStylesheetPtr;
+  if output = nil then
+//    raise DOMException.Create(SNodeExpected);
+    raise Exception.Create('output may not be nil!');
+  doc := fXmlNode.doc;
+  // if the node is the documentnode, it's ownerdocument is nil,
+  // so you have to use self to get the domImplementation
+  if self.fOwnerDocument<>nil
+    then impl:= self.fOwnerDocument.domImplementation
+    else impl:= (self as IDomDocument).domImplementation;
+  styleNode := GetXmlNode(stylesheet);
+  styleDoc := styleNode.doc;
+  if (styleDoc = nil) or (doc = nil) then exit;
+  // the userData passed to the error func is not what i expected. need to check
+  // how to set that correctly.
+  xmlSetStructuredErrorFunc(nil, nil);
+  tempXSL := xsltParseStyleSheetDoc(styleDoc);
   if tempXSL = nil then exit;
-
-  outputDoc:=xsltApplyStylesheet(tempXSL, Doc, nil);
+  // mark the document as stylesheetdocument;
+  // it holds additional information, so a different free method must
+  // be used
+  (stylesheet.ownerDocument as IDomInternal).set_fXsltStylesheet(tempXSL);
+  outputDoc := xsltApplyStylesheet(tempXSL, doc, nil);
   if outputDoc = nil then exit;
-
-  // get the domImplementation
-  impl:= (get_OwnerOrSelf as IDomDocument).domImplementation;
-
-  output := TDomDocument.Create(impl, xmlNodePtr(outputDoc)) as IDomDocument;
+  (output as IDomInternal).injectDifferentDocElement(outputDoc);
 end;
 
 function TDomNode.IsSameNode(node: IDomNode): boolean;
@@ -5719,6 +5739,11 @@ end;
 procedure TDomDocument.set_exposeNsDefAttribs(value: boolean);
 begin
   fExposeNsDefAttribs:=value;
+end;
+
+procedure TDomDocument.set_fXsltStylesheet(XSL: xsltStylesheetPtr);
+begin
+  fXsltStylesheet := XSL;
 end;
 
 procedure TDomDocument.setDefaults;

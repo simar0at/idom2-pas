@@ -193,12 +193,12 @@ type
   { IDomNodeExt }
 
   // this interface is similar to the interface IDomNodeEx from Borland,
-  // but not the same, therefore a slightly different name is used
+  // but not the same, (IDomDocument as var not const)
   // it provides methods for xslt transformation (transformNode)
   // for accessing the text-value of an element (similar to textcontent in dom3)
   // and for obtaining the string-value of a node (property xml)
 
-  IDomNodeExt = interface(IDomNode)
+  IDomNodeEx = interface(IDomNode)
     ['{1B41AE3F-6365-41FC-AFDD-26BC143F9C0F}']
     { Property Acessors }
     function get_text: DomString;
@@ -206,16 +206,21 @@ type
     procedure set_text(const Value: DomString);
     { Methods }
     procedure transformNode(const stylesheet: IDomNode; var output: DomString); overload;
-    procedure transformNode(const stylesheet: IDomNode; var output: IDomDocument);
+    procedure transformNode(const stylesheet: IDomNode; const output: IDomDocument);
       overload;
     { Properties }
     property Text: DomString read get_text write set_text;
     property xml: DomString read get_xml;
   end;
 
+  IDomNodeEx2 = interface(IDomNode)
+    ['{1B41AE3F-6365-41FC-AFDD-26BC143F9C0F}']
+    procedure RegisterNS(const prefix, URI: DomString);
+  end;
+
   { IDomNodeListExt }
 
-  // this interface is similar to the interface IDomNodeExt
+  // this interface is similar to the interface IDomNodeEx
   // and is using for serialization of nodelists
 
   IDomNodeListExt = interface(IDomNodeList)

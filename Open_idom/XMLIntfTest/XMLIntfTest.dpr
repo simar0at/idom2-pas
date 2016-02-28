@@ -20,11 +20,11 @@ uses
   XPTest_idom2_TestDOM2Methods in 'XPTest_idom2_TestDOM2Methods.pas',
   domSetup in 'domSetup.pas',
   xmldom_ext in 'xmldom_ext.pas',
-  libxml2xmldom in '..\..\Open_libxml2\libxml2xmldom.pas',
   XPTest_idom2_TestXPath in 'XPTest_idom2_TestXPath.pas',
   XPTest_idom2_TestXSLT in 'XPTest_idom2_TestXSLT.pas',
   DomDocumentTests in 'contrib\DomDocumentTests.pas',
-  DomImplementationTests in 'contrib\DomImplementationTests.pas';
+  DomImplementationTests in 'contrib\DomImplementationTests.pas',
+  libxml in '..\libxml.pas';
 
 {$ifndef linux}
 

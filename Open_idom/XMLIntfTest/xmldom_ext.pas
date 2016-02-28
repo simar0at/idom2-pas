@@ -325,7 +325,7 @@ var
 
 implementation
 
-uses SysUtils, msxmldom, msxml, ComObj;
+uses msxmldom, msxml, ComObj;
 
 type
 

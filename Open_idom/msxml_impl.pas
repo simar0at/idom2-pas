@@ -48,7 +48,7 @@ uses
       MSXML3,
     {$else}
       MSXML2_TLB,
-    {$endif
+    {$endif}
     windows,
     Variants,
     {$IFDEF VER300}
