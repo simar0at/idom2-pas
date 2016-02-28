@@ -5,15 +5,15 @@
   Diese Datei enthält vom Compiler erzeugte Ressourcen, die an die ausführbare Datei gebunden wurden. Wenn diese Datei leer ist, dann wurden keine vom Compiler generierten Ressourcen an die erzeugte ausführbare Datei gebunden.
 */
 
-#define Vcl_ComStrs_sInvalidLevel 65120
-#define Vcl_ComStrs_sInvalidLevelEx 65121
-#define Vcl_ComStrs_sInvalidIndex 65122
-#define Vcl_ComStrs_sInsertError 65123
-#define Vcl_ComStrs_sInvalidOwner 65124
-#define Vcl_ComStrs_sRichEditInsertError 65125
-#define Vcl_ComStrs_sRichEditLoadFail 65126
-#define Vcl_ComStrs_sRichEditSaveFail 65127
-#define Vcl_OleConst_sNoRunningObject 65128
+#define Vcl_OleConst_sNoRunningObject 65120
+#define Vcl_ComStrs_sInvalidLevel 65121
+#define Vcl_ComStrs_sInvalidLevelEx 65122
+#define Vcl_ComStrs_sInvalidIndex 65123
+#define Vcl_ComStrs_sInsertError 65124
+#define Vcl_ComStrs_sInvalidOwner 65125
+#define Vcl_ComStrs_sRichEditInsertError 65126
+#define Vcl_ComStrs_sRichEditLoadFail 65127
+#define Vcl_ComStrs_sRichEditSaveFail 65128
 #define Vcl_Consts_SStyleClassNotFound 65136
 #define Vcl_Consts_SStyleInvalidHandle 65137
 #define Vcl_Consts_SStyleFormatError 65138
@@ -416,6 +416,7 @@
 #define System_SysConst_SDiskFull 65535
 STRINGTABLE
 BEGIN
+	Vcl_OleConst_sNoRunningObject,	L"Es kann kein Zeiger auf ein ausgef\x00fchrtes Objekt geholt werden, dass mit OLE f\x00fcr %s/%s registriert ist"
 	Vcl_ComStrs_sInvalidLevel,	L"Ung\x00fcltige Zuweisung von Eintragsebenen"
 	Vcl_ComStrs_sInvalidLevelEx,	L"Ung\x00fcltige Ebene (%d) f\x00fcr Eintrag \"%s\""
 	Vcl_ComStrs_sInvalidIndex,	L"Ung\x00fcltiger Index"
@@ -424,7 +425,6 @@ BEGIN
 	Vcl_ComStrs_sRichEditInsertError,	L"Fehler beim Einf\x00fcgen einer Zeile in RichEdit"
 	Vcl_ComStrs_sRichEditLoadFail,	L"Stream konnte nicht geladen werden"
 	Vcl_ComStrs_sRichEditSaveFail,	L"Stream konnte nicht gespeichert werden"
-	Vcl_OleConst_sNoRunningObject,	L"Es kann kein Zeiger auf ein ausgef\x00fchrtes Objekt geholt werden, dass mit OLE f\x00fcr %s/%s registriert ist"
 	Vcl_Consts_SStyleClassNotFound,	L"Stilklasse '%s' nicht gefunden"
 	Vcl_Consts_SStyleInvalidHandle,	L"Ung\x00fcltiges Stil-Handle"
 	Vcl_Consts_SStyleFormatError,	L"Ung\x00fcltiges Stilformat"

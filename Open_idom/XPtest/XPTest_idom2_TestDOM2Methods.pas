@@ -14,11 +14,8 @@ uses
 {$endif}
   XPTest_idom2_Shared,
   Classes,
-{$ifdef VER130} // Delphi5
   Dialogs;
-{$else}
-  QDialogs;
-{$endif}
+
 
 type
   TTestDOM2Methods = class(TMyTestCase)

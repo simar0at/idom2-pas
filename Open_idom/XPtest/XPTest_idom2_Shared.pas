@@ -13,6 +13,7 @@ uses
   QForms,
   QStdCtrls,
   QControls,
+  QDialogs,
 {$else}
   Forms,
   StdCtrls,
@@ -22,12 +23,7 @@ uses
   {$IFDEF FPC}
   TestFrameworkIfaces,
   {$ENDIF}
-  Classes,
-{$ifdef VER130} // Delphi5
-  Dialogs;
-{$else}
-  QDialogs;
-{$endif}
+  Classes, Dialogs;
 
 const
   cUTF8   = 'utf-8'; // utf-8
