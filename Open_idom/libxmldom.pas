@@ -543,7 +543,7 @@ type
     procedure set_resolveExternals(Value: boolean);
     procedure set_validate(Value: boolean);
     // IDomPersist
-    function get_xml: DOMString; //IDomPersist
+    function get_xml: DOMString;
     function asyncLoadState: integer;
     function loadFrom_XmlParserCtx(ctxt: xmlParserCtxtPtr): boolean;
     function load(Source: DOMString): boolean;

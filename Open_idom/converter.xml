@@ -301,6 +301,8 @@ var
            with="    procedure set_validate(Value: boolean); safecall;" />;
   <replace line="    function get_xml: DOMString;"
            with="    function get_xml: DOMString; safecall;" />
+  <replace line="    function get_xml: DOMString;"
+           with="    function get_xml: DOMString; safecall;" />
   <replace line="    function get_text: DomString;"
            with="    function get_text: DomString; safecall;" />
   <replace line="    procedure set_text(const Value: DomString);"
