@@ -1,9 +1,13 @@
 unit libxml2xmldom;
 
+  
+
 {
   ------------------------------------------------------------------------------
    This unit is an object-oriented wrapper for libxml2.
-   It implements the interfaces defined in idom2.pas and idom2_ext.pas .
+   It implements the interfaces defined in xmldom.pas from Borland and the
+   extensions defined in xmldom_ext.pas.
+  
 
    Original author:
    Uwe Fechner <ufechner@4commerce.de>
@@ -12,6 +16,8 @@ unit libxml2xmldom;
    Martijn Brinkers   <m.brinkers@pobox.com>
    Petr Kozelka       <pkozelka@centrum.cz>
    Thomas Freudenberg <th.freudenberg@4commerce.de>
+   Marco Voetberg     <marco@dqd.nl>
+   Daniel Rikowski
 
    Thanks to the gdome2 project, where I got many ideas from.
    (see: http://phd.cs.unibo.it/gdome2/)
@@ -41,27 +47,28 @@ unit libxml2xmldom;
   ------------------------------------------------------------------------------
 }
 
-  // implemented methods:
-  // ====================
-  // see tests_libxml2.txt
+  // !!! This version is created automatically from libxmldom.pas
+  // !!! using the template converter.xml.
+  // !!! If you want to make persistant changes, apply them to libxmldom.pas
+  // !!! or to converter.xml, not to this file directly.
 
   // Partly supported by libxml2:
   // IDomPersist
   // (asynchron parsing of xml files/ strings is not supported)
 
-
-
 interface
 
 
 uses
-{$IFDEF MSWINDOWS}
-  ActiveX,
-{$ENDIF}
 {$ifdef VER130} // Delphi 5
   jclUnicode,   // UTF8Encode and UTF8Decode
 {$else}
   StrUtils,
+{$endif}
+{$ifdef MSWINDOWS}
+  activex,
+{$else}
+  types,
 {$endif}
   classes,
   xmldom,
@@ -69,13 +76,24 @@ uses
   libxml2,
   libxslt,
   sysutils;
-
-
+  
 const
 
   SLIBXML = 'LIBXML_4CT';  { Do not localize }
 
 type
+  { IXmlDomDocRef }
+
+  (*
+   * IXmlDomDocRef is an interface that can be implemented by any object
+   * that has a corresponding c-struct in libxml2 representing an xml-doc-node.
+   * implemented by TDomDocument.
+   *)
+
+  IXmlDomDocRef = interface
+    ['{86A9F11A-3AA5-4111-B860-CA60D4FA3ACA}']
+    function GetXmlDocPtr: xmlDocPtr;
+  end;
 
   { IXmlDomNodeRef }
 
@@ -83,8 +101,9 @@ type
    * IXmlDomNodeRef is an interface that can be implemented by any object
    * that has a corresponding c-struct in libxml2 representing an xml-node.
    * implemented by TDomNode.
+   * It cannot be in the unit idom2_ext, because it uses the type xmlNodePtr,
+   * that is defined in libxml2.
    *)
-   // todo: move to idom2_ext or to the protected part of this unit
 
   IXmlDomNodeRef = interface
     ['{7787A532-C8C8-4F3C-9529-29098FE954B0}']
@@ -109,12 +128,48 @@ function GetXmlNode(const Node: IDomNode): xmlNodePtr;
 function MakeDocument(doc: xmlDocPtr; impl: IDomImplementation): IDomDocument;
 
 (*
+ * same as GetXmlDocPtr of IXmlDomDocRef, but declared as function and
+ * additional error-check
+ *)
+function GetXmlDoc(const Doc: IDomDocument): xmlDocPtr;
+
+(*
+ * create an IDomImplementation based on TDomImplementation Object
+ *
+ *)
+function newDomImplementation: IDomImplementation;
+
+(*
+ * Same as IsSameNode of IDomNodeCompare, but declared as function
+ * and works correctly, if any of the nodes is nil.
+ * It is neccessary to use it with libxml2, because there can be
+ * several interfaces pointing to the same node.
+ *)
+function IsSameNode(node1, node2: IDomNode): boolean;
+
+
+// code for registration with Borland TXMLDocument
+type
+
+{ TMSDOMImplementationFactory }
+
+  TDOMImplementationFactory = class(TDOMVendor)
+  public
+    function DOMImplementation: IDOMImplementation; override;
+    function Description: String; override;
+  end;
+
+
+(*
  * same as IsSameNode of IDomNodeCompare, but declared as function
  * and works correctly, if any of the nodes is nil
  * it is neccessary to use it with libxml2, because there can be
  * several interfaces pointing to the same node
  *)
 function IsSameNode(node1, node2: IDomNode): boolean;
+
+var
+  LIBXML_DOM: TDOMImplementationFactory;
 
 implementation
 
@@ -166,6 +221,7 @@ type
     { for internal use within this unit only}
     function IsReadOnly: boolean;
     function IsAncestorOrSelf(newNode: xmlNodePtr): boolean;
+    function Get_ExposeNsDefAttribs: boolean;
     { IDomNode }
     function get_nodeName: DOMString; safecall;
     function get_nodeValue: DOMString; safecall;
@@ -174,11 +230,12 @@ type
     function get_parentNode: IDomNode; safecall;
     function get_childNodes: IDomNodeList; safecall;
     function get_firstChild: IDomNode; safecall;
-    function get_lastChild: IDomNode; safecall;
+    function get_lastChild: IDomNode;safecall;
     function get_previousSibling: IDomNode; safecall;
     function get_nextSibling: IDomNode; safecall;
     function get_attributes: IDomNamedNodeMap; safecall;
     function get_ownerDocument: IDomDocument; safecall;
+    function get_ownerOrSelf: IDomDocument;
     function get_namespaceURI: DOMString; safecall;
     function get_prefix: DOMString; safecall;
     procedure set_Prefix(const prefix: DomString); safecall;
@@ -195,17 +252,18 @@ type
     { IXmlDomNodeRef }
     function GetXmlNodePtr: xmlNodePtr;
     { IDomNodeSelect }
-    function selectNode(const nodePath: WideString): IDomNode; safecall;
-    function selectNodes(const nodePath: WideString): IDomNodeList; safecall;
-    procedure RegisterNS(const prefix, URI: DomString);
-    { IDomNodeExt }
-    procedure transformNode(const stylesheet: IDomNode; var output: WideString); overload; safecall;
+    function selectNode(const nodePath: XmlDomString): IDomNode; safecall;
+    function selectNodes(const nodePath: XmlDomString): IDomNodeList; safecall;
+    { IDomNodeEx }
+    procedure transformNode(const stylesheet: IDomNode; var output: XmlDomString); overload; safecall;
     procedure transformNode(const stylesheet: IDomNode; const output: IDomDocument); overload; safecall;
     function get_text: DomString; safecall;
     procedure set_text(const Value: DomString); safecall;
     function get_xml: DOMString; safecall;
     { IDomNodeCompare }
     function IsSameNode(node: IDomNode): boolean;
+    { IDomNodeEx2}
+    procedure RegisterNS(const prefix, URI: DomString);
   public
     constructor Create(ANode: xmlNodePtr; ADocument: IDomDocument);
     destructor Destroy; override;
@@ -223,7 +281,7 @@ type
   protected
     { IDomNodeList }
     function get_item(index: integer): IDomNode; safecall;
-    function get_length: integer; safecall;
+    function get_length: integer;  safecall;
     { IDomNodeListExt }
     function get_xml: DomString;
   public
@@ -247,14 +305,14 @@ type
     { internal }
     function get_xmlAttributes: xmlNodePtr;
     { IDomNamedNodeMap }
-    function get_item(index: integer): IDomNode; safecall;
+    function get_item(index: integer): IDomNode;  safecall;
     function get_length: integer; safecall;
-    function getNamedItem(const Name: DOMString): IDomNode; safecall;
-    function setNamedItem(const newItem: IDomNode): IDomNode; safecall;
-    function removeNamedItem(const Name: DOMString): IDomNode; safecall;
-    function getNamedItemNS(const namespaceURI, localName: DOMString): IDomNode; safecall;
-    function setNamedItemNS(const newItem: IDomNode): IDomNode; safecall;
-    function removeNamedItemNS(const namespaceURI, localName: DOMString): IDomNode; safecall;
+    function getNamedItem(const Name: DOMString): IDomNode;  safecall;
+    function setNamedItem(const newItem: IDomNode): IDomNode;  safecall;
+    function removeNamedItem(const Name: DOMString): IDomNode;  safecall;
+    function getNamedItemNS(const namespaceURI, localName: DOMString): IDomNode;  safecall;
+    function setNamedItemNS(const newItem: IDomNode): IDomNode;  safecall;
+    function removeNamedItemNS(const namespaceURI, localName: DOMString): IDomNode;  safecall;
   public
     constructor Create(ANamedNodeMap: xmlNodePtr; AOwnerDocument: IDomDocument;
       typ: TDomNamedNodeMapType = nnmAttributes; externalDtd: xmlDtdPtr = nil);
@@ -309,13 +367,13 @@ type
     function getXmlElement: xmlNodePtr;
   protected
     { IDomElement }
-    function get_tagName: DOMString; safecall;
-    function getAttribute(const Name: DOMString): DOMString; safecall;
+    function get_tagName: DOMString;  safecall;
+    function getAttribute(const Name: DOMString): DOMString;  safecall;
     procedure setAttribute(const Name, Value: DOMString); safecall;
     procedure removeAttribute(const Name: DOMString); safecall;
-    function getAttributeNode(const Name: DOMString): IDomAttr; safecall;
-    function setAttributeNode(const newAttr: IDomAttr): IDomAttr; safecall;
-    function removeAttributeNode(const oldAttr: IDomAttr): IDomAttr; safecall;
+    function getAttributeNode(const Name: DOMString): IDomAttr;  safecall;
+    function setAttributeNode(const newAttr: IDomAttr): IDomAttr;  safecall;
+    function removeAttributeNode(const oldAttr: IDomAttr): IDomAttr;  safecall;
     function getElementsByTagName(const Name: DOMString): IDomNodeList; safecall;
     function getAttributeNS(const namespaceURI, localName: DOMString): DOMString; safecall;
     procedure setAttributeNS(const namespaceURI, qualifiedName, Value: DOMString); safecall;
@@ -414,7 +472,7 @@ type
     { IDomProcessingInstruction }
     function get_target: DOMString; safecall;
     function get_data: DOMString; safecall;
-    procedure set_data(const Value: DOMString); safecall;
+    procedure set_data(const data: DOMString); safecall;
   end;
 
   (*
@@ -423,14 +481,18 @@ type
    *)
   IDomInternal = interface
     ['{E9D505C3-D354-4D19-807A-8B964E954C09}']
+    procedure set_reason(aReason: DomString);
+    function get_reason: DomString; safecall;
 
     // managing the list of nodes and attributes, that must be freed manually
     procedure removeNode(node: xmlNodePtr);
     procedure removeAttr(attr: xmlAttrPtr);
     procedure appendAttr(attr: xmlAttrPtr);
     procedure appendNode(node: xmlNodePtr);
+    procedure appendNs(ns: xmlNsPtr);
     function  getNewNamespace(const namespaceURI, prefix: DOMString): xmlNsPtr;
-    function  findOrCreateNewNamespace(const node: xmlNodePtr; const ns: xmlNsPtr): xmlNsPtr;
+    function  findOrCreateNewNamespace(const node: xmlNodePtr; const ns: xmlNsPtr): xmlNsPtr; overload;
+    function  findOrCreateNewNamespace(const node: xmlNodePtr; const namespaceURI, prefix: PAnsiChar): xmlNsPtr; overload;
 
     // managing a list of namespace declarations for xpath queries
     procedure registerNS(prefix,uri: AnsiString);
@@ -438,16 +500,23 @@ type
     function  getUriList:TStringList;
 
     // managing stylesheets, that must be freed differently
-    procedure set_fTempXSL(tempXSL: xsltStylesheetPtr);
+    procedure set_fXsltStylesheet(XSL: xsltStylesheetPtr);
+
+    // managing stylesheets, that must be freed differently
+    function getXsltStylesheetPtr: xsltStylesheetPtr;
 
     // doc element injection for XSLT transform.
     procedure injectDifferentDocElement(docElement: xmlDocPtr);
 
+    // this procedure removes all text nodes, that contain whitespace only
+    procedure removeWhitespace;
     // parser context for locating nodes
     function getParserCtxt: xmlParserCtxtPtr;
     // get schema varieties
     function getAsXSDSchema: xmlSchemaPtr;
     function getAsRelaxNG: xmlRelaxNGPtr;
+
+    property reason: DomString read get_reason write set_reason;
   end;
 
   { TError }
@@ -472,11 +541,11 @@ type
 
   { TDomDocument }
 
-  TDomDocument = class(TDomNode, IDomDocument, IDomParseOptions, IDomPersist,
-      IDomParseError, IDomInternal, IDomOutputOptions, IDOMDocumentEx)
+  TDomDocument = class(TDomNode, IXmlDomDocRef, IDomDocument, IDomParseOptions, IDomImplOptions,
+      IDomPersist, IDomPersistHTML, IDomInternal, IDomOutputOptions, IDomParseError, IDOMXMLProlog, IDOMDocumentEx)
   private
     fDomImpl: IDomImplementation;  // the domimplementation used to create this document
-    fTempXSL: xsltStylesheetPtr;   // if the document was used as stylesheet,
+    fXsltStylesheet: xsltStylesheetPtr;   // if the document was used as stylesheet,
                                    // this Pointer has to be freed and not
                                    // the xmlDocPtr
     fAsync: boolean;               // for compatibility, not really supported
@@ -502,8 +571,12 @@ type
     fPrefixList: TStringList;      // if you want to use prefixes in xpath expressions,
     fURIList: TStringList;         // they must be registered and are then stored
                                    // on this two lists.
-                                   // todo: use one list for prefix and uri as
-                                   //       name-value pairs
+    fReason:  DomString;           // reason of last parse error
+    fLine:    integer;             // line of the first parse error
+    fLinePos: integer;             // row of first parse error
+    fUrl:     DomString;           // filename or URL of parsed file containing error
+    fExposeNsDefAttribs: boolean;  // whether to expose namespace declaration attributes
+                                   // as Attributes via the IDomElement methods or not
     fError: TError;           // xmlError structure returned by xmlCtxGetLastError
     fParserCtxtPtr: xmlParserCtxtPtr;
     fDocAsXSDSchema: xmlSchemaPtr; // The doc as parsed XSD schema
@@ -512,6 +585,9 @@ type
     fDefaultRelaxNGValidCtxt: xmlRelaxNGValidCtxtPtr;
     fDefaultXSDSchemaDoc: IDOMDocument;
     fDefaultXSDValidCtxt: xmlSchemaValidCtxtPtr;
+    procedure processError;        // removes wrong error message validation error (if fValidate=false)
+                                   // end extracts line and row number of error from fReason
+    procedure setDefaults;         // set the default options
     procedure setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
     procedure setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
     procedure injectDifferentDocElement(docElement: xmlDocPtr);
@@ -520,11 +596,13 @@ type
     function xsdValidate(source: IDOMDocument; flags: Integer): Boolean;
     function rngValidate(source: IDOMDocument): Boolean;
   protected
+    // IXmlDomDocRef
+    function GetXmlDocPtr: xmlDocPtr;
     // IDomDocument
     function get_doctype: IDomDocumentType; safecall;
     function get_domImplementation: IDomImplementation; safecall;
     function get_documentElement: IDomElement; safecall;
-    procedure set_documentElement(const IDomElement: IDomElement); safecall;
+    procedure set_documentElement(const Element: IDomElement); safecall;
     function createElement(const tagName: DOMString): IDomElement; safecall;
     function createDocumentFragment: IDomDocumentFragment; safecall;
     function createTextNode(const Data: DOMString): IDomText; safecall;
@@ -544,49 +622,60 @@ type
       localName: DOMString): IDomNodeList; safecall;
     function getElementById(const elementId: DOMString): IDomElement; safecall;
     // IDomParseOptions
-    function get_async: Boolean; safecall;
-    function get_preserveWhiteSpace: Boolean; safecall;
-    function get_resolveExternals: Boolean; safecall;
-    function get_validate: Boolean; safecall;
-    procedure set_async(Value: Boolean); safecall;
-    procedure set_preserveWhiteSpace(Value: Boolean); safecall;
-    procedure set_resolveExternals(Value: Boolean); safecall;
-    procedure set_validate(Value: Boolean); safecall;
+    function get_async: boolean; safecall;
+    function get_preserveWhiteSpace: boolean; safecall;
+    function get_resolveExternals: boolean; safecall;
+    function get_validate: boolean; safecall;
+    procedure set_async(Value: boolean); safecall;
+    procedure set_preserveWhiteSpace(Value: boolean); safecall;
+    procedure set_resolveExternals(Value: boolean); safecall;
+    procedure set_validate(Value: boolean); safecall;
     // IDomPersist
     function get_xml: DOMString; safecall;
     function asyncLoadState: integer; safecall;
     function loadFrom_XmlParserCtx(ctxt: xmlParserCtxtPtr): boolean;
     function load(Source: OleVariant): WordBool; safecall;
+
     function loadFromStream(const stream: TStream): WordBool; overload; safecall;
     function loadFromStream(const stream: IStream): WordBool; overload; safecall;
-    function loadxml(const Value: WideString): WordBool; safecall;
-    procedure save(destination: OleVariant); safecall;
+  
+    function loadxml(const Value: DOMString): WordBool; safecall;
+    procedure save(Source: OleVariant); safecall;
+
     procedure saveToStream(const stream: TStream); overload; safecall;
     procedure saveToStream(const stream: IStream); overload; safecall;
+  
     procedure set_OnAsyncLoad(const Sender: TObject;
       EventHandler: TAsyncEventHandler); safecall;
+    // IDomPersistHTML
+    function get_html: DOMString;
     // IDomInternal
     procedure removeNode(node: xmlNodePtr);
     procedure appendNode(node: xmlNodePtr);
     procedure removeAttr(attr: xmlAttrPtr);
     procedure appendAttr(attr: xmlAttrPtr);
+    procedure appendNs(ns: xmlNsPtr);
     function  getNewNamespace(const namespaceURI, prefix: DOMString): xmlNsPtr;
     procedure registerNS(prefix,uri: AnsiString);
-    procedure set_fTempXSL(tempXSL: xsltStylesheetPtr);
+    function getXsltStylesheetPtr: xsltStylesheetPtr;
+    procedure set_fXsltStylesheet(XSL: xsltStylesheetPtr);
     function  getPrefixList:TStringList;
     function  getUriList:TStringList;
+    procedure set_reason(aReason: DomString);
+    procedure removeWhitespace;
+    procedure injectDifferentDocElement(docElement: xmlDocPtr);
     function getParserCtxt: xmlParserCtxtPtr;
     function getAsXSDSchema: xmlSchemaPtr;
     function getAsRelaxNG: xmlRelaxNGPtr;
     // IDomOutputOptions
     function get_prettyPrint: boolean;
-    function get_encoding: DomString;
+    function get_encoding1: DomString;
     function get_parsedEncoding: DomString;
     function get_compressionLevel: integer;
     procedure set_prettyPrint(prettyPrint: boolean);
-    procedure set_encoding(encoding: DomString);
+    procedure set_encoding1(encoding: DomString);
     procedure set_compressionLevel(compressionLevel: integer);
-    // IDOMParseError
+    // IDomParseError
     function get_errorCode: Integer; safecall;
     function get_url: DOMString; safecall;
     function get_reason: DOMString; safecall;
@@ -594,6 +683,17 @@ type
     function get_line: Integer; safecall;
     function get_linepos: Integer; safecall;
     function get_filepos: Integer; safecall;
+    // IDomImplOptions
+    function  get_exposeNsDefAttribs: boolean;
+    procedure set_exposeNsDefAttribs(value: boolean);
+    // IDOMXMLProlog
+    function get_Encoding: DOMString; safecall;
+    function get_Standalone: DOMString; safecall;
+    function get_Version: DOMString; safecall;
+    procedure set_Encoding(const Value: DOMString); safecall;
+    procedure set_Standalone(const Value: DOMString); safecall;
+    procedure set_Version(const Value: DOMString); safecall;
+      // not bound to an interface
     // IDOMDocumentEx
     function get_relaxNG: IDOMDocument; safecall;
     function get_xmlschema: IDOMDocument; safecall;
@@ -603,11 +703,12 @@ type
     function schemaValidateSource (source: DOMString; flags: LongInt): WordBool; safecall;
     function relaxNGValidate (filename: OleVariant): WordBool; safecall;
     function relaxNGValidateSource (source: DOMString): WordBool; safecall;
-    // not bound to an interface
-    function  getXmlDocument: xmlDocPtr;
+    // not bound to an interface;
     function  findNamespaceNode(const ns: xmlNsPtr): boolean;
     function  findOrCreateNewNamespace(const node: xmlNodePtr; const ns: xmlNsPtr): xmlNsPtr; overload;
     function  findOrCreateNewNamespace(const node: xmlNodePtr; const namespaceURI, prefix: PAnsiChar): xmlNsPtr; overload;
+    procedure setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
+    procedure setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
   public
     // to create an empty document or a document with a documentElement node
     // this constructor is used:
@@ -637,6 +738,7 @@ type
   TLibXML2ImplementationFactory = class(TDOMVendor)
   private
     fFreeThreading: boolean;
+
   public
     constructor Create(AFreeThreading: boolean);
     destructor Destroy; override;
@@ -655,10 +757,53 @@ function IsXmlName(const S: DOMString): boolean; forward;
 function IsXmlChars(const S: DOMString): boolean; forward;
 
 
+const
+  {$ifdef mswindows}
+    crlf=#13#10;
+  {$else}
+    crlf=#10;
+  {$endif}
+
 // *************************************************************
 // internal methods
 // *************************************************************
 
+
+{$ifdef VER130} // Delphi 5
+function UTF8Encode(s: DOMString):AnsiString;
+begin
+  result:=jclUnicode.WideStringToUTF8(s);
+end;
+{$endif}
+
+function UTF8Decode(const s: PAnsiChar): DOMString;
+begin
+  if Assigned(s)
+  {$ifdef VER130} // Delphi 5
+     then Result := jclUnicode.UTF8ToWideString(s)
+  {$else}
+     then Result := System.UTF8Decode(s)
+  {$endif}
+     else Result := '';
+end;
+
+function isEncodingUTF8(const Encoding: DOMString): boolean;
+var
+  S : AnsiString;
+begin
+  S:=lowercase(Encoding);
+
+  Result:=(S='utf-8') or (S='utf8');
+end;
+
+function isEncodingUTF16(const Encoding: DOMString): boolean;
+var
+  S : AnsiString;
+begin
+  S:=lowercase(Encoding);
+
+  Result:=(S='utf-16') or (S='utf16');
+end;
 
 // converts an error no into the corresponding string
 function errorString(err: integer): string;
@@ -679,6 +824,8 @@ begin
     INVALID_MODIFICATION_ERR: Result := SINVALID_MODIFICATION_ERR;
     NAMESPACE_ERR: Result := SNAMESPACE_ERR;
     INVALID_ACCESS_ERR: Result := SINVALID_ACCESS_ERR;
+    NULL_PTR_ERR: Result:='NULL_PTR_ERR';
+    WRITE_ERR: Result:='WRITE_ERR';
     20: Result := 'SaveXMLToMemory_ERR';
     22: Result := 'SaveXMLToDisk_ERR';
     100: Result := 'LIBXML2_NULL_POINTER_ERR';
@@ -703,6 +850,67 @@ begin
     raise E;
   end;
 end;
+
+{+------------------------------------------------------------
+ | Function IScan
+ |
+ | Parameters:
+ |  ch: Character to scan for
+ |  S : String to scan
+ |  fromPos: first character to scan
+ | Returns:
+ |  position of next occurence of character ch, or 0, if none
+ |  found
+ | Description:
+ |  Search for next occurence of a character in a string.
+ | Error Conditions: none
+ | Created: 11/27/96 by P. Below
+ +------------------------------------------------------------}
+Function IScan( ch: Char; Const S: String; fromPos: Integer ): Integer;
+Var
+  i: Integer;
+Begin
+  Result := 0;
+  For i := fromPos  To Length(S) Do Begin
+    If S[i] = ch Then Begin
+      Result := i;
+      Break;
+    End; { If }
+  End; { For }
+End; { IScan }
+
+{+------------------------------------------------------------
+ | Procedure SplitString
+ |
+ | Parameters:
+ |  S: String to split
+ |  separator: character to use as separator between substrings
+ |  substrings: list to take the substrings
+ | Description:
+ |  Isolates the individual substrings and copies them into the
+ |  passed stringlist. Note that we only add to the list, we do
+ |  not clear it first! If two separators follow each other directly
+ |  an empty string will be added to the list.
+ | Error Conditions:
+ |  will do nothing if the stringlist is not assigned
+ | Created: 08.07.97 by P. Below
+ +------------------------------------------------------------}
+Procedure SplitString( Const S: String; separator: Char; substrings: TStringList );
+Var
+  i, n: Integer;
+Begin
+  If Assigned( substrings ) and ( Length( S )>0 ) Then Begin
+    i:= 1;
+    Repeat
+      n := IScan( separator, S, i );
+      If n = 0 Then
+        n:= Length( S )+1;
+      substrings.Add( Copy( S,i,n-i ));
+      i:= n+1;
+    Until i>Length( S );
+  End; { If }
+End; { SplitString }
+
 
 function IsReadOnlyNode(node: xmlNodePtr): boolean;
 begin
@@ -840,6 +1048,53 @@ begin
   Result := True;
 end;
 
+procedure addNsdef(node: xmlNodePtr); overload;
+// this procedure appends the namespace of the node and of all its
+// attributes (but not the default attributes) to it's nsdef list
+var
+  attr: xmlAttrPtr;
+begin
+  // append the namespace of the node
+  if node.ns <> nil then begin
+    appendNamespace(node,node.ns,true);
+  end;
+  // append the namespace of it's attributes
+  attr:=node.properties;
+  // loop through the list of attributes
+  while attr <> nil do begin
+    // append the namespace of the current attribute
+    if attr.ns <> nil then begin
+      appendNamespace(node,attr.ns,true);
+    end;
+    attr:=attr.next;
+  end;
+end;
+
+procedure addNsdef(node: xmlNodePtr; deep: boolean); overload;
+// this procedure appends the namespace of the node and of all its
+// attributes (but not the default attributes) to it's nsdef list
+// if deep is true, than it works recursively through the node and
+// all it's children
+var
+  child: xmlNodePtr;
+begin
+  // exit the function, if node isn't an element node
+  if node.type_ <> XML_ELEMENT_NODE then exit;
+  // add the namespace(s) of the node itself
+  addNsdef(node);
+  // if deep, then loop through all children
+  if deep then begin
+    // get the first child
+    child:=node.children;
+    // if it exists, loop through the list of children
+    while child <> nil do begin
+      // add the namespaces of the subtree of the child
+      addNsdef(child, true);
+      child:=child.next;
+    end;
+  end;
+end;
+
 function charCountOf(c: WideChar; const s: DOMString; breakAfter: integer = 0): integer;
 var i: integer;
 begin
@@ -861,17 +1116,6 @@ end;
 function split_localName(const qualifiedName: DOMString): DOMString;
 begin
   Result := Copy(qualifiedName, Pos(':', qualifiedName) + 1, MAXINT);
-end;
-
-function UTF8Decode(const s: DOMString): DOMString;
-begin
-  if s <> ''
-  {$ifdef VER130} // Delphi 5
-     then Result := jclUnicode.UTF8Decode(s)
-  {$else}
-     then Result := System.UTF8Decode(AnsiString(s))
-  {$endif}
-     else Result := '';
 end;
 
 function check_IsSupported(const feature, version: DOMString): boolean;
@@ -983,6 +1227,18 @@ begin
   if ((qualifiedName = 'xmlns') or (split_prefix(qualifiedName) = 'xmlns'))
     and (namespaceURI <> SXMLNamespaceURI) then checkError(NAMESPACE_ERR);
 end;
+
+function check_NsDeclAttr1(const qualifiedName: DOMString): integer;
+// returns 1 for defaultns and 2 for nsdecl attribute, 0 otherwise
+begin
+  result:=0;
+  if (qualifiedName = 'xmlns')
+    then result:=1
+    else if (split_prefix(qualifiedName) = 'xmlns')
+      then result:=2;
+end;
+
+
 
 // *************************************************************
 // internal libxml_utils methods
@@ -1151,6 +1407,79 @@ begin
   child:=node.children;
   while assigned(child) do begin
     cleanNsdef(child,true);
+
+function xmlGetDefaultNs(node: xmlNodePtr): xmlNsPtr;
+// get the default namespace attribute of the element node
+// if there is none, return nil
+var
+  nsDef: xmlNsPtr;
+begin
+  // set the default value
+  result:=nil;
+  // get the first entry of the nsdef list
+  nsDef:=node.nsDef;
+  // loop through the list
+  while nsDef<>nil do begin
+    // if the prefix is nil, then we found the default namespace
+    if nsDef.prefix=nil then begin
+      // set the result
+      result:=nsDef;
+      // exit
+      exit;
+    end;
+    // get the next member of the list
+    nsDef:=nsDef.next;
+  end;
+end;
+
+function xmlRemoveDefaultNs(node: xmlNodePtr): xmlNsPtr;
+// remove the default namespace from the passed element node
+// returns true, if a default ns was found and removed
+begin
+  result:=nil;
+  if node.type_ <> XML_ELEMENT_NODE then exit;
+  result:=xmlGetDefaultNs(node);
+  if result=nil then exit;
+  // remove the defaultNs;
+  removeNamespace(node,result);
+end;
+
+procedure xmlRemoveWhitespace(node:xmlNodePtr); overload;
+  // removes all empty text nodes from the child- list of the given element-node
+  // and frees them
+  var
+    tmp,next: xmlNodePtr;
+  begin
+    if node.type_ <> XML_ELEMENT_NODE then exit;
+    tmp:=node.children;
+    while tmp<>nil do begin
+      next:=tmp.next;
+        if xmlIsBlankNode(tmp) = 1 then begin
+          //remove the whitespace from the list of children
+          xmlUnlinkNode(tmp);
+          //free it
+          xmlFreeNode(tmp);
+      end;
+      tmp:=next;
+    end;
+  end;
+
+procedure xmlRemoveWhitespace(node:xmlNodePtr; deep: boolean); overload;
+// removes all empty text nodes from the child- list of the given element-node
+// and his children and grandchildren... (deep=true), and frees them
+var
+  child: xmlNodePtr;
+begin
+  // exit the function, if node isn't an element node
+  if node.type_ <> XML_ELEMENT_NODE then exit;
+  // clean the nsdef list of the current node
+  xmlRemoveWhitespace(node);
+  // if not deep, than all done!
+  if not deep then exit;
+  // if deep, than process the list of children of this node
+  child:=node.children;
+  while assigned(child) do begin
+    xmlRemoveWhitespace(child,true);
     child:=child.next;
   end;
 end;
@@ -1295,7 +1624,68 @@ begin
   end;
 end;
 
-// **************** this code might be moved to libxml_hash.inc****************
+//
+// macros from xpath.h
+//
+
+(* These macros may later turn into functions *)
+(**
+ * xmlXPathNodeSetGetLength:
+ * @ns:  a node-set
+ *
+ * Implement a functionality similar to the DOM NodeList.length
+ *
+ * Returns the number of nodes in the node-set.
+ *)
+function xmlXPathNodeSetGetLength(ns: xmlNodeSetPtr): Integer;
+begin
+  if ns = nil then begin
+    Result := 0;
+  end else begin
+    Result := ns^.nodeNr;
+  end;
+end;
+
+(**
+ * xmlXPathNodeSetItem:
+ * @ns:  a node-set
+ * @index:  index of a node in the set
+ *
+ * Implements a functionnality similar to the DOM NodeList.item().
+ *
+ * Returns the xmlNodePtr at the given @index in @ns or NULL if
+ *         @index is out of range (0 to length-1)
+ *)
+function xmlXPathNodeSetItem(ns: xmlNodeSetPtr; index: Integer): xmlNodePtr;
+var
+  p: PxmlNodePtr;
+begin
+  Result := nil;
+  if ns = nil then exit;
+  if index < 0 then exit;
+  if index >= ns^.nodeNr then exit;
+  p := ns^.nodeTab;
+  Inc(p, index);
+  Result := p^;
+end;
+
+(**
+ * xmlXPathNodeSetIsEmpty:
+ * @ns: a node-set
+ *
+ * Checks whether @ns is empty or not.
+ *
+ * Returns %TRUE if @ns is an empty node-set.
+ *)
+function xmlXPathNodeSetIsEmpty(ns: xmlNodeSetPtr): Boolean;
+begin
+  Result := ((ns = nil) or (ns^.nodeNr = 0) or (ns^.nodeTab = nil));
+end;
+// ****************************************************************************
+// todo: replace the following code with a version of xmlGetHashEntry, that
+// uses libxml2 api functions only
+// ****************************************************************************
+// **************** this code might be moved to libxml_hash.inc***************
 
 type
 
@@ -1395,6 +1785,179 @@ begin
      then xmlNewPropNode.parent.properties := xmlNewPropNode;
 end;
 
+// *****************************************************************************
+//     helper functions for the handling of namespace declaration attributes
+// *****************************************************************************
+
+function xmlGetNsAttrib(node: xmlNodePtr; name: DOMString; out value: DOMString): boolean;
+// check if the passed attribute is a namespace declaration attribute
+// if so, than return true, and return it's value. If not found, return an empty string;
+// otherwise return false and do nothing
+var
+  test: integer;
+  ns: xmlNsPtr;
+  prefix: AnsiString;
+begin
+  // check if it is a namespace-declaration attribute
+  test:=check_NsDeclAttr1(name);
+  // set the return value (true means, name contains xmlns)
+  result := test <> 0;
+  // if it is a default ns-decl attribute
+  if test = 1 then begin
+    // if there is a default ns
+    ns:=xmlGetDefaultNs(node);
+    if ns<>nil then begin
+      // than return true and we are finished
+      if ns.href <> nil then begin
+        value:=UTF8Decode(ns.href);
+      end;
+      exit;
+    end;
+    // if there isn't, return an empty string
+    value:='';
+    exit;
+  // if its a non-default namespace attribute
+  end else if test = 2 then begin
+    prefix:=UTF8Encode(split_localName(name));
+    ns:=node.nsDef;
+    while ns <> nil do begin
+      if ns.prefix <> nil
+        then if (StrComp(ns.prefix,PAnsiChar(prefix))=0)
+          then begin
+            value:=UTF8Decode(ns.href);
+            exit;
+          end;
+      ns:=ns.next;
+    end;
+  end;
+end;
+
+function xmlSetNsAttrib(doc: IDomDocument; node: xmlNodePtr; name, value: DOMString): boolean;
+// check if the passed attribute is a namespace declaration attribute
+// if so, than return true, and add it to the nsdef list
+// otherwise return false and do nothing
+var
+  test: integer;
+  ns: xmlNsPtr;
+  OldValue: DOMString;
+begin
+  // check if it is a namespace-declaration attribute
+  test:=check_NsDeclAttr1(name);
+  // set the return value (true means, name contains xmlns)
+  result := test <> 0;
+  // if it is a default ns-decl attribute
+  if test=1 then begin
+    // first check, of a default namespace is already defined
+    ns:=xmlGetDefaultNs(node);
+    if (ns<>nil) then begin
+      if (strcomp(ns.href , PAnsiChar(UTF8Encode(Value)))<>0)
+        then checkError(NO_MODIFICATION_ALLOWED_ERR)
+        // if this default-ns was already defined, we get quit
+        else exit;
+    end;
+    // if it is a default ns attribute, create one and append it to the nsdecl-list
+    //
+    // first create it; we use nil for the parameter node, because we want
+    // to use our own appendNamespace procedure to append the namespace
+    // to the nsdecl list of the node
+    ns:=(doc as IDomInternal).findOrCreateNewNamespace
+      (nil,PAnsiChar(UTF8Encode(Value)),nil);
+    // then append it
+    appendNamespace(node,ns,true);
+    exit;
+  end else
+  // if it is a non-default ns-decl attribute
+  if test=2 then begin
+    xmlGetNsAttrib(node,name,OldValue);
+    if (OldValue<>'') and (OldValue<>Value) then checkError(NO_MODIFICATION_ALLOWED_ERR);
+    // if the same namespace is already defined, then quit
+    if OldValue<>'' then exit;      
+    // find or create the new namespace
+    ns:=(doc as IDomInternal).findOrCreateNewNamespace
+      (nil,PAnsiChar(UTF8Encode(value)),
+           PAnsiChar(UTF8Encode(split_localName(name))));
+    // then append it
+    appendNamespace(node,ns,true);
+    exit;
+  end;
+end;
+
+function xmlHasNsAttrib(node: xmlNodePtr; name: DOMString; out exists: boolean): boolean;
+var
+  test: integer;
+  ns: xmlNsPtr;
+  OldValue: DOMString;
+begin
+  exists:=false;
+  // check if it is a namespace-declaration attribute
+  test:=check_NsDeclAttr1(name);
+  // set the return value (true means, name contains xmlns)
+  result := test <> 0;
+  // if it is a default ns-decl attribute
+  if test=1 then begin
+    // if there is a default ns
+    ns:=xmlGetDefaultNs(node);
+    if ns<>nil then begin
+      // than return true and we are finished
+      exists:=true;
+      exit;
+    end;
+  // if it is a normal ns-decl attribute
+  end else if test=2 then begin
+    // try to get it's value
+    xmlGetNsAttrib(node,name,OldValue);
+    // if it has a value <> '', then say that it exists
+    if OldValue<>'' then exists:=true;
+  end;
+end;
+
+function xmlRemoveNsAttrib(doc: IDomDocument; node: xmlNodePtr; name: DOMString): boolean;
+var
+  test: integer;
+  ns: xmlNsPtr;
+  prefix: AnsiString;
+begin
+  // check if it is a namespace-declaration attribute
+  test:=check_NsDeclAttr1(name);
+  // set the return value (true means, name contains xmlns)
+  result := test <> 0;
+  // quit, if we don't have a nsdef attribute
+  if test = 0 then exit;
+  // if it is a default ns-decl attribute
+  if test = 1 then begin
+    ns:=xmlRemoveDefaultNs(node);
+  // if it is a normal ns-decl attribute
+  end else begin
+    // get the prefix
+    prefix:=UTF8Encode(split_localName(name));
+    // get the first entry in the nsDef list
+    ns:=node.nsDef;
+    // loop through the list
+    while ns <> nil do begin
+      // if its not a default ns
+      if ns.prefix <> nil
+        // check, if we found the correct prefix
+        then if (StrComp(ns.prefix,PAnsiChar(prefix))=0)
+          // if we found it
+          then begin
+            // remove the Namespace from the nsDef list
+            ns:=removeNamespace(node,ns);
+            break;
+          end;
+      // get the next entry of the list
+      ns:=ns.next;
+    end;
+  end;
+  if ns<>nil then begin
+    // add the nsdecl to the list of ns-nodes, that have to be
+    // freed at the end
+    (doc as IDomInternal).appendNs(ns);
+  end;
+
+end;
+
+// *****************************************************************************
+
 function xmlSetPropNode(const parent: xmlNodePtr; const xmlNewPropNode, xmlOldPropNode: xmlAttrPtr): xmlAttrPtr;
 begin
   // default
@@ -1415,6 +1978,45 @@ begin
           then
             // append the new one
             xmlAddPropChild(parent, xmlNewPropNode);
+end;
+
+(*
+ *  TXDomDocumentBuilder
+*)
+constructor TDomDocumentBuilder.Create(AFreeThreading: boolean);
+begin
+  inherited Create;
+  FFreeThreading := AFreeThreading;
+end;
+
+destructor TDomDocumentBuilder.Destroy;
+begin
+  inherited Destroy;
+end;
+
+function TDomDocumentBuilder.Get_DomImplementation: IDomImplementation;
+begin
+  Result := TDomImplementation.Create;
+end;
+
+function TDomDocumentBuilder.Get_IsNamespaceAware: boolean;
+begin
+  Result := True;
+end;
+
+function TDomDocumentBuilder.Get_IsValidating: boolean;
+begin
+  Result := True;
+end;
+
+function TDomDocumentBuilder.Get_HasAbsoluteURLSupport: boolean;
+begin
+  Result := False;
+end;
+
+function TDomDocumentBuilder.Get_HasAsyncSupport: boolean;
+begin
+  Result := False;
 end;
 
 // *********************************
@@ -2170,8 +2772,6 @@ var
   entity:   xmlEntityPtr;
   attr: xmlAttrPtr;
   attributes: xmlAttributePtr;
-  //length: integer;
-  //temp: AnsiString;
 begin
   attr := nil;
   result:=nil;
@@ -3292,8 +3892,8 @@ function TDomDocument.get_doctype: IDomDocumentType;
 var
   dtd1, dtd2: xmlDtdPtr;
 begin
-  dtd1 := getXmlDocument.intSubset;
-  dtd2 := getXmlDocument.extSubset;
+  dtd1 := GetXmlDocPtr.intSubset;
+  dtd2 := GetXmlDocPtr.extSubset;
   if (dtd1 <> nil) or (dtd2 <> nil) then Result :=
       TDomDocumentType.Create(dtd1, dtd2, self)
   else Result := nil;
@@ -3309,14 +3909,14 @@ var
   root1:  xmlNodePtr;
   FGRoot: TDomElement;
 begin
-  root1 := xmlDocGetRootElement(getXmlDocument);
+  root1 := xmlDocGetRootElement(GetXmlDocPtr);
   if assigned(root1)
     then FGRoot := TDomElement.Create(root1, self)
     else FGRoot := nil;
   Result := FGRoot;
 end;
 
-procedure TDomDocument.set_documentElement(const IDomElement: IDomElement);
+procedure TDomDocument.set_documentElement(const Element: IDomElement);
 begin
   checkError(NOT_SUPPORTED_ERR);
 end;
@@ -3327,7 +3927,7 @@ var
 begin
   result:=nil;
   if not IsXMLName(tagName) then checkError(INVALID_CHARACTER_ERR);
-  AElement := xmlNewDocNode(getXmlDocument, nil, PAnsiChar(UTF8Encode(tagName)), nil);
+  AElement := xmlNewDocNode(GetXmlDocPtr, nil, PAnsiChar(UTF8Encode(tagName)), nil);
   if AElement <> nil then begin
     AElement.parent := nil;
     fNodeList.Add(AElement);
@@ -3339,7 +3939,7 @@ function TDomDocument.createDocumentFragment: IDomDocumentFragment;
 var
   node: xmlNodePtr;
 begin
-  node := xmlNewDocFragment(getXmlDocument);
+  node := xmlNewDocFragment(GetXmlDocPtr);
   if node <> nil then begin
     fNodeList.Add(node);
     result := TDomDocumentFragment.Create(node, self)
@@ -3350,7 +3950,7 @@ function TDomDocument.createTextNode(const Data: DOMString): IDomText;
 var
   textNode: xmlNodePtr;
 begin
-  textNode := xmlNewDocText(getXmlDocument, PAnsiChar(UTF8Encode(Data)));
+  textNode := xmlNewDocText(GetXmlDocPtr, PAnsiChar(UTF8Encode(Data)));
   if textNode <> nil then begin
     fNodeList.Add(textNode);
     result := TDomText.Create(textNode, self)
@@ -3362,7 +3962,7 @@ function TDomDocument.createComment(const Data: DOMString): IDomComment;
 var
   node:  xmlNodePtr;
 begin
-  node := xmlNewDocComment(getXmlDocument, PAnsiChar(UTF8Encode(Data)));
+  node := xmlNewDocComment(GetXmlDocPtr, PAnsiChar(UTF8Encode(Data)));
   if node <> nil then begin
     fNodeList.Add(node);
     result := TDomComment.Create((node), self)
@@ -3377,7 +3977,7 @@ var
 begin
   result:=nil;
   sData := UTF8Encode(Data);
-  node := xmlNewCDataBlock(getXmlDocument, PAnsiChar(sData), length(sData));
+  node := xmlNewCDataBlock(GetXmlDocPtr, PAnsiChar(sData), length(sData));
   if node <> nil then begin
     FNodeList.Add(node);
     Result := TDomCDataSection.Create(node, self)
@@ -3394,7 +3994,7 @@ begin
   AProcessingInstruction := xmlNewPI(PAnsiChar(UTF8Encode(target)), PAnsiChar(UTF8Encode(Data)));
   if AProcessingInstruction <> nil then begin
     AProcessingInstruction.parent := nil;
-    AProcessingInstruction.doc := getXmlDocument;
+    AProcessingInstruction.doc := GetXmlDocPtr;
     FNodeList.Add(AProcessingInstruction);
     Result := TDomProcessingInstruction.Create(AProcessingInstruction, self)
   end;
@@ -3406,7 +4006,7 @@ var
 begin
   result:=nil;
   if not IsXMLName(Name) then checkError(INVALID_CHARACTER_ERR);
-  AAttr := xmlNewDocProp(getXmlDocument, PAnsiChar(UTF8Encode(Name)), nil);
+  AAttr := xmlNewDocProp(GetXmlDocPtr, PAnsiChar(UTF8Encode(Name)), nil);
   AAttr.parent := nil;
   if AAttr <> nil then begin
     FAttrList.Add(AAttr);
@@ -3420,7 +4020,7 @@ var
 begin
   result:=nil;
   if not IsXMLName(Name) then checkError(INVALID_CHARACTER_ERR);
-  AEntityReference := xmlNewReference(getXmlDocument, PAnsiChar(UTF8Encode(Name)));
+  AEntityReference := xmlNewReference(GetXmlDocPtr, PAnsiChar(UTF8Encode(Name)));
   if AEntityReference <> nil then begin
     FNodeList.Add(AEntityReference);
     Result := TDomEntityReference.Create(AEntityReference, self)
@@ -3469,14 +4069,30 @@ begin
     // build the interface object
     Result := MakeNode(node, self);
   end;
+
+  if Assigned(node)
+    then
+      begin
+        node^.doc:=GetXmlDocPtr;
+
+        if node.type_=XML_ATTRIBUTE_NODE
+          then
+            (self as IDomInternal).appendAttr(xmlAttrPtr(node))
+          else
+            (self as IDomInternal).appendNode(node);
+
+        // I think xmlSetTreeDoc does not what it was supposed to do!
+        // I would expect it to recurse and modify the doc for all nodes
+        // but, for one, it doesn't change the doc for attributes and
+        // it doesn't change the doc for attribute values... (MAV) 
+        //
+        xmlSetTreeDoc(node, GetXmlDocPtr);
+
+        // build the interface object
+        Result := MakeNode(node, self);
+      end;
 end;
 
-
-procedure TDomDocument.injectDifferentDocElement(docElement: xmlDocPtr);
-begin
-  xmlFreeDoc(getXmlDocument);
-  fXmlNode := xmlNodePtr(docElement);
-end;
 
 function TDomDocument.createElementNS(const namespaceURI,
   qualifiedName: DOMString): IDomElement;
@@ -3491,7 +4107,7 @@ begin
   check_ValidQualifierNS(namespaceURI, qualifiedName);
 
   ns:=getNewNamespace(namespaceURI, split_Prefix(qualifiedName));
-  AElement := xmlNewDocNode(getXmlDocument,
+  AElement := xmlNewDocNode(GetXmlDocPtr,
                             ns,
                             PAnsiChar(UTF8Encode(split_localname(qualifiedName))),
                             nil
@@ -3506,6 +4122,12 @@ begin
        FNodeList.Add(AElement);
        Result := TDomElement.Create(AElement, self);
      end;
+end;
+
+procedure TDomDocument.injectDifferentDocElement(docElement: xmlDocPtr);
+begin
+  xmlFreeDoc(GetXmlDocPtr());
+  fXmlNode := xmlNodePtr(docElement);
 end;
 
 function TDomDocument.createAttributeNS(const namespaceURI,
@@ -3528,7 +4150,7 @@ begin
 
   if Assigned(Attr)
      then begin
-       Attr.doc := getXmlDocument;
+       Attr^.doc := GetXmlDocPtr;
        FAttrList.Add(Attr);
        Result := TDomAttr.Create(Attr, self);
      end;
@@ -3621,7 +4243,7 @@ var
   AAttr:    xmlAttrPtr;
   AElement: xmlNodePtr;
 begin
-  AAttr := xmlGetID(getXmlDocument, PAnsiChar(UTF8Encode(elementID)));
+  AAttr := xmlGetID(GetXmlDocPtr, PAnsiChar(UTF8Encode(elementID)));
   if AAttr <> nil
     then AElement := AAttr.parent
     else AElement := nil;
@@ -3757,12 +4379,12 @@ begin
 
   // check encoding
   if fEncoding = ''
-     then encoding := getXmlDocument.encoding
+     then encoding := GetXmlDocPtr().encoding
      else encoding := PAnsiChar(AnsiString(lowercase(fEncoding)));
 
   // if the xml document doesn't have an encoding or a documentElement,
   // return an empty string (it works like this in msdom)
-  if (Assigned(getXmlDocument.children) or (encoding <> ''))
+  if (Assigned(GetXmlDocPtr().children) or (encoding <> ''))
     then begin
       // handle format
       if fPrettyPrint
@@ -3777,7 +4399,7 @@ begin
         // xmlPrepareNSSerialization(xmlDocGetRootElement(fXmlDocPtr));
 
         // Dump this to my memory
-        xmlDocDumpFormatMemoryEnc(getXmlDocument, CString, @length, encoding, format);
+        xmlDocDumpFormatMemoryEnc(GetXmlDocPtr(), CString, @length, encoding, format);
 
         try
           // check decoding
@@ -3804,6 +4426,58 @@ begin
   Result := fDefaultXSDSchemaDoc;
 end;
 
+// IDomPersistHTML
+function TDomDocument.get_html: DOMString;
+var
+  CString:  PAnsiChar;
+  encoding: PAnsiChar;
+  length:   longint;
+  temp:     AnsiString;
+begin
+  result:='';
+  temp := fEncoding;
+  if fEncoding = ''
+    then encoding := GetXmlDocPtr.encoding
+    else encoding := PAnsiChar(temp);
+  // if the xml document doesn't have an encoding or a documentElement,
+  // return an empty string (it works like this in msdom)
+  if (GetXmlDocPtr.children<>nil) or (encoding<>'')
+    then begin
+      // set encoding
+      // htmlSetMetaEncoding(fXmlDocPtr, encoding);
+      // create a buffer
+      //buffer := xmlBufferCreate;
+      try
+        //htmlDocContentDumpFormatOutput(, fXmlDocPtr, encoding, format);
+        htmlDocDumpMemory(GetXmlDocPtr, @CString, @length);
+        // get the text
+        //CString := xmlBufferContent(buffer);
+        try
+          // set the prolog
+          // THIS IS A HACK !!!!
+          if (encoding = '')
+             then
+               Result := '<?xml version="1.0"' + ' ?>'#13#10
+             else
+               Result := '<?xml version="1.0"' + ' encoding="' + encoding + '"' + ' ?>'#13#10;
+
+          // make xhtml header
+          // check encoding
+          if not isEncodingUTF8(encoding)
+            then
+              Result := Result + {'<html xmlns="http://www.w3.org/1999/xhtml"' + } CString { Copy(CString, 6, maxint) }
+            else
+              Result := Result + {'<html xmlns="http://www.w3.org/1999/xhtml"' + Copy( } UTF8Decode(CString){, 6, maxint)};
+        finally
+          // free string
+          xmlFree(CString);  //this works with the new dll from 2001-01-25
+        end;
+      finally
+        //xmlBufferFree(buffer);
+      end;
+    end;
+end;
+
 function TDomDocument.asyncLoadState: integer;
 begin
   Result := 0;
@@ -3813,6 +4487,27 @@ function TDomDocument.loadFromStream(const stream: IStream): WordBool;
 begin
   checkError(NOT_SUPPORTED_ERR);
   Result := False;
+end;
+
+type
+  TErrCtx = record
+              document: TDomDocument;
+              errMsg:   AnsiString;
+            end;
+
+  TErrCtxPtr = ^TErrCtx;
+
+function countSubstringOccurance(s,sub: AnsiString): integer;
+var
+  n: integer;
+begin
+  result := 0;
+  n := Pos(sub,s);
+  while n <> 0 do begin
+    Inc(result);
+    s := Copy(s,n+Length(sub),Length(s)-(n+Length(sub))+1);
+    n := Pos(sub,s);
+  end;
 end;
 
 function TDomDocument.loadFrom_XmlParserCtx(ctxt: xmlParserCtxtPtr): boolean;
@@ -3888,7 +4583,7 @@ begin
       end; // if assigned
 end;
 
-function TDomDocument.loadxml(const Value: WideString): WordBool;
+function TDomDocument.loadxml(const Value: DOMString): WordBool;
 // Load dom from string;
 var pxml: AnsiString;
 begin
@@ -3908,9 +4603,12 @@ begin
 end;
 
 function TDomDocument.loadFromStream(const stream: TStream): WordBool;
+var
+  tmp     : AnsiString;
 begin
-  checkError(NOT_SUPPORTED_ERR);
-  Result := False;
+  SetLength(tmp, stream.Size-stream.Position);
+  stream.Read(tmp[1], stream.Size-stream.Position);
+  Result:=(Self as IDomPersist).loadxml(tmp);
 end;
 
 function TDomDocument.load(Source: OleVariant): WordBool;
@@ -3936,7 +4634,7 @@ var
 begin
   // check encoding
   if fEncoding = ''
-     then encoding := getXmlDocument.encoding
+     then encoding := GetXmlDocPtr().encoding
      else encoding := lowercase(fEncoding);
 
   // check output format
@@ -4063,7 +4761,7 @@ end;
 procedure TDomCharacterData.replaceData(offset, Count: integer;
   const Data: DOMString);
 var
-  s1, s2, s: widestring;
+  s1, s2, s: DOMString;
 begin
   s := Get_data;
   if (offset < 0) or (offset > length(s)) or (Count < 0) then checkError(INDEX_SIZE_ERR);
@@ -4081,7 +4779,7 @@ end;
 function TDomCharacterData.substringData(offset,
   Count: integer): DOMString;
 var
-  s: widestring;
+  s: DOMString;
 begin
   if (offset < 0) or (offset > length(s)) or (Count < 0) then checkError(INDEX_SIZE_ERR);
   s := Get_data;
@@ -4104,7 +4802,7 @@ end;
 
 function TDomText.splitText(offset: integer): IDomText;
 var
-  s, s1: widestring;
+  s, s1: DOMString;
   tmp:   IDomText;
   node:  IDomNode;
 begin
@@ -4152,9 +4850,9 @@ begin
   Result := inherited get_nodeName;
 end;
 
-procedure TDomProcessingInstruction.set_data(const Value: DOMString);
+procedure TDomProcessingInstruction.set_data(const data: DOMString);
 begin
-  inherited set_nodeValue(Value);
+  inherited set_nodeValue(data);
 end;
 
 { TDomDocumentType }
@@ -4237,12 +4935,12 @@ begin
 end;
 
 
-function TDomNode.selectNode(const nodePath: WideString): IDomNode;
+function TDomNode.selectNode(const nodePath: XmlDomString): IDomNode;
 begin
   Result := selectNodes(nodePath)[0];
 end;
 
-function TDomNode.selectNodes(const nodePath: WideString): IDomNodeList;
+function TDomNode.selectNodes(const nodePath: XmlDomString): IDomNodeList;
 // raises SYNTAX_ERR,
 // if invalid xpath expression or
 // if the result type is string or number
@@ -4291,9 +4989,48 @@ begin
   xmlXPathFreeContext(ctxt);
 end;
 
+(*
+ *  TXDomDocumentBuilderFactory
+*)
+constructor TDomDocumentBuilderFactory.Create(AFreeThreading: boolean);
+begin
+  FFreeThreading := AFreeThreading;
+end;
+
+function TDomDocumentBuilderFactory.NewDocumentBuilder: IDomDocumentBuilder;
+begin
+  Result := TDomDocumentBuilder.Create(FFreeThreading);
+end;
+
+function TDomDocumentBuilderFactory.Get_VendorID: DomString;
+begin
+  if FFreeThreading then Result := SLIBXML
+  else Result := SLIBXML;
+end;
+
 procedure TDomNode.set_Prefix(const prefix: DomString);
 begin
   checkError(NOT_SUPPORTED_ERR);
+end;
+
+function TDomDocumentBuilder.load(const url: DomString): IDomDocument;
+begin
+  Result := (TDomDocument.Create(Get_DomImplementation, url)) as IDomDocument;
+end;
+
+function TDomDocumentBuilder.newDocument: IDomDocument;
+begin
+  Result := TDomDocument.Create(Get_DomImplementation);
+end;
+
+function TDomDocumentBuilder.parse(const xml: DomString): IDomDocument;
+var
+  doctype: IDomDocumentType;
+begin
+  doctype:=nil;
+  Result := TDomDocument.Create(Get_DomImplementation,'', '', doctype);
+  (Result as IDomParseOptions).resolveExternals := True;
+  (Result as IDomPersist).loadxml(xml);
 end;
 
 procedure TDomNode.RegisterNS(const prefix, URI: DomString);
@@ -4550,8 +5287,7 @@ end;
 
 {$endif}
 
-procedure TDomNode.transformNode(const stylesheet: IDomNode;
-  var output: WideString);
+procedure TDomNode.transformNode(const stylesheet: IDomNode; var output: XmlDomString);
 var
   doc:       xmlDocPtr;
   styleDoc:  xmlDocPtr;
@@ -4610,8 +5346,7 @@ begin
   xmlFree(CString);
 end;
 
-procedure TDomNode.transformNode(const stylesheet: IDomNode;
-  const output: IDomDocument);
+procedure TDomNode.transformNode(const stylesheet: IDomNode; const output: IDomDocument);
 var
   doc:       xmlDocPtr;
   styleDoc:  xmlDocPtr;
@@ -4659,9 +5394,13 @@ begin
   else Result := False;
 end;
 
-procedure TDomDocument.set_fTempXSL(tempXSL: xsltStylesheetPtr);
+function TDomDocument.getXsltStylesheetPtr: xsltStylesheetPtr;
 begin
-  fTempXSL := tempXSL;
+  if fXsltStylesheet=nil
+    then
+      fXsltStylesheet:=xsltParseStyleSheetDoc(GetXmlDocPtr);
+
+  Result:=fXsltStylesheet;
 end;
 
 function TDomNode.get_xml: DOMString;
@@ -4747,7 +5486,7 @@ begin
   FcompressionLevel := compressionLevel;
 end;
 
-procedure TDomDocument.set_encoding(encoding: DomString);
+procedure TDomDocument.set_encoding1(encoding: DomString);
 begin
   fEncoding := encoding;
 end;
@@ -4759,7 +5498,7 @@ end;
 
 function TDomDocument.get_parsedEncoding: DomString;
 begin
-  Result := getXmlDocument.encoding;
+  Result := GetXmlDocPtr().encoding;
 end;
 
 procedure TDomDocument.registerNS(prefix, uri: AnsiString);
@@ -4828,6 +5567,11 @@ end;
 function TDomImplementation.get_doccount: integer;
 begin
   result:=Fdoccount;
+end;
+
+function newDomImplementation: IDomImplementation;
+begin
+  Result := TDomImplementation.Create;
 end;
 
 constructor TDomNotation.Create(notation: xmlNotationPtr;
@@ -4942,9 +5686,332 @@ begin
      else result := findOrCreateNewNamespace(nil, PAnsiChar(UTF8Encode(namespaceURI)), PAnsiChar(UTF8Encode(prefix)));
 end;
 
-function TDomDocument.getXmlDocument: xmlDocPtr;
+function TDomDocument.GetXmlDocPtr: xmlDocPtr;
 begin
-  Result := xmlDocPtr(xmlNode);
+  result := xmlDocPtr(xmlNode);
+end;
+
+function TDomDocument.get_errorCode: Integer;
+begin
+  result := 0;
+end;
+
+function TDomDocument.get_filepos: Integer;
+begin
+  result := 0;
+end;
+
+function TDomDocument.get_line: Integer;
+begin
+  result:=fLine;
+end;
+
+function TDomDocument.get_linepos: Integer;
+begin
+  result:=fLinePos;
+end;
+
+function TDomDocument.get_reason: DOMString;
+// get the reason of the last parse error
+begin
+  result:=fReason;
+end;
+
+function TDomDocument.get_srcText: DOMString;
+begin
+
+end;
+
+function TDomDocument.get_url: DOMString;
+begin
+  result:=fUrl;
+end;
+
+procedure TDomDocument.processError;
+
+var
+  temp: AnsiString;
+  substrings: TStringList;
+  i: integer;
+begin
+   temp:=fReason;
+   // remove windows linefeeds
+   temp:=stringreplace(temp,#13,'',[rfReplaceAll]);
+   substrings:=TStringList.Create;
+   try
+     // split string into strings
+     splitString(temp,#10,substrings);
+     // remove validity error if fValidate is false
+     if (substrings.Count>=3) and (not self.fValidate) then begin
+       if pos('validity',substrings[0]) > 0 then begin
+          substrings[0]:='';
+          substrings[1]:='';
+          substrings[2]:='';
+       end;
+       if pos('validity',substrings[2]) > 0 then begin
+          substrings[1]:='';
+          substrings[2]:='';
+          substrings[3]:='';
+          substrings[4]:='';
+          substrings[5]:='';
+          substrings[6]:='';
+          substrings[7]:='';
+       end;
+     end;
+
+     // concat strings to string
+     temp:='';
+     fLinePos:=-1;
+     for i:=0 to substrings.count-1 do begin
+       if substrings[i]<>'' then begin
+         temp:=temp+substrings[i]+crlf;
+       end;
+       if (pos('^',substrings[i]) > 0) and (fLinePos=-1) then begin
+         fLinePos:=pos('^',substrings[i]);
+       end;
+     end;
+   finally
+     substrings.Free;
+   end;
+   fReason:=temp;
+end;
+
+
+
+procedure TDomDocument.set_reason(aReason: DomString);
+begin
+  fReason := aReason;
+end;
+
+procedure TDomDocument.removeWhitespace;
+var
+  node: xmlNodePtr;
+begin
+  // get the documentElement
+  node:=xmlDocGetRootElement(GetXmlDocPtr);
+  // remove all the whitespace beyond of it
+  if node <> nil then begin
+    xmlRemoveWhitespace(node,true);
+  end;
+end;
+
+procedure TDomDocument.appendNs(ns: xmlNsPtr);
+begin
+  if ns <> nil then FNsList.add(ns);
+end;
+
+function GetXmlDoc(const Doc: IDomDocument): xmlDocPtr;
+begin
+  if not Assigned(Doc) then checkError(INVALID_ACCESS_ERR);
+  Result := (Doc as IXMLDOMDocRef).GetXmlDocPtr;
+end;
+
+function TDomNode.get_ownerOrSelf: IDomDocument;
+// because the ownerDocument of a Document is nil,
+// we need this function
+begin
+  result:=fOwnerDocument;
+  if result=nil then result:=self as IDomDocument;
+end;
+
+function TDomDocument.get_exposeNsDefAttribs: boolean;
+begin
+  result := fExposeNsDefAttribs;
+end;
+
+procedure TDomDocument.set_exposeNsDefAttribs(value: boolean);
+begin
+  fExposeNsDefAttribs:=value;
+end;
+
+procedure TDomDocument.set_fXsltStylesheet(XSL: xsltStylesheetPtr);
+begin
+  fXsltStylesheet := XSL;
+end;
+
+procedure TDomDocument.setDefaults;
+// if you want to change the defaults, you can do it here
+begin
+  (self as IDomParseOptions).Validate            := false;
+  (self as IDomParseOptions).resolveExternals    := false;
+  (self as IDomImplOptions).ExposeNsDefAttribs   := true;
+end;
+
+function TDomNode.Get_ExposeNsDefAttribs: boolean;
+begin
+  result:=(get_ownerOrSelf as IDomImplOptions).exposeNsDefAttribs;
+end;
+
+
+{ TDOMImplementationFactory }
+
+function TDOMImplementationFactory.Description: String;
+begin
+  result:=SLIBXML;
+end;
+
+// the following code comes from idom2.pas
+
+type
+
+ TDomVendorRegister = class(TInterfacedObject, IDomVendorList)
+    private
+      (* list of DocumentBuilderFactories *)
+      fFactoryList : TInterfaceList;
+    protected //IDomVendorList
+      function  get_Count: integer;
+      function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
+    public
+      constructor Create;
+      destructor Destroy; override;
+
+      (*
+       * add a new DocumentBuilderFactory to the list.
+       * Pre-condition:
+       *   - vendorID must be set
+       *   - vendorID must be unique (if not EDomVendorRegisterException)
+      *)
+      procedure add(domDocumentBuilderFactory : IDomDocumentBuilderFactory);
+
+      (*
+       * returns the DomDocumentBuilderFactory with id vendorId
+       * if vendorId is not found then result := nil
+      *)
+      function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
+  end;
+
+var
+  (*
+   * global TDomVendorRegister. Used to register the domDocumentBuilderFactories
+  *)
+  gDomVendorRegister : TDomVendorRegister;
+
+(******************************************************************************)
+
+{ TDomVendorRegister }
+
+constructor TDomVendorRegister.Create;
+begin
+  inherited Create;
+  fFactoryList := TInterfaceList.Create;
+  _AddRef; // one extra lock needed
+end;
+
+destructor TDomVendorRegister.Destroy;
+begin
+  fFactoryList.Free;
+  inherited Destroy;
+end;
+
+procedure TDomVendorRegister.add(
+        domDocumentBuilderFactory : IDomDocumentBuilderFactory);
+begin
+  {check if a factory with same VendorID is already registered}
+  if get_Factory(domDocumentBuilderFactory.vendorID) <> nil then
+    Raise Exception.create('Vendor ID already present');
+  fFactoryList.add(domDocumentBuilderFactory);
+end;
+
+function TDomVendorRegister.get_Count: integer;
+begin
+  Result := fFactoryList.Count;
+end;
+
+function TDomVendorRegister.get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
+var
+  i : Integer;
+begin
+  for i := 0 to fFactoryList.Count - 1 do begin
+    Result := fFactoryList.items[i] as IDomDocumentBuilderFactory;
+    {check the name}
+    if (Result.vendorID = vendorID) then exit;
+  end;
+  Result := nil;
+end;
+
+function TDomVendorRegister.get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
+begin
+  Result := fFactoryList[aIndex] as IDomDocumentBuilderFactory;
+end;
+
+
+function get_DomVendorRegisterSingleton : TDomVendorRegister;
+begin
+  if gDomVendorRegister = nil then
+  begin
+    gDomVendorRegister := TDomVendorRegister.create;
+  end;
+  result := gDomVendorRegister;
+end;
+
+function getDomVendorList: IDomVendorList;
+begin
+  Result := get_DomVendorRegisterSingleton as IDomVendorList;
+end;
+
+(******************************************************************************)
+
+procedure registerDomVendorFactory(factory : IDomDocumentBuilderFactory);
+begin
+  get_DomVendorRegisterSingleton.add(factory);
+end;
+
+function getDocumentBuilderFactory(
+        vendorID : DomString) : IDomDocumentBuilderFactory;
+var
+  factory : IDomDocumentBuilderFactory;
+begin
+  factory := get_DomVendorRegisterSingleton.get_Factory(vendorID);
+  if factory = nil then
+    Raise Exception.createFmt(
+            'Vendor ID: %s not present', [vendorID]);
+
+  result := factory;
+end;
+
+function TDOMImplementationFactory.DOMImplementation: IDOMImplementation;
+begin
+  result:=getDocumentBuilderFactory(SLIBXML).
+      newDocumentBuilder.DOMImplementation;
+end;
+
+function TDomDocument.loadFromStream(const stream: IStream): WordBool;
+begin
+
+end;
+
+procedure TDomDocument.saveToStream(const stream: IStream);
+begin
+
+end;
+  function TDomDocument.get_Encoding: DOMString;
+begin
+  result:=self.get_encoding1;
+end;
+
+function TDomDocument.get_Standalone: DOMString;
+begin
+
+end;
+
+function TDomDocument.get_Version: DOMString;
+begin
+
+end;
+
+procedure TDomDocument.set_Encoding(const Value: DOMString);
+begin
+  self.set_encoding1(Value);
+end;
+
+procedure TDomDocument.set_Standalone(const Value: DOMString);
+begin
+
+end;
+
+procedure TDomDocument.set_Version(const Value: DOMString);
+begin
+
 end;
 
 { TDOMSafeCallHandler }
