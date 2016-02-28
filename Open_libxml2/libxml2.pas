@@ -12,7 +12,7 @@ unit libxml2;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF mswindows}
   Windows,
 {$ENDIF}
 {$IFDEF LINUX}
@@ -20,10 +20,7 @@ uses
 {$ENDIF}
   iconv;
 const
-{$IFDEF WIN32}
-  LIBXML2_SO = 'libxml2.dll';
-{$ENDIF}
-{$IFDEF WIN64}
+{$IFDEF mswindows}
   LIBXML2_SO = 'libxml2.dll';
 {$ENDIF}
 {$IFDEF LINUX}
@@ -82,7 +79,7 @@ type
 {$I libxml_xmlschemas.inc}
 {$I libxml_relaxng.inc}
 
-{$IFDEF WIN32}
+{$IFDEF mswindows}
 { this function should release memory using the same mem.manager that libxml2
   uses for allocating it. Unfortunately it doesn't work...
 }

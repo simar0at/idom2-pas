@@ -3151,7 +3151,7 @@ var
   fn: AnsiString;
 begin
   fDomImpl := DOMImpl;
-  {$ifdef WIN32}
+  {$ifdef mswindows}
   // libxml accepts only '/' as path delimiter
   fn := UTF8Encode(StringReplace(aUrl, '\', '/', [rfReplaceAll]));
   {$else}
@@ -3917,7 +3917,7 @@ function TDomDocument.load(Source: OleVariant): WordBool;
 // Load dom from file
 var fn: AnsiString;
 begin
-  {$ifdef WIN32}
+  {$ifdef mswindows}
   // libxml accepts only '/' as path delimiter
   fn := UTF8Encode(StringReplace(Source, '\', '/', [rfReplaceAll]));
   {$else}
