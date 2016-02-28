@@ -9,7 +9,7 @@ uses
   SysUtils,
   domSetup,
   XPTest_idom2_Shared,
-{$ifdef win32}
+{$ifdef mswindows}
   ActiveX,
 {$endif}
   Classes;
@@ -407,7 +407,7 @@ end;
 
 initialization
   datapath := getDataPath;
-  {$ifdef win32}
+  {$ifdef mswindows}
   CoInitialize(nil);
   {$endif}
   {$ifdef linux}

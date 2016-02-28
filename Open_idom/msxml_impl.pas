@@ -40,10 +40,15 @@ unit msxml_impl;
 *)
 
 interface
+{off $define MSXML3} // -> MSXML 6.0
 
 uses
   {$IFDEF MSWINDOWS}
-    MSXML2_TLB,
+    {$ifdef MSXML3}
+      MSXML3,
+    {$else}
+      MSXML2_TLB,
+    {$endif
     windows,
     Variants,
     {$IFDEF VER300}
@@ -85,8 +90,14 @@ implementation
 uses
   SysUtils,
   Classes,
+  {$ifdef VER140} {delphi6}
+    variants,
+  {$endif}
+  {$ifdef VER150} {delphi7}
+    variants,
+  {$endif}
   ActiveX;
-
+  
 type
 
   TMSXMLDocumentBuilderFactory = class(TInterfacedObject, IDomDocumentBuilderFactory)
@@ -228,10 +239,10 @@ type
       function  isSupported(
               const feature : DomString;
               const version : DomString) : Boolean;
-    function selectNode(const nodePath: WideString): IDomNode;
-    function selectNodes(const nodePath: WideString): IDomNodeList;
+    function selectNode(const nodePath: DOMString): IDomNode;
+    function selectNodes(const nodePath: DOMString): IDomNodeList;
     procedure registerNS(const prefix : DomString; const uri : DomString);
-    procedure transformNode(const stylesheet: IDomNode; var output: WideString); overload;
+    procedure transformNode(const stylesheet: IDomNode; var output: DOMString); overload;
     procedure transformNode(const stylesheet: IDomNode; var output: IDomDocument); overload;
     function get_text: DomString;
     procedure set_text(const Value: DomString);
@@ -814,22 +825,31 @@ begin
 end;
 
 function createDOMDocument(freeThreaded : Boolean) : IXMLDOMDocument;
+const
+ CLASS_DOMDocument60: TGUID = '{88D96A05-F192-11D4-A65F-0040963251E5}';
+ CLASS_FreeThreadedDOMDocument60: TGUID = '{88D96A06-F192-11D4-A65F-0040963251E5}';
+ CLASS_DOMDocument40: TGUID = '{88D969C0-F192-11D4-A65F-0040963251E5}';
+ CLASS_FreeThreadedDOMDocument40: TGUID = '{88D969C1-F192-11D4-A65F-0040963251E5}';
+ CLASS_DOMDocument26: TGUID = '{F5078F1B-C551-11D3-89B9-0000F81FE221}';
+ CLASS_DOMDocument30: TGUID = '{F5078F32-C551-11D3-89B9-0000F81FE221}';
+ CLASS_FreeThreadedDOMDocument26: TGUID = '{F5078F1C-C551-11D3-89B9-0000F81FE221}';
+ CLASS_FreeThreadedDOMDocument30: TGUID = '{F5078F33-C551-11D3-89B9-0000F81FE221}';
 begin
   if not freeThreaded then
     begin
       result := tryObjectCreate(
               [CLASS_DOMDocument60,
                CLASS_DOMDocument40,
-               CLASS_msDOMDocument30,
-               CLASS_msDOMDocument26]) as IXMLDOMDocument;
+               CLASS_DOMDocument30,
+               CLASS_DOMDocument26]) as IXMLDOMDocument;
     end
   else
     begin
       result := tryObjectCreate(
               [CLASS_FreeThreadedDOMDocument60,
                CLASS_FreeThreadedDOMDocument40,
-               CLASS_msFreeThreadedDOMDocument30,
-               CLASS_msFreeThreadedDOMDocument26]) as IXMLDOMDocument;
+               CLASS_FreeThreadedDOMDocument30,
+               CLASS_FreeThreadedDOMDocument26]) as IXMLDOMDocument;
     end;
   if not assigned(result) then
     raise EDOMException.create(NOT_FOUND_ERR,'MSDOM not installed!');
@@ -1550,9 +1570,15 @@ var
   msNewChild : IXMLDOMNode;
   msRefChild : IXMLDOMNode;
 begin
-  msNewChild := (newChild as IMSXMLExtDomNode).getOrgInterface;
-  msRefChild := (refChild as IMSXMLExtDomNode).getOrgInterface;
-  result := domCreateNode(fMSDomNode.insertBefore(msNewChild, msRefChild));
+  if refChild = nil then begin
+    // If refChild is null, insert newChild
+    // at the end of the list of children. (w3c.org)
+    result := appendChild(newChild);
+  end else begin
+    msNewChild := (newChild as IMSXMLExtDomNode).getOrgInterface;
+    msRefChild := (refChild as IMSXMLExtDomNode).getOrgInterface;
+    result := domCreateNode(fMSDomNode.insertBefore(msNewChild, msRefChild));
+  end;
 end;
 
 function TMSXMLNode.replaceChild(
@@ -2047,6 +2073,8 @@ end;
 
 function TMSXMLAttr.get_OwnerElement : IDomElement;
 begin
+  result := get_ParentNode as IDOMElement;  // why not ?
+  exit;
   (* not supported *)
   raise EDomException.create(
           NOT_SUPPORTED_ERR, 'GetOwnerElement is not supported');
@@ -2322,7 +2350,7 @@ begin
 end;
 
 
-function TMSXMLNode.selectNode(const nodePath : WideString): IDomNode;
+function TMSXMLNode.selectNode(const nodePath : DOMString): IDomNode;
 var
   node : IXMLDOMNode;
 begin
@@ -2333,7 +2361,7 @@ begin
     result := nil;
 end;
 
-function TMSXMLNode.selectNodes(const nodePath : WideString): IDomNodeList;
+function TMSXMLNode.selectNodes(const nodePath : DOMString): IDomNodeList;
 var
   msNodeList : IXMLDOMNodeList;
 begin
@@ -2357,7 +2385,7 @@ begin
 end;
 
 procedure TMSXMLNode.transformNode(const stylesheet: IDomNode;
-  var output: WideString);
+  var output: DOMString);
 var
   msStylesheet: ixmldomnode;
 begin

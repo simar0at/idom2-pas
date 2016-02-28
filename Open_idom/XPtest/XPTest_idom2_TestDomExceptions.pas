@@ -8,10 +8,11 @@ uses
   idom2_ext,
   domSetup,
   SysUtils,
-  XPTest_idom2_Shared,
-{$ifndef linux}
-  ActiveX;
-{$endif}
+  {$ifndef linux}
+  ActiveX,
+  {$endif}
+  XPTest_idom2_Shared;
+
 
 
 type
@@ -333,7 +334,7 @@ begin
     node1.insertBefore(doc.documentElement, node2);
     fail('There should have been an EDomError');
   except
-    on E: Exception do Check(E is EDomException, getErrStr(E));
+    on E: Exception do Check(E is EDomException, 'Warning: Wrong exception type!');
   end;
 end;
 
@@ -367,7 +368,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -386,7 +387,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, getErrStr(E,HIERARCHY_REQUEST_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -410,7 +411,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -433,7 +434,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
-          fail(getErrStr(E));
+          fail('wrong exception: ' + E.Message);
         end;
       end;
     end;
@@ -457,7 +458,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, getErrStr(E,INVALID_CHARACTER_ERR));
         end else begin
-          fail(getErrStr(E));
+          fail('wrong exception: ' + E.Message);
         end;
       end;
     end;
@@ -481,7 +482,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail(getErrStr(E));
+          fail('wrong exception: ' + E.Message);
         end;
       end;
     end;
@@ -505,7 +506,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail(getErrStr(E));
+          fail('wrong exception: ' + E.Message);
         end;
       end;
     end;
@@ -529,7 +530,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail(getErrStr(E));
+          fail('wrong exception: ' + E.Message);
         end;
       end;
     end;
@@ -553,7 +554,7 @@ begin
         if E is EDomException then begin
           check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
         end else begin
-          fail(getErrStr(E));
+          fail('wrong exception: ' + E.Message);
         end;
       end;
     end;
@@ -622,7 +623,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -641,7 +642,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -660,7 +661,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -679,7 +680,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -700,7 +701,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, getErrStr(E,NAMESPACE_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -724,7 +725,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -742,7 +743,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -761,7 +762,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -779,7 +780,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -798,7 +799,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -818,7 +819,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = NAMESPACE_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -842,7 +843,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = INVALID_CHARACTER_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -863,7 +864,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -885,7 +886,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -906,7 +907,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -926,7 +927,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = HIERARCHY_REQUEST_ERR, 'wrong exception raised');
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -948,7 +949,7 @@ begin
       if E is EDomException then begin
         check((E as EDomException).code = WRONG_DOCUMENT_ERR, getErrStr(E,WRONG_DOCUMENT_ERR));
       end else begin
-        fail(getErrStr(E));
+        fail('wrong exception: ' + E.Message);
       end;
     end;
   end;
@@ -2262,7 +2263,7 @@ end;
 initialization
   datapath := getDataPath;
 
-  {$ifdef win32}
+  {$ifdef mswindows}
   CoInitialize(nil);
   {$endif}
   {$ifdef linux}

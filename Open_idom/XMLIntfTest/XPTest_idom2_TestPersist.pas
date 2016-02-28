@@ -13,7 +13,7 @@ uses
 {$ifdef VER130} // Delphi 5
   jclUnicode,   // UTF8Encode and UTF8Decode
 {$endif}
-{$ifdef win32}
+{$ifdef mswindows}
   ActiveX;
 {$endif}
 
@@ -569,7 +569,7 @@ end;
 procedure TTestPersist.load_windows_pathdelimiter;
 
 begin
-  {$ifdef win32}
+  {$ifdef mswindows}
   check(Pos('\',datapath) > 0, 'datapath does not have a windows path delimiter');
   {$endif}
   (doc as IDOMParseOptions).resolveExternals := True;
@@ -579,7 +579,7 @@ end;
 
 initialization
   datapath := getDataPath;
-  {$ifdef win32}
+  {$ifdef mswindows}
   CoInitialize(nil);
   {$endif}
   {$ifdef linux}

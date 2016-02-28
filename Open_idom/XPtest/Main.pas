@@ -12,7 +12,7 @@ uses
   TestFrameWork,
   domSetup,
   libxmldom,
-  {$ifdef WIN32}
+  {$ifdef mswindows}
   msxml_impl,
   {$endif}
 
@@ -60,7 +60,7 @@ initialization
    * will be run for every Dom Implementation (specified by VendorID)
   *)
 
-  {$ifdef WIN32}
+  {$ifdef mswindows}
   //if not FindCmdLineSwitch('no_msxml', true)
   //   then
        TestFramework.RegisterTest(DomSetup.createDomSetupTest(MSXML2Rental, getAllTests('Ms-DOM Rental')));

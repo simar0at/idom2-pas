@@ -9,13 +9,13 @@ uses
   SysUtils,
   XPTest_idom2_Shared,
   Classes,
-  domSetup,
 {$ifdef VER130} // Delphi 5
   jclUnicode,   // UTF8Encode and UTF8Decode
 {$endif}
-{$ifdef win32}
-  ActiveX;
+{$ifdef mswindows}
+  ActiveX,
 {$endif}
+  domSetup;
 
 type
   TTestPersist = class(TMyTestCase)
@@ -31,15 +31,19 @@ type
     procedure persist;
     procedure valid;
     procedure valid1;
+    procedure valid1_ParseError;
     procedure valid2;
     procedure valid3;
     procedure valid4;
+    procedure valid4_ParseError;
     procedure wellformed;
+    procedure wellformed_ParseError;
     procedure wellformed1;
     procedure wellformed2;
     procedure wellformed3;
     procedure parsedEncoding;
     procedure parsedEncoding1;
+    procedure parsedEncoding1_ParseError;
     procedure stringEncoding;
     procedure fileEncoding;
     procedure stringPrettyPrint;
@@ -124,9 +128,34 @@ begin
     'result of load true - should be false because xml is not valid');
 end;
 
+procedure TTestPersist.valid1_ParseError;
+  // Test if the xml structure is validated against the dtd.
+  // Create and save a xml structure that NOT valid against the dtd.
+  // Additional have a look at the parse error.
+const
+  Data        = xmldecl +
+                '<!DOCTYPE root [' + CRLF +
+                '<!ELEMENT root (test*)>' + CRLF +
+                '<!ELEMENT test (#PCDATA)>' + CRLF +
+                '<!ATTLIST test name CDATA #IMPLIED>' + CRLF +
+                ']>' + CRLF +
+                '<egon />';
+begin
+  (doc as IDomParseOptions).validate := True;
+  try
+    check(not (doc as IDomPersist).loadxml(Data),
+      'result of load true - should be false because xml is not valid');
+  finally
+    check((doc as IDOMParseError).url = '','Xml was parsed from a string not from a file.');
+    check((doc as IDOMParseError).line = 6,'There must occur a parse error at line 6.');
+    //check((doc as IDOMParseError).linePos = 7,'There must occur a parse error at linepos 7.' );
+    // ... but for msxml it is linepos 9 !
+  end;
+end;
+
 procedure TTestPersist.valid2;
   // test if the xml structure is validated against the dtd
-  // create and save a xml structure that NOT valid against the dtd
+  // create and save a xml structure that is NOT valid against the dtd
 var
   Data: string;
 begin
@@ -193,6 +222,33 @@ begin
   end;
 end;
 
+procedure TTestPersist.valid4_ParseError;
+  // test if the xml structure is validated against the dtd
+  // create and save a xml structure that is NOT valid against the dtd
+  // Additional the parse error is checked.
+var
+  sl: TStrings;
+begin
+  sl := TStringList.Create;
+  sl.Text := xmldecl + CRLF +
+             '<!DOCTYPE root [' + CRLF +
+             '<!ELEMENT root (test*)>' + CRLF +
+             '<!ELEMENT test (#PCDATA)>' + CRLF +
+             '<!ATTLIST test name CDATA #IMPLIED>' + CRLF +
+             ']>' + CRLF +
+             '<egon />';
+  sl.SaveToFile('temp.xml');
+  sl.Free;
+  (doc as IDomParseOptions).validate := True;
+  try
+    check(not (doc as IDomPersist).load('temp.xml'),
+      'result of load is true - should be false because xml is not vaild');
+  finally
+    check((doc as IDOMParseError).line = 7,'There must occur a parse error at line 7.');
+    check((doc as IDOMParseError).url = 'temp.xml','The Url is different from "temp.xml".');
+    if FileExists('temp.xml') then DeleteFile('temp.xml');
+  end;
+end;
 procedure TTestPersist.LoadFiles;
 var
   builder: IDomDocumentBuilder;
@@ -281,8 +337,20 @@ end;
 procedure TTestPersist.wellformed;
   // load a NOT wellformed xml from string
 begin
-  check(not (doc as IDOMPersist).loadxml(xmldecl+'<test>'),
+  check(not (doc as IDOMPersist).loadxml(xmldecl+'<test>'+CRLF+'<a>'+CRLF+'</test>'),
     'method loadxml should return False because xml is NOT wellformed');
+end;
+
+procedure TTestPersist.wellformed_ParseError;
+  // load a NOT wellformed xml from string
+begin
+  try
+    check(not (doc as IDOMPersist).loadxml(xmldecl+'<test>'+CRLF+'<a>'+CRLF+'</test>'),
+      'method loadxml should return False because xml is NOT wellformed');
+  finally
+    check((doc as IDOMParseError).line = 3,'There must occur a parse error at line 3.');
+    check((doc as IDOMParseError).url = '','Xml was parsed from a string not from a file.');
+  end;
 end;
 
 procedure TTestPersist.wellformed1;
@@ -372,9 +440,9 @@ var
 begin
   ok1 := False;
   sl := TStringList.Create;
-  tmp := '<?xml version="1.0"?>' +
-         '<test>' +
-           '‰ˆ¸ƒ÷‹Ä' +
+  tmp := '<?xml version="1.0"?>' + CRLF +
+         '<test>' + CRLF +
+           '‰ˆ¸ƒ÷‹Ä' + CRLF +
          '</test>';
   sl.text:=tmp;
   sl.SaveToFile('temp.xml');
@@ -389,38 +457,68 @@ begin
   end;
 end;
 
+procedure TTestPersist.parsedEncoding1_ParseError;
+// check wether there is a parse error reported, if we
+// try to parse a document, that containes umlauts (non ascii chars),
+// but has no declared encoding
+var
+  sl: TStrings;
+  ok,ok1: boolean;
+  tmp: widestring; // ,tmp1
+begin
+  ok1 := False;
+  sl := TStringList.Create;
+  tmp := '<?xml version="1.0"?>' + CRLF +
+         '<test>' + CRLF +
+           '‰ˆ¸ƒ÷‹Ä' + CRLF +
+         '</test>';
+  sl.text:=tmp;
+  sl.SaveToFile('temp.xml');
+  sl.Free;
+  try
+    ok:=(doc as IDomPersist).load('temp.xml');
+    check(not ok,'no parse error');
+    ok1:=true;
+  finally
+    check(ok1,'exception raised, but should not');
+    check((doc as IDOMParseError).line = 3, 'There must occur a parse error at line 3.');
+    check((doc as IDOMParseError).url = 'temp.xml','The Url must be "temp.xml".');
+    if FileExists('temp.xml') then DeleteFile('temp.xml');
+  end;
+end;
+
 procedure TTestPersist.stringEncoding;
 var
   sl: TStrings;
   ok: boolean;
   tmp,tmp1: widestring;
 begin
-  if domvendor='LIBXML_4CT' then begin
-    sl := TStringList.Create;
-    tmp := '<?xml version="1.0" encoding="iso-8859-1"?>' +
-           '<test>' +
-             '‰ˆ¸ƒ÷‹' +
-           '</test>';
-    sl.text:=tmp;
-    sl.SaveToFile('temp.xml');
-    sl.Free;
-    try
-      ok:=(doc as IDomPersist).load('temp.xml');
-      check(ok,'parse error');
-      (doc as IDomOutputOptions).encoding:='utf-8';
-      tmp1:= (doc as IDomPersist).xml;
-      tmp1:=UTF8Decode(tmp1);
-      tmp1:=Unify(tmp1);
-      tmp:=Unify(tmp);
-      //showMessage(tmp+CRLF+tmp1);
-      check(tmp=tmp1,'encoding error');
-      check((doc as IDomOutputOptions).parsedEncoding='iso-8859-1','wrong parsed encoding');
-    finally
-      if FileExists('temp.xml') then DeleteFile('temp.xml');
-    end;
-  end else begin
-    check(false,'DomVendor not supported!');
-  end;
+  if domvendor='LIBXML_4CT'
+    then
+      begin
+        sl:=TStringList.Create;
+        tmp := '<?xml version="1.0" encoding="iso-8859-1"?><test>‰ˆ¸ƒ÷‹</test>';
+        sl.text:=tmp;
+        sl.SaveToFile('temp.xml');
+        sl.Free;
+
+        try
+          ok:=(doc as IDomPersist).load('temp.xml');
+          check(ok,'parse error');
+          (doc as IDomOutputOptions).encoding:=cUTF8; // used to be: utf-8
+          tmp1:= (doc as IDomPersist).xml;
+          tmp1:=Unify(tmp1);
+          tmp:=Unify(tmp);
+          check(tmp=tmp1,'encoding error');
+          check((doc as IDomOutputOptions).parsedEncoding='iso-8859-1','wrong parsed encoding');
+        finally
+          if FileExists('temp.xml') then DeleteFile('temp.xml');
+        end;
+      end
+    else
+      begin
+        check(false,'DomVendor not supported!');
+      end;
 end;
 
 procedure TTestPersist.fileEncoding;
@@ -429,35 +527,35 @@ var
   ok: boolean;
   tmp,tmp1: widestring;
 begin
-  if domvendor='LIBXML_4CT' then begin
-    sl := TStringList.Create;
-    tmp := '<?xml version="1.0" encoding="iso-8859-1"?>' +
-           '<test>' +
-             '‰ˆ¸ƒ÷‹' +
-           '</test>';
-    sl.text:=tmp;
-    sl.SaveToFile('temp.xml');
-    sl.Free;
-    try
-      ok:=(doc as IDomPersist).load('temp.xml');
-      check(ok,'parse error');
-      if FileExists('temp.xml') then DeleteFile('temp.xml');
-      (doc as IDomOutputOptions).encoding:='utf-8';
-      (doc as IDomPersist).save('temp.xml');
-      ok:=(doc as IDomPersist).load('temp.xml');
-      check(ok,'parse error');
-      tmp1:=(doc as IDomPersist).xml;
-      tmp1:=UTF8Decode(tmp1);
-      tmp1:=Unify(tmp1);
-      tmp:=Unify(tmp);
-      check(tmp=tmp1,'encoding error');
-      check((doc as IDomOutputOptions).parsedEncoding='utf-8','wrong parsed encoding');
-    finally
-      if FileExists('temp.xml') then DeleteFile('temp.xml');
-    end;
-  end else begin
-    check(false,'DomVendor not supported!');
-  end;
+  if domvendor='LIBXML_4CT'
+    then
+      begin
+        sl:=TStringList.Create;
+        tmp := '<?xml version="1.0" encoding="iso-8859-1"?><test>‰ˆ¸ƒ÷‹</test>';
+        sl.text:=tmp;
+        sl.SaveToFile('temp.xml');
+        sl.Free;
+        try
+          ok:=(doc as IDomPersist).load('temp.xml');
+          check(ok,'parse error');
+          if FileExists('temp.xml') then DeleteFile('temp.xml');
+          (doc as IDomOutputOptions).encoding:=cUTF8; // used to be: utf-8
+          (doc as IDomPersist).save('temp.xml');
+          ok:=(doc as IDomPersist).load('temp.xml');
+          check(ok,'parse error');
+          tmp1:=(doc as IDomPersist).xml;
+          tmp1:=Unify(tmp1);
+          tmp:=Unify(tmp);
+          check(tmp=tmp1,'encoding error');
+          check((doc as IDomOutputOptions).parsedEncoding=cUTF8, 'wrong parsed encoding');  // used to be: utf-8
+        finally
+          if FileExists('temp.xml') then DeleteFile('temp.xml');
+        end;
+      end
+    else
+      begin
+        check(false,'DomVendor not supported!');
+      end;
 end;
 
 procedure TTestPersist.filePrettyPrint;
@@ -553,7 +651,7 @@ var
 begin
   teststr:= getunicodestr(1);
   parsestr:='';
-  parsestr:=parsestr+'<?xml version="1.0" encoding="utf8"?><root><text>'+teststr+'</text><text>ƒ÷‹</text></root>';
+  parsestr:=parsestr+'<?xml version="1.0" encoding="'+cUTF8+'"?><root><text>'+teststr+'</text><text>ƒ÷‹</text></root>';  // used to be: utf8
   //showMessage(parsestr);
   ok:=(doc as IDOMPersist).loadxml(parsestr);
   check(ok,'parse error');
@@ -569,7 +667,7 @@ end;
 procedure TTestPersist.load_windows_pathdelimiter;
 
 begin
-  {$ifdef win32}
+  {$ifdef mswindows}
   check(Pos('\',datapath) > 0, 'datapath does not have a windows path delimiter');
   {$endif}
   (doc as IDOMParseOptions).resolveExternals := True;
@@ -579,7 +677,7 @@ end;
 
 initialization
   datapath := getDataPath;
-  {$ifdef win32}
+  {$ifdef mswindows}
   CoInitialize(nil);
   {$endif}
   {$ifdef linux}

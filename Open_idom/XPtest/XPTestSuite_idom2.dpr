@@ -10,27 +10,32 @@ uses
   TestModules,
   TestFramework,
   TextTestRunner,
+  Main,
+  XPTest_idom2_Shared,
+  XPTest_idom2_TestDOM2Methods,
+  XPTest_idom2_TestDomExceptions,
+  XPTest_idom2_TestMemoryLeaks,
+  XPTest_idom2_TestXPath,
+  XPTest_idom2_TestXSLT,
+  XPTest_idom2_TestPersist,
+  DomDocumentTests,
+  DomImplementationTests,
+  domSetup,
   SysUtils,
+{$ifdef linux}
+  QForms,
+  KylixGUITestRunner,
+{$endif}
+{$ifdef mswindows}
   Windows,
   Forms,
   GUITestRunner,
   msxml_impl,
+{$endif}
   libxmldom,
-  libxslt,
-  Main in 'Main.pas',
-  XPTest_idom2_Shared in 'XPTest_idom2_Shared.pas',
-  XPTest_idom2_TestDOM2Methods in 'XPTest_idom2_TestDOM2Methods.pas',
-  XPTest_idom2_TestDomExceptions in 'XPTest_idom2_TestDomExceptions.pas',
-  XPTest_idom2_TestMemoryLeaks in 'XPTest_idom2_TestMemoryLeaks.pas',
-  XPTest_idom2_TestPersist in 'XPTest_idom2_TestPersist.pas',
-  XPTest_idom2_TestXPath in 'XPTest_idom2_TestXPath.pas',
-  XPTest_idom2_TestXSLT in 'XPTest_idom2_TestXSLT.pas',
-  domSetup in 'domSetup.pas',
-  DomDocumentTests in 'contrib\DomDocumentTests.pas',
-  DomImplementationTests in 'contrib\DomImplementationTests.pas';
+  libxslt;
 
-{$ifndef linux}
-
+{$ifdef mswindows}
 {$R *.res}
 {$endif}
 
@@ -45,7 +50,7 @@ var
 begin
   try
     try
-      {$ifndef linux}
+      {$ifdef mswindows}
       if not IsConsole then begin
          Windows.AllocConsole;
       end;
@@ -123,13 +128,13 @@ begin
       on e: Exception do Writeln(Format('%s: %s', [e.ClassName, e.Message]));
     end;
   finally
-    {$ifndef linux}
+    {$ifdef mswindows}
     if not IsConsole then begin
     {$endif}
       writeln;
       write  ('Press <RETURN> to exit.');
       readln;
-    {$ifndef linux}
+    {$ifdef mswindows}
     end;
     {$endif}
   end;

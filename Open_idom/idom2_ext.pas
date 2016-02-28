@@ -82,7 +82,18 @@ type
     property xml : DomString read get_xml;
   end;
 
- 
+  { IDOMPersistHTML }
+
+  IDomPersistHTML = interface
+    ['{2FB54CBC-9300-4DA9-9B4D-5FD9C249EF79}']
+
+    {property setters/getters}
+    function get_html : DOMString;
+
+    {properties}
+    property html : DomString read get_html;
+  end;
+
   { IDOMParseOptions }
  
   IDomParseOptions = interface
@@ -106,6 +117,42 @@ type
             read get_resolveExternals
             write set_resolveExternals;
     property validate : Boolean read get_validate write set_validate;
+  end;
+
+	{ IDOMParseError }
+
+  IDOMParseError = interface
+    ['{C8F5A77E-39B6-4F88-8593-46130DFC5F60}']
+    { Property Acessors }
+    function get_errorCode: Integer;
+    function get_url: DOMString; safecall;
+    function get_reason: DOMString; safecall;
+    function get_srcText: DOMString; safecall;
+    function get_line: Integer;
+    function get_linepos: Integer;
+    function get_filepos: Integer;
+    { Properties }
+    property errorCode: Integer read get_errorCode;
+    property url: DOMString read get_url;
+    property reason: DOMString read get_reason;
+    property srcText: DOMString read get_srcText;
+    property line: Integer read get_line;
+    property linePos: Integer read get_linepos;
+    property filePos: Integer read get_filepos;
+  end;
+
+  // this interface makes it possible to switch between the old libxmldom
+  // behaviour, not to expose namespace declaration attributes and the
+  // dom2 compliant way of doing so
+  IDOMImplOptions = interface
+    ['{FB0436A1-155B-4CBF-AE41-1E24260BCCA2}']
+    { Property Acessors }
+    function  get_exposeNsDefAttribs: boolean;
+    procedure set_exposeNsDefAttribs(value: boolean);
+    { Properties }
+    property exposeNsDefAttribs: boolean read  get_exposeNsDefAttribs
+                                         write set_exposeNsDefAttribs;
+
   end;
 
   { IDomNodeCompare }
@@ -189,16 +236,16 @@ type
     ['{B2ECC3F1-CC9B-4445-85C6-3D62638F7835}']
     { Property Acessors }
     function get_prettyPrint: boolean;
-    function get_encoding: DomString;
+    function get_encoding1: DomString;
     function get_parsedEncoding: DomString;
     function get_compressionLevel: integer;
     procedure set_prettyPrint(prettyPrint: boolean);
-    procedure set_encoding(encoding: DomString);
+    procedure set_encoding1(encoding: DomString);
     procedure set_compressionLevel(compressionLevel: integer);
     { methods }
     { Properties }
     property prettyPrint: boolean read get_prettyPrint write set_prettyPrint;
-    property encoding: DomString read get_encoding write set_encoding;
+    property encoding: DomString read get_encoding1 write set_encoding1;
     property parsedEncoding: DomString read get_parsedEncoding;
     property compressionLevel: integer read get_compressionLevel write set_compressionLevel;
   end;

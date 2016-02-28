@@ -154,6 +154,16 @@ const
 
   PARSE_ERR = 1000;
 
+  (*
+   * If a File couldn't be written
+   *)
+  WRITE_ERR = 1001;
+
+  (*
+   * if a parameter, that was passed, was nil, but must not
+   *)
+  NULL_PTR_ERR = 1002;
+
 
   (*
    * The official DOM specs works with Integer values for Node Types.
@@ -223,7 +233,7 @@ const
 
 type
 
-  DomString    = WideString;
+  DomString    = UnicodeString;
   DomTimeStamp = Int64;
 
   DomNodeType  = Integer;
@@ -963,7 +973,7 @@ type
   (**
    * Interface for enumerating vendors.
    *)
-  IDomVendorList = interface(IInterface)
+  IDomVendorList = interface
     ['{2739F26E-98D6-49D0-AAE4-2B0D2DF128BE}']
 
     (**
@@ -1017,7 +1027,7 @@ implementation
 
 type
 
-  IDomVendorRegister = interface (IInterface)
+  IDomVendorRegister = interface
   ['{7066DA54-8AC1-42A3-8456-DDE9C527A1FD}']
       (*
        * add a new DocumentBuilderFactory to the list.
@@ -1038,18 +1048,30 @@ type
    * Register for registering different DocumentBuilderFactories. Each
    * DocumentBuilderFactory is identified by a vendorID.
    *)
-  TDomVendorRegister = class(TInterfacedObject, IDomVendorRegister, IDomVendorList)
+  TDomVendorRegister = class(TInterfacedObject, IDomVendorList, IDomVendorRegister)
     private
       (* list of DocumentBuilderFactories *)
       fFactoryList : TInterfaceList;
     protected //IDomVendorList
       function  get_Count: integer;
       function  get_Item(const aIndex: integer): IDomDocumentBuilderFactory;
-      procedure add(domDocumentBuilderFactory : IDomDocumentBuilderFactory);
-      function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
     public
       constructor Create;
       destructor Destroy; override;
+
+      (*
+       * add a new DocumentBuilderFactory to the list.
+       * Pre-condition:
+       *   - vendorID must be set
+       *   - vendorID must be unique (if not EDomVendorRegisterException)
+      *)
+      procedure add(domDocumentBuilderFactory : IDomDocumentBuilderFactory);
+
+      (*
+       * returns the DomDocumentBuilderFactory with id vendorId
+       * if vendorId is not found then result := nil
+      *)
+      function get_Factory(vendorID : DomString) : IDomDocumentBuilderFactory;
   end;
 
 var
@@ -1171,10 +1193,3 @@ begin
 end;
 
 end.
-
-
-
-
-
-
-

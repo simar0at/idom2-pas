@@ -9,7 +9,9 @@ uses
   idom2,
   idom2_ext,
   SysUtils,
+{$ifndef linux}
   ActiveX,
+{$endif}
   XPTest_idom2_Shared,
   Classes,
   Dialogs;
@@ -87,18 +89,24 @@ type
     procedure basic_documentFragment;
     procedure basic_domImplementation;
     procedure basic_firstChild;
+    procedure basic_get_defaultNs;
+    procedure basic_get_NsDecl;
     procedure basic_getAttributeNodeNS_setAttributeNodeNS;
     procedure basic_getAttributeNS_setAttributeNS;
     procedure basic_getAttribute_setAttribute;
     procedure basic_getElementByID;
     procedure basic_getElementsByTagName;
     procedure basic_getElementsByTagNameNS;
+
     procedure basic_hasAttributeNS_setAttributeNodeNS;
     procedure basic_hasAttributes_setAttribute;
     procedure basic_hasAttribute_setAttributeNode;
     procedure basic_hasChildNodes;
+
     procedure basic_importNode_AttributeNode;
+    procedure basic_importNode_AttributeNode1;
     procedure basic_importNode_AttributeNodeNS;
+    procedure basic_importNode_AttributeNodeNS1;
     procedure basic_importNode_AttributeNodeNS_on_element;
     procedure basic_importNode_AttributeNode_on_element;
     procedure basic_importNode_CDataSection;
@@ -109,6 +117,7 @@ type
     procedure basic_importNode_ElementNS_deep_flat;
     procedure basic_importNode_ProcessingInstruction;
     procedure basic_importNode_TextNode;
+
     procedure basic_insertBefore;
     procedure basic_isSupported;
     procedure basic_lastChild;
@@ -119,17 +128,25 @@ type
     procedure basic_removeAttributeNS;
     procedure basic_removeChild;
     procedure basic_replaceChild;
+
+    procedure basic_set_defaultNs;
+    procedure basic_set_NsDecl;
+
     procedure ext_appendAttributeNodeNS_removeAttributeNode;
     procedure ext_appendChild_10times;
+    procedure ext_appendChild_defaultNs;
+    procedure ext_appendChild_override_defaultNs;
     procedure ext_appendChild_existing;
     procedure ext_appendChild_NsDecl;
     procedure ext_appendChild_orphan;
     procedure ext_appendChild_removeChild;
     procedure ext_append_100_attributes_with_different_namespaces;
+    procedure ext_appendRemove_defaultNs;
+    procedure ext_appendRemove_NsDecl;
     procedure ext_attributes_10times;
     procedure ext_attribute_default2;
     procedure ext_attribute_default3;
-    procedure ext_attribute_default4;
+    procedure ext_attribute_default_enumeration;
     procedure ext_attribute_default5;
     procedure ext_attribute_default_removeNamedItem;
     procedure ext_attribute_default_getAttribute;
@@ -147,6 +164,7 @@ type
     procedure ext_cloneNode_getFragmentA;
     procedure ext_cloneNode_NsDecl;
     procedure ext_createElementNS_defaultNS;
+    procedure ext_defaultNs_check_serializer;
     procedure ext_docType;
     procedure ext_docType_entities1;
     procedure ext_docType_entities2;
@@ -168,12 +186,15 @@ type
     procedure ext_importNode_AttributeNode_default;
     procedure ext_importNode_AttributeNode_default_on_element;
     procedure ext_importNode_cloneNode;
-    procedure basic_importNode_AttributeNode1;
-    procedure basic_importNode_AttributeNodeNS1;
+
     procedure ext_insertBefore_10times;
     procedure ext_insertBefore_documentFragment;
     procedure ext_insertBefore_existing;
     procedure ext_insertBefore_TextNode;
+
+    procedure ext_namespaceMove_I;
+    procedure ext_namespaceMove_II;
+    procedure ext_namespaceAppendRemoveAttr;
     procedure ext_namedNodeMap;
     procedure ext_namedNodeMapNS;
     procedure ext_namedNodeMap_append_remove_NsDecl1;
@@ -183,6 +204,7 @@ type
     procedure ext_previousSibling_10times;
     procedure ext_reconciliate1;
     procedure ext_reconciliate;
+    procedure ext_removeChild;
     procedure ext_removeAttributeNs;
     procedure ext_setAttributeNodeNs_NsDecl;
     procedure ext_setAttributeNodeNS_Xml;
@@ -207,7 +229,9 @@ type
 
 implementation
 
-uses domSetup;
+uses
+  domSetup;
+
 
 const
   S_OK = 0;
@@ -443,7 +467,7 @@ begin
   // the same with namespace
   doc:=nil;
   doc := impl.createDocument('', '', nil);
-  (doc as IDomPersist).loadxml('<?xml version="1.0" encoding="utf8"?><root />');
+  (doc as IDomPersist).loadxml('<?xml version="1.0" encoding="'+cUTF8+'"?><root />'); // used to be: utf8
   elem := doc.createElementNs(nsuri,fqname);
   doc.documentElement.appendChild(elem);
   // debug
@@ -921,7 +945,6 @@ begin
 
   check(myIsSameNode(elem.parentNode,doc), 'wrong parentNode');
   check(myIsSameNode(elem.ownerDocument,doc), 'wrong ownerDocument');
-  check(true);
 end;
 
 procedure TTestDom2Methods.basic_documentFragment;
@@ -980,13 +1003,15 @@ procedure TTestDom2Methods.basic_getAttributeNodeNS_setAttributeNodeNS;
 begin
   elem := doc.createElement(Name);
   attr := doc.createAttributeNS(nsuri, fqname);
+  check((attr.parentNode=nil), 'wrong parentNode');
   elem.setAttributeNodeNS(attr);
+  check((attr.parentNode=nil), 'wrong parentNode');
   attr := elem.getAttributeNodeNS(nsuri, Name);
   check(attr <> nil, 'attribute is nil');
   check(attr.name = fqname, 'wrong name');
   check(attr.nodeName = fqname, 'wrong nodeName');
   check(attr.nodeType = ATTRIBUTE_NODE, 'wrong nodeType');
-  check(MyIsSameNode(attr.parentNode,elem), 'wrong parentNode');
+  check((attr.parentNode=nil), 'wrong parentNode');
   check(attr.namespaceURI = nsuri, 'wrong namespaceURI');
   check(attr.prefix = prefix, 'wrong prefix');
   check(attr.localName = Name, 'wrong localName');
@@ -1222,36 +1247,6 @@ begin
   check(node.firstChild.nodeName = prefix + ':' + 'second', 'wrong nodeName');
 
 end;
-
-procedure TTestDOM2Methods.basic_importNode_AttributeNode1;
-var
-  adoc: IDomDocument;
-  attr1,attr2: IDOMAttr;
-begin
-  // create a second dom
-  adoc := impl.createDocument('', '', nil);
-  check((adoc as IDomPersist).loadxml(xmlstr), 'parse error');
-  // append new attribute to documentElement of 2nd dom
-  attr1 := adoc.createAttribute(Name);
-  attr1.value:='blau';
-  adoc.documentElement.setAttributeNode(attr1);
-  // clone the attribute => 2nd new attribute
-  // this is unneccessary, if you use libxmldom.pas
-  attr2 := ((attr1 as IDOMNode).cloneNode(false)) as IDOMAttr;
-  // import the attribute => 3rd new attribute
-  // this is unneccessary, if you use msxml
-  attr := (doc.importNode(attr2,false)) as IDOMAttr;
-  // append the attribute to documentElement of 1st dom
-  doc.documentElement.setAttributeNode(attr);
-  attr:=nil;
-  attr:=doc.documentElement.attributes[0] as IDomAttr;
-  check(attr <> nil, 'attribute is nil');
-  check(attr.name = Name,'wrong name of imported attribute');
-  check(attr.value = 'blau','wrong value of imported attribute');
-  check(not myIsSameNode(doc,adoc),'the two documents must not be the same');
-  check(myIsSameNode(attr.ownerDocument,doc), 'wrong ownerDocument');
-end;
-
 
 procedure TTestDom2Methods.basic_insertBefore;
 begin
@@ -1722,7 +1717,7 @@ begin
 
   // make elem visible to ().xml
   doc.documentElement.appendChild(elem);
-
+  // debugDom(doc);
   elem.setAttributeNS(xmlns,'xmlns:abc','http://abc.org');
     // namespace declaration was set
     check(elem.attributes.length = 1, 'wrong length (Ia)');
@@ -2033,41 +2028,6 @@ begin
   check(attr<>nil,'namespace-attribute is not shown');
 end;
 
-procedure TTestDOM2Methods.basic_importNode_AttributeNodeNS1;
-var
-  adoc: IDomDocument;
-  attr1,attr2: IDOMAttr;
-begin
-  // create a second dom
-  adoc := impl.createDocument('', '', nil);
-  check((adoc as IDomPersist).loadxml(xmlstr), 'parse error');
-  // append new attribute to documentElement of 2nd dom
-  attr1 := adoc.createAttributeNs(nsuri, fqname);
-  attr1.value:='grün';
-  check(attr1.name=fqname,'wrong name of original attribute');
-  adoc.documentElement.setAttributeNodeNs(attr1);
-  attr1:=nil;
-  attr1:=adoc.documentElement.attributes[0] as IDomAttr;
-  check(attr1.name=fqname,'wrong name of original attribute');
-  // clone the attribute => 2nd new attribute
-  // this is unneccessary, if you use libxmldom.pas
-  attr2 := ((attr1 as IDOMNode).cloneNode(false)) as IDOMAttr;
-  check(attr2.name=fqname,'wrong name of original attribute');
-  // import the attribute => 3rd new attribute
-  // this is unneccessary, if you use msxml
-  attr := (doc.importNode(attr2,false)) as IDOMAttr;
-  check(attr.name=fqname,'wrong name of imported attribute');
-  // append the attribute to documentElement of 1st dom
-  doc.documentElement.setAttributeNodeNs(attr);
-  attr:=nil;
-  attr:=doc.documentElement.attributes[0] as IDomAttr;
-  check(attr <> nil, 'attribute is nil');
-  check(attr.name=fqname,'wrong name of imported attribute');
-  check(attr.value='grün','wrong value of imported attribute');
-  check(not myIsSameNode(doc,adoc),'the two documents must not be the same');
-  check(myIsSameNode(attr.ownerDocument,doc), 'wrong ownerDocument');
-end;
-
 procedure TTestDOM2Methods.ext_appendAttributeNodeNS_removeAttributeNode;
 begin
   elem := doc.createElementNS(nsuri,fqname);
@@ -2179,6 +2139,7 @@ begin
   sl := TStringList.Create;
   for i := 0 to doc.docType.entities.length-1 do begin
     ent := doc.docType.entities[i] as IDomEntity;
+    check(ent<>nil,'an existing entity was not found!');
     sl.Add(ent.nodeName);
   end;
   check(sl.IndexOf('ct') <> -1, 'entity "ct" not found');
@@ -2497,7 +2458,7 @@ begin
   check(doc.documentElement.firstChild.nodeValue = 'This sample shows a error-prone method.', 'wrong value');
 end;
 
-procedure TTestDOM2Methods.ext_attribute_default4;
+procedure TTestDOM2Methods.ext_attribute_default_enumeration;
 const
   xmlstr = '<?xml version=''1.0''?>'+CRLF+
            '<!DOCTYPE test ['+CRLF+
@@ -3442,6 +3403,8 @@ begin
 end;
 
 procedure TTestDOM2Methods.ext_cloneNode_NsDecl;
+var
+  tmp: string;
 const
   xmlstr0 = xmldecl+
             '<root>'+
@@ -3460,6 +3423,16 @@ const
                 '<elem3><abc:elem4 xmlns:abc="ABC"/></elem3>'+
               '</elem1b>'+
             '</root>';
+   xmlstr2 = '<root>'+
+               '<elem1 xmlns:abc="ABC">'+
+                 '<elem2>'+
+                   '<elem3><abc:elem4/></elem3>'+
+                 '</elem2>'+
+               '</elem1>'+
+               '<elem1b>'+
+                 '<elem3 xmlns:abc="ABC"><abc:elem4/></elem3>'+
+               '</elem1b>'+
+             '</root>';
 begin
   check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
   node := doc.createElement('elem3');
@@ -3468,7 +3441,8 @@ begin
   doc.documentElement.firstChild.firstChild.appendChild(node);
   node := node.cloneNode(True);
   doc.documentElement.lastChild.appendChild(node);
-  check(Unify((doc as IDOMPersist).xml) = xmlstr1, 'wrong content');
+  tmp:=(Unify((doc as IDOMPersist).xml));
+  check((tmp = xmlstr1) or (tmp = xmlstr2), 'wrong content');
 end;
 
 procedure TTestDOM2Methods.ext_cloneNode_AttributeNode_default_on_Element;
@@ -3630,7 +3604,7 @@ procedure TTestDOM2Methods.basic_importNode_AttributeNode;
 begin
   attr := doc.createAttribute('attr');
   doc.documentElement.setAttributeNode(attr);
-  node := doc0.importNode(attr,True);
+  node := doc0.importNode(attr, True);
   check(node <> nil, 'node is nil');
   check(not MyIsSameNode(node,attr), 'target and source are the same');
   check(node.parentNode = nil, 'parent is not nil');
@@ -3647,6 +3621,46 @@ begin
   check(attr <> nil, 'attr is nil');
   check(attr.ownerElement = nil, 'ownerElement is not nil');
   check(attr.specified, 'attribute is not specified');
+end;
+
+procedure TTestDOM2Methods.basic_importNode_AttributeNode1;
+var
+  adoc  : IDomDocument;
+  attr1 : IDOMAttr;
+begin
+  // create a second dom
+  adoc := impl.createDocument('', '', nil);
+  check((adoc as IDomPersist).loadxml(xmlstr), 'parse error');
+
+  // append new attribute to documentElement of 2nd dom
+  attr1 := adoc.createAttribute(Name);
+  attr1.value:='blau';
+  adoc.documentElement.setAttributeNode(attr1);
+
+  attr := (doc.importNode(attr1, true)) as IDOMAttr;
+  doc.documentElement.setAttributeNode(attr);
+
+  {
+  // clone the attribute => 2nd new attribute
+  // this is unneccessary, if you use libxmldom.pas
+  attr2 := ((attr1 as IDOMNode).cloneNode(false)) as IDOMAttr;
+
+  // import the attribute => 3rd new attribute
+  // this is unneccessary, if you use msxml
+  attr := (doc.importNode(attr2,false)) as IDOMAttr;
+
+  // append the attribute to documentElement of 1st dom
+  doc.documentElement.setAttributeNode(attr);
+
+  attr:=nil;
+  attr:=doc.documentElement.attributes[0] as IDomAttr;
+
+  check(attr <> nil, 'attribute is nil');
+  check(attr.name = Name,'wrong name of imported attribute');
+  check(attr.value = 'blau','wrong value of imported attribute');
+  check(not myIsSameNode(doc,adoc),'the two documents must not be the same');
+  check(myIsSameNode(attr.ownerDocument,doc), 'wrong ownerDocument');
+  }
 end;
 
 procedure TTestDOM2Methods.basic_importNode_AttributeNodeNS;
@@ -3677,6 +3691,41 @@ begin
   check(attr <> nil, 'attr is nil');
   check(attr.ownerElement = nil, 'ownerElement is not nil');
   check(attr.specified, 'attribute is not specified');
+end;
+
+procedure TTestDOM2Methods.basic_importNode_AttributeNodeNS1;
+var
+  adoc: IDomDocument;
+  attr1,attr2: IDOMAttr;
+begin
+  // create a second dom
+  adoc := impl.createDocument('', '', nil);
+  check((adoc as IDomPersist).loadxml(xmlstr), 'parse error');
+  // append new attribute to documentElement of 2nd dom
+  attr1 := adoc.createAttributeNs(nsuri, fqname);
+  attr1.value:='grün';
+  check(attr1.name=fqname,'wrong name of original attribute');
+  adoc.documentElement.setAttributeNodeNs(attr1);
+  attr1:=nil;
+  attr1:=adoc.documentElement.attributes[0] as IDomAttr;
+  check(attr1.name=fqname,'wrong name of original attribute');
+  // clone the attribute => 2nd new attribute
+  // this is unneccessary, if you use libxmldom.pas
+  attr2 := ((attr1 as IDOMNode).cloneNode(false)) as IDOMAttr;
+  check(attr2.name=fqname,'wrong name of original attribute');
+  // import the attribute => 3rd new attribute
+  // this is unneccessary, if you use msxml
+  attr := (doc.importNode(attr2,false)) as IDOMAttr;
+  check(attr.name=fqname,'wrong name of imported attribute');
+  // append the attribute to documentElement of 1st dom
+  doc.documentElement.setAttributeNodeNs(attr);
+  attr:=nil;
+  attr:=doc.documentElement.attributes[0] as IDomAttr;
+  check(attr <> nil, 'attribute is nil');
+  check(attr.name=fqname,'wrong name of imported attribute');
+  check(attr.value='grün','wrong value of imported attribute');
+  check(not myIsSameNode(doc,adoc),'the two documents must not be the same');
+  check(myIsSameNode(attr.ownerDocument,doc), 'wrong ownerDocument');
 end;
 
 procedure TTestDOM2Methods.basic_importNode_DocumentFragment_deep;
@@ -4156,9 +4205,391 @@ begin
   end;
 end;
 
+procedure TTestDOM2Methods.ext_namespaceMove_I;
+var
+  elem1, elem2, elem3: IDomElement;
+  tmp: string;
+begin
+  elem1 := doc.createElementNS('AAA', 'ns1:elem1');
+  // Setting NS attributes will produce namespace definitions on the element.
+  doc.documentElement.appendChild(elem1);
+  elem2 := doc.createElement('elem2');
+  elem1.appendChild(elem2);
+  elem3 := doc.createElementNS('AAA', 'ns1:elem3');
+  elem2.appendChild(elem3);
+  // debugDom(doc);
+  // Now the namespaces should be reconciliated.
+  elem1.removeChild(elem2);
+  // What happens with the namespace definitions on the element?
+  doc.documentElement.appendChild(elem2);
+  // debugDom(doc);
+  tmp:=unify((doc as IDomPersist).xml);
+  //status(tmp);
+  check(tmp='<root><ns1:elem1 xmlns:ns1="AAA"/><elem2><ns1:elem3 xmlns:ns1="AAA"/></elem2></root>',
+        'incorrect result, perhaps namespace declaration attribute missing?');
+end;
+
+
+procedure TTestDOM2Methods.ext_namespaceMove_II;
+var
+  elemBag, elemMoveMe: IDomElement;
+  attr: IDomAttr;
+  tmp: string;
+begin
+  elemBag := doc.createElementNS('AAA', 'a:elembag');
+  // Setting NS attributes will produce namespace definitions on the element.
+  attr:=doc.createAttributeNS('BBB','b:attr');
+  elemBag.setAttributeNodeNs(attr);
+  // append elemBag to the document
+  doc.documentElement.appendChild(elemBag);
+  // debugDom(doc);
+  elemMoveMe := doc.createElementNS('AAA', 'a:elemMoveMe');
+  // Setting NS attributes will produce namespace definitions on the element.
+  attr:=doc.createAttributeNS('BBB','b:attr');
+  elemMoveMe.setAttributeNodeNs(attr);
+  elemBag.appendChild(elemMoveMe);
+  // Now the namespaces should be reconciliated.
+  elemBag.removeChild(elemMoveMe);
+  // What happens with the namespace definitions on the element?
+  doc.documentElement.appendChild(elemMoveMe);
+  // debugDom(doc);
+  tmp:=unify((doc as IDomPersist).xml);
+  //status(tmp);
+  check(tmp='<root><a:elembag xmlns:a="AAA" xmlns:b="BBB" b:attr=""/><a:elemMoveMe xmlns:a="AAA" xmlns:b="BBB" b:attr=""/></root>',
+        'incorrect result, perhaps namespace declaration attribute missing?')
+end;
+
+procedure TTestDOM2Methods.ext_namespaceAppendRemoveAttr;
+// this test checks, wether removeAttributeNode removes the
+// nsdef entry of the attribute, too
+var
+  elemBag: IDomElement;
+  attr: IDomAttr;
+  tmp: string;
+begin
+  elemBag := doc.createElementNS('AAA', 'a:elembag');
+  // Setting NS attributes will produce namespace definitions on the element.
+  attr:=doc.createAttributeNS('BBB','b:attr');
+  elemBag.setAttributeNodeNs(attr);
+  // create a second attribute on this node (with namespace)
+  attr:=doc.createAttributeNS('BBB','b:attr');
+  elemBag.setAttributeNodeNs(attr);
+  // remove it
+  elemBag.removeAttributeNode(attr);
+  // append elemBag to the document
+  doc.documentElement.appendChild(elemBag);
+  // debugDom(doc);
+  // debugDom(doc);
+  tmp:=unify((doc as IDomPersist).xml);
+  check(tmp='<root><a:elembag xmlns:a="AAA"/></root>',
+        'incorrect result, perhaps obsolete namespace declaration attribute not deleted?')
+
+end;
+
+procedure TTestDOM2Methods.ext_removeChild;
+// test, removing a comment node that is placed directly beyond the document
+// node
+  procedure removeComments(doc: IDOMDocument);
+  var
+    nodelist: IDOMNodeList;
+    i: integer;
+    node,parent: IDOMNode;
+    doc1: IDomDocument;
+  begin
+    nodelist := (doc.documentElement as IDOMNodeSelect).selectNodes('//comment()');
+    for i := nodelist.length-1 downto 0 do begin
+      node := nodelist[i];
+      parent := node.parentNode;
+      doc1:=parent.ownerDocument;
+      parent.removeChild(node);
+    end;
+  end;
+const
+ xclass =
+'<?xml version=''1.0'' encoding=''iso-8859-1''?>'+
+'<xClasses>'+
+'  <xClass>'+
+'    <description>'+
+'      <remark lang=''de_DE''>Betreuer</remark>'+
+'    </description>'+
+'    <methods>'+
+'    </methods>'+
+''+
+'  </xClass>'+
+'</xClasses>'+
+crlf+
+'<!-- this is a comment beyond the document -->';
+var
+  ok: boolean;
+begin
+  (doc as IDOMPersist).loadxml(xclass);
+  try
+    removeComments(doc);
+    ok := True;
+  except
+    ok := False;
+  end;
+  Check(ok,'unable to remove a comment');
+end;
+
+procedure TTestDOM2Methods.ext_appendChild_defaultNs;
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<elem1>'+
+              '</elem1>'+
+            '</root>';
+  // the expected result
+  xmlstr1 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<elem1>'+
+                '<elem2/>'+
+              '</elem1>'+
+            '</root>';
+var
+  ns: string;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  ns:=doc.documentElement.firstChild.namespaceURI;
+  check(ns='http://ABC','default namespace URI not found!');
+  node := doc.createElementNs('http://ABC','elem2');
+  doc.documentElement.firstChild.appendChild(node);
+  //showXml(Unify((doc as IDOMPersist).xml));
+  check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr1), 'wrong content');
+end;
+
+procedure TTestDOM2Methods.ext_appendChild_override_defaultNs;
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<elem1>'+
+              '</elem1>'+
+            '</root>';
+  // the expected result
+  xmlstr1 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<elem1>'+
+                '<elem2 xmlns=""/>'+
+              '</elem1>'+
+            '</root>';
+  // the second expected result;
+  xmlstr2 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<elem1>'+
+                '<elem2 xmlns="">'+
+                  '<elem2 xmlns="http://DEF"/>'+
+                  '<elem2 xmlns="http://ABC"/>'+
+                '</elem2>'+
+              '</elem1>'+
+            '</root>';
+var
+  ns: string;
+  node1: IDomNode;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  ns:=doc.documentElement.firstChild.namespaceURI;
+  check(ns='http://ABC','default namespace URI not found!');
+  // override the defaultNs
+  node := doc.createElementNs('','elem2');
+  doc.documentElement.firstChild.appendChild(node);
+  // showXml(Unify((doc as IDOMPersist).xml));
+  check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr1), 'wrong content');
+  // now append another child with a different default namespace
+  node1 := doc.createElementNs('http://DEF','elem2');
+  doc.documentElement.firstChild.firstchild.appendChild(node1);
+  ns:=doc.documentElement.firstChild.firstChild.firstChild.namespaceURI;
+  check(ns='http://DEF','second default namespace URI not found!');
+  // now append another child with the first default namespace
+  node1 := doc.createElementNs('http://ABC','elem2');
+  doc.documentElement.firstChild.firstchild.appendChild(node1);
+  ns:=doc.documentElement.firstChild.firstChild.firstChild.nextSibling.namespaceURI;
+  check(ns='http://ABC','second default namespace URI not found!');
+  check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr2), 'wrong content');
+  //showXml(Unify((doc as IDOMPersist).xml));
+end;
+
+procedure TTestDOM2Methods.basic_set_defaultNs;
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root />';
+  // the expected result
+  xmlstr1 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<test/>'+
+            '</root>';
+var
+  ns:   string;
+  elem: IDomElement;
+  ok: boolean;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  doc.documentElement.setAttribute('xmlns','http://ABC');
+  elem:=doc.createElementNs('http://ABC','test');
+  doc.documentElement.appendChild(elem);
+  ns:=doc.documentElement.firstChild.namespaceURI;
+  check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr1), 'wrong content');
+  // check, if an exception is raised, if we append a second xmlns attribute
+  ok:=false;
+  try
+    doc.documentElement.setAttribute('xmlns','http://DEF');
+  except
+    ok:=true;
+  end;
+  check(ok,'no exception was raised when appending a second xmlns attribute')
+end;
+
+procedure TTestDOM2Methods.ext_appendRemove_defaultNs;
+// remove a default namespace declaration and replace it with a different one
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root xmlns="http://ABC"/>';
+  // the expected result
+  xmlstr1 = xmldecl+
+            '<root xmlns="http://DEF"/>';
+var
+  ns:   string;
+  ok: boolean;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  ok:=doc.documentElement.hasAttribute('xmlns');
+  check(ok,'namespace decl attribute not found!');
+  ns:=doc.documentElement.getAttribute('xmlns');
+  check(ns='http://ABC','wrong content for the value of the default namespace!');
+  doc.documentElement.removeAttribute('xmlns');
+  ok:=doc.documentElement.hasAttribute('xmlns');
+  check(not ok,'namespace decl attribute not removed!');
+  doc.documentElement.setAttribute('xmlns','http://DEF');
+  //showXml(Unify((doc as IDOMPersist).xml));
+  check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr1), 'wrong content');
+end;
+
+procedure TTestDOM2Methods.ext_defaultNs_check_serializer;
+// this test isn't very usefull
+// if you uncomment the line with showXml, you can see that both
+// msxml and libxml don't remove default nsdecls, if the same default
+// nsdecl is appended above.
+// you must remove the unneccessary nsdecl manually
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root >'+
+              '<test xmlns="http://ABC" />'+
+            '</root>';
+  // the expected result
+  xmlstr1 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<test/>'+
+            '</root>';
+var
+  ns:   string;
+  elem: IDomElement;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  doc.documentElement.setAttribute('xmlns','http://ABC');
+  elem:=doc.createElementNs('http://ABC','test');
+  doc.documentElement.appendChild(elem);
+  ns:=doc.documentElement.firstChild.namespaceURI;
+  //showXml(Unify((doc as IDOMPersist).xml));
+  //check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr1), 'wrong content');
+end;
+
+procedure TTestDOM2Methods.basic_set_NsDecl;
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root />';
+  // the expected result
+  xmlstr1 = xmldecl+
+            '<root xmlns:eva="http://ABC">'+
+              '<eva:test/>'+
+            '</root>';
+var
+  ns:   string;
+  elem: IDomElement;
+  ok: boolean;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  doc.documentElement.setAttribute('xmlns:eva','http://ABC');
+  elem:=doc.createElementNs('http://ABC','eva:test');
+  doc.documentElement.appendChild(elem);
+  ns:=doc.documentElement.firstChild.namespaceURI;
+  //showXml(Unify((doc as IDOMPersist).xml));
+  check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr1), 'wrong content');
+  // check, if an exception is raised, if we set the same xmlns attribute to a differnt value
+  ok:=false;
+  try
+    doc.documentElement.setAttribute('xmlns:eva','http://DEF');
+  except
+    ok:=true;
+  end;
+  check(ok,'no exception was raised when appending the same xmlns attribute to a different value')
+end;
+
+procedure TTestDOM2Methods.basic_get_NsDecl;
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root xmlns:eva="http://ABC">'+
+              '<eva:test/>'+
+            '</root>';
+
+var
+  ns:   string;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  ns:=doc.documentElement.getAttribute('xmlns:eva');
+  check((ns = 'http://ABC'), 'namespace declaration attribute not found');
+end;
+
+procedure TTestDOM2Methods.basic_get_defaultNs;
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root xmlns="http://ABC">'+
+              '<test/>'+
+            '</root>';
+
+var
+  ns:   string;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  ns:=doc.documentElement.getAttribute('xmlns');
+  check((ns = 'http://ABC'), 'default namespace declaration attribute not found');
+end;
+
+procedure TTestDOM2Methods.ext_appendRemove_NsDecl;
+// remove a normal namespace declaration and replace it with a different one
+const
+  // the input
+  xmlstr0 = xmldecl+
+            '<root xmlns:eva="http://ABC"/>';
+  // the expected result
+  xmlstr1 = xmldecl+
+            '<root xmlns:eva="http://DEF"/>';
+var
+  ns:   string;
+  ok: boolean;
+begin
+  check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
+  ok:=doc.documentElement.hasAttribute('xmlns:eva');
+  check(ok,'namespace decl attribute not found!');
+  ns:=doc.documentElement.getAttribute('xmlns:eva');
+  check(ns='http://ABC','wrong content for the value of the default namespace!');
+  doc.documentElement.removeAttribute('xmlns:eva');
+  ok:=doc.documentElement.hasAttribute('xmlns:eva');
+  check(not ok,'namespace decl attribute not removed!');
+  doc.documentElement.setAttribute('xmlns:eva','http://DEF');
+  //showXml(Unify((doc as IDOMPersist).xml));
+  check(Unify((doc as IDOMPersist).xml) = Unify(xmlstr1), 'wrong content');
+end;
+
 initialization
   datapath := getDataPath;
-  {$ifdef win32}
+  {$ifdef mswindows}
   CoInitialize(nil);
   {$endif}
   {$ifdef linux}

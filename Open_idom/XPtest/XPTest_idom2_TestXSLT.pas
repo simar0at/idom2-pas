@@ -124,7 +124,7 @@ end;
 
 procedure TTestXSLT.transformNode2Html4_WideString;
 var
-  Text: widestring;
+  Text: DOMString;
   ok:   boolean;
 begin
   // apply a stylesheet that produces html-output
@@ -135,7 +135,6 @@ begin
   (xnode as IDomNodeExt).transformNode(snode, Text);
   Text := Unify(Text);
   CheckEquals(outstr, Text, 'wrong content');
-//  check(Text = outstr, 'wrong content');
 end;
 
 // libxmldom wrapper currently does not support html documents
@@ -158,7 +157,7 @@ end;
 
 procedure TTestXSLT.transformNodeVersion10;
 var
-  Text: widestring;
+  Text: DOMString;
 begin
   // any XSLT 1.0 processor must be able to process the following stylesheet
   // without error, although the stylesheet includes elements from the XSLT
@@ -197,7 +196,7 @@ end;
 
 procedure TTestXSLT.transformNode2PlainText_WideString;
 var
-  Text: widestring;
+  Text: DOMString;
 begin
   // apply a stylesheet that produces text-output
 
@@ -222,7 +221,7 @@ end;
 
 procedure TTestXSLT.transformNodeSimplifiedSyntax;
 var
-  Text, result1, result2: widestring;
+  Text, result1, result2: DOMString;
 begin
   // A simplified syntax is allowed for stylesheets that consist of only a
   // single template for the root node. The stylesheet may consist of just a
@@ -329,7 +328,7 @@ end;
 
 procedure TTestXSLT.transformNode2XHTML_WideString;
 var
-  Text: widestring;
+  Text: DOMString;
   ok:   boolean;
 begin
   ok := (xsl as IDomPersist).loadxml(xslstr2);
@@ -359,7 +358,7 @@ var
 begin
   teststr := getunicodestr(1);
   rootstr := '<root><text>'+teststr+'</text><text>ÄÖÜ</text></root>';
-  parsestr := '<?xml version="1.0" encoding="utf8"?>'+ rootstr;
+  parsestr := '<?xml version="1.0" encoding="'+cUTF8+'"?>'+ rootstr; // used to be: utf8
 
   check((xml as IDOMPersist).loadxml(parsestr),'parse error');
   check(xml.documentElement.hasChildNodes, 'has no childNodes');

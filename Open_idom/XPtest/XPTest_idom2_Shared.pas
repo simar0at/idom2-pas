@@ -8,11 +8,25 @@ uses
   idom2,
   idom2_ext,
   sysutils,
+{$ifdef linux}
+  libc,
+  QForms,
+  QStdCtrls,
+  QControls,
+  QDialogs,
+{$else}
+  Forms,
+  StdCtrls,
+  Controls,
+{$endif}
   TestFrameWork,
-  Classes,
-  Dialogs;
+  {$IFDEF FPC}
+  TestFrameworkIfaces,
+  {$ENDIF}
+  Classes, Dialogs;
 
 const
+  cUTF8   = 'utf-8'; // utf-8
   CRLF    = #13#10;
   xmlns   = 'http://www.w3.org/2000/xmlns/';
   xmldecl = '<?xml version="1.0" encoding="iso-8859-1"?>';
@@ -101,7 +115,6 @@ const
             '<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
             '                version="1.0">' +
             '  <xsl:output method="text"' +
-            //'              omit-xml-declaration="yes"'+
             '              encoding="ISO-8859-1" />' +
             '  <xsl:template match="/*">' +
             '    <xsl:value-of select="name()" />' +
@@ -121,7 +134,7 @@ const
             '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">' +
             '<html xmlns="http://www.w3.org/1999/xhtml">' +
             '<head>' +
-            '<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />' +
+            '<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />'+
             '<title>test</title>' +
             '</head>' +
             '<body>' +
@@ -149,17 +162,18 @@ function getCurMemory: cardinal;
 function getDataPath: string;
 function domvendor: string;
 function myIsSameNode(node1, node2: IDomNode): boolean;
-function Unify(xml: widestring; removeEncoding: boolean = True): widestring;
+function Unify(xml: UnicodeString; removeEncoding: boolean = True): UnicodeString;
 function GetHeader(xml: string): string;
-function StrCompare(str1, str2: WideString): integer;
+function StrCompare(str1, str2: UnicodeString): integer;
 function DupeString(const AText: string; ACount: Integer): string;
 function IncludeTrailingPathDelimiter(const S: string): string;
-function getUnicodeStr(mode: integer = 0): WideString;
+function getUnicodeStr(mode: integer = 0): UnicodeString;
 function GetDoccount(impl:IDomImplementation):integer;
 procedure debugDom(doc: IDOMDocument;bUnify: boolean=false);
 procedure debugAttributes(attributes: IDOMNamedNodeMap; entities: boolean = False);
-function PrettyPrint(text: WideString): WideString;
+function PrettyPrint(text: UnicodeString): UnicodeString;
 function getEnabledTests(suite: ITestSuite;domVendor,className:string): TStrings;
+procedure showXml(msg: string);
 
 var
   datapath: string = '';
@@ -168,6 +182,35 @@ implementation
 
 const
   PathDelim  = {$IFNDEF LINUX} '\'; {$ELSE} '/'; {$ENDIF}
+
+procedure showXml(msg: string);
+// display a message similar to showMessage, but in a memo field,
+// so that you can copy the result to the Zwischenablage
+var
+  lForm: TForm;
+  lMemo: TMemo;
+  lButton: TButton;
+begin
+  lForm := TForm.Create(nil);
+  lForm.Caption := 'info';
+  lMemo := TMemo.Create(lForm);
+  lMemo.Parent := lForm;
+  lMemo.Top := 4;
+  lMemo.Left := 4;
+  lMemo.Width := lForm.ClientWidth - 8;
+  lMemo.Height := lForm.ClientHeight - 4 - 29;
+  lMemo.Text := prettyPrint(msg);
+  lButton := TButton.Create(lForm);
+  lButton.Parent := lForm;
+  lButton.Top := lForm.ClientHeight - 25;
+  lButton.Left := (lForm.ClientWidth div 2) - (lButton.Width div 2);
+  lButton.Caption := 'OK';
+  lButton.ModalResult := mrOK;
+  lButton.Default := true;
+  lForm.Position := poMainFormCenter;
+  lForm.ShowModal;
+  lForm.Free;
+end;
 
 function getEnabledTests(suite: ITestSuite;domVendor,className:string): TStrings;
 // returns a stringlist with the names of the enabled tests
@@ -217,7 +260,7 @@ begin
   end;
 end;
 
-function PrettyPrint(text: WideString): WideString;
+function PrettyPrint(text: UnicodeString): UnicodeString;
 // text: a wellformed xml document
 // adds spaces and crlfs to make the document better readable for humans
 const
@@ -342,7 +385,7 @@ begin
   {$endif}
 end;
 
-function getUnicodeStr(mode: integer = 0): WideString;
+function getUnicodeStr(mode: integer = 0): DOMString;
   // this function returns an unicode string
 var
   i: integer;
@@ -403,7 +446,7 @@ begin
   Result := domSetup.getCurrentDomSetup.getVendorID;
 end;
 
-function Unify(xml: widestring; removeEncoding: boolean = True): widestring;
+function Unify(xml: UnicodeString; removeEncoding: boolean = True): UnicodeString;
 // this procedure unifies the result of the method xml of IDomPersist
 // todo: unify doesn't handle unicode correctly!
 var
@@ -413,8 +456,8 @@ begin
   xml := StringReplace(xml, #10, '', [rfReplaceAll]);
   xml := StringReplace(xml, #9, '', [rfReplaceAll]);
   if removeEncoding then
-    if pos(WideString('<?xml'),xml) > 0 then begin
-      len := Pos(WideString('>'),xml) + 1;
+    if pos(UnicodeString('<?xml'),xml) > 0 then begin
+      len := Pos(UnicodeString('>'),xml) + 1;
       xml := Copy(xml,len,length(xml)-len+1);
     end;
   result := xml;
@@ -430,7 +473,7 @@ begin
   result:=leftstr(xml,pos('>',xml));
 end;
 
-function StrCompare(str1, str2: WideString): integer;
+function StrCompare(str1, str2: UnicodeString): integer;
   // compares two strings
   // if they are equal, zero is the return value
   // if they are unqual, it returns the position,

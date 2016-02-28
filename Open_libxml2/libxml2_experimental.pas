@@ -11,7 +11,7 @@ unit libxml2_experimental;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF mswindows}
   windows,
 {$ENDIF}
   libxml2;
@@ -51,7 +51,7 @@ begin
   if Assigned(myErrH) then begin
     myErrH(msg);
   end;
-{$IFDEF WIN32}
+{$IFDEF mswindows}
   OutputDebugStringW(PWideChar(msg));
 {$ENDIF}
 {$IFDEF LINUX}
