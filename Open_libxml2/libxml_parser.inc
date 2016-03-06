@@ -44,8 +44,8 @@ type
   xmlParserInput = record
     (* Input buffer *)
     buf: xmlParserInputBufferPtr;   (* UTF-8 encoded buffer  *)
-    filename: PChar;                (* The file analyzed, if any  *)
-    directory: PChar;               (* the directory/base of the file  *)
+    filename: PAnsiChar;                (* The file analyzed, if any  *)
+    directory: PAnsiChar;               (* the directory/base of the file  *)
     base: PxmlChar;                 (* Base of the array to parse  *)
     cur: PxmlChar;                  (* Current char being parsed  *)
     _end: PxmlChar;                 (* end of the array to parse  *)
