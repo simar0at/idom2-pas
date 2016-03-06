@@ -3881,7 +3881,7 @@ begin
        // stylesheet information
        if fXsltStylesheet=nil
          then
-           xmlFreeDoc(xmlNode)
+           xmlFreeDoc(xmlDocPtr(xmlNode))
          else
            begin
              xsltFreeStylesheet(fXsltStylesheet);
