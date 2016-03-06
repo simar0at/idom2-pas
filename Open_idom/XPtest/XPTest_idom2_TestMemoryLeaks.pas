@@ -1345,7 +1345,7 @@ var
   snode:    IDomNode;
   persist:  IDomPersist;
   delement: IDomElement;
-  exNode:   IDomNodeExt;
+  exNode:   IDOMNodeEx;
 begin
   for i := 1 to 1000 do begin
     // apply a stylesheet that produces html-output
@@ -1361,7 +1361,7 @@ begin
     xnode := xml as IDomNode;
     delement := xsl.documentElement;
     snode := delement as IDomNode;
-    exNode := xnode as IDomNodeExt;
+    exNode := xnode as IDOMNodeEx;
     exNode.transformNode(snode, Text);
     Text := Unify(Text,False);
     check(Text = outstr1, 'wrong content');
@@ -1379,7 +1379,7 @@ var
   snode:    IDomNode;
   persist:  IDomPersist;
   delement: IDomElement;
-  exNode:   IDomNodeExt;
+  exNode:   IDOMNodeEx;
 begin
   for i := 1 to 1000 do begin
     // apply a stylesheet that produces html-output
@@ -1395,7 +1395,7 @@ begin
     doc:=xnode.ownerDocument;
     delement := xsl.documentElement;
     snode := delement as IDomNode;
-    exNode := xnode as IDomNodeExt;
+    exNode := xnode as IDOMNodeEx;
     exNode.transformNode(snode, doc);
     Text := (doc as IDompersist).xml;
     Text := Unify(Text,False);

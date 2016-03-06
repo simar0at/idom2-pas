@@ -2867,7 +2867,7 @@ begin
   // the following line just tests, wether cloneNode works
   // correctly, importNode Clones a Node, too
   elem := (elemb.cloneNode(true)) as IDomElement;
-  check(((elem as IDomNodeExt).xml=(elemb as IDomNodeExt).xml),'clone error');
+  check(((elem as IDomNodeEx).xml=(elemb as IDomNodeEx).xml),'clone error');
 
   elemb:=nil;
   if impl.QueryInterface(IDOMDebug,domdebug) = S_OK then begin
@@ -3526,7 +3526,7 @@ begin
   node := elem1.cloneNode(False);
   check(node <> nil, 'is nil');
   check(node.nodeName = 'NAME', 'wrong nodeName');
-  check(((node as IDomNodeExt).xml='<NAME xmlns:def="http://def.org" def:child=""/>'),
+  check(((node as IDomNodeEx).xml='<NAME xmlns:def="http://def.org" def:child=""/>'),
                    'namespacedecl missing?');
 end;
 

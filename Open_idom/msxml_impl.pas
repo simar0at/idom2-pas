@@ -198,7 +198,7 @@ type
   end;
 
 
-  TMSXMLNode = class(TInterfacedObject, IDomNode, IDomNodeSelect, IMSXMLExtDomNode, IDomNodeExt)
+  TMSXMLNode = class(TInterfacedObject, IDomNode, IDomNodeSelect, IMSXMLExtDomNode, IDomNodeEx)
     private
       fMSDomNode : IXMLDOMNode;
 
@@ -243,7 +243,7 @@ type
     function selectNodes(const nodePath: DOMString): IDomNodeList;
     procedure registerNS(const prefix : DomString; const uri : DomString);
     procedure transformNode(const stylesheet: IDomNode; var output: DOMString); overload;
-    procedure transformNode(const stylesheet: IDomNode; var output: IDomDocument); overload;
+    procedure transformNode(const stylesheet: IDomNode; const output: IDomDocument); overload;
     function get_text: DomString;
     procedure set_text(const Value: DomString);
     function get_xml: DOMString;
@@ -2394,12 +2394,10 @@ begin
 end;
 
 procedure TMSXMLNode.transformNode(const stylesheet: IDomNode;
-  var output: IDomDocument);
+  const output: IDomDocument);
 var
   msStylesheet,node: ixmldomnode;
 begin
-  if output = nil
-    then output:=(stylesheet.get_OwnerDocument.domImplementation.createDocument('','',nil));
   msStylesheet:=(stylesheet as IMSXMLExtDomNode).getOrgInterface;
   node:=(output as IMSXMLExtDomNode).getOrgInterface;
   fMSDomNode.transformNodeToObject(msStylesheet, node);
