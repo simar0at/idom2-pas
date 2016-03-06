@@ -1,4 +1,4 @@
-unit XPTest_idom2_Shared;
+ unit XPTest_idom2_Shared;
 
 interface
 
@@ -176,7 +176,7 @@ function getEnabledTests(suite: ITestSuite;domVendor,className:string): TStrings
 procedure showXml(msg: string);
 
 var
-  datapath: string = '';
+  datapath: string = '../../data';
 
 implementation
 
@@ -426,7 +426,7 @@ end;
 function getDataPath: string;
   // this function returns the path to the sample files
 const
-  cDefault = 'data';
+  cDefault = '..\..\data';
 var
   ini: TIniFile;
 begin

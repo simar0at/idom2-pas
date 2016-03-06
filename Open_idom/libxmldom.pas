@@ -138,7 +138,7 @@ implementation
 type
   { TDomImplementation }
 
-  TDomImplementation = class(TInterfacedObject, IDomImplementation,IDomDebug)
+  TDomImplementation = class(TInterfacedObject, IDomImplementation, IDomDebug)
   private
     fDoccount: integer;  // number of living documents, created with this
                          // implementation. For debugging purposes only.
@@ -166,10 +166,10 @@ type
     // this field helps to manage the lifetime of the OwnerDocument:
     // the document won't be freed, as long as a node exists, that
     // references it (RefCount>0)
-    fXmlNode:       xmlNodePtr;    //reference to the corresponding c-struct
     fOwnerDocument: IDomDocument;  //reference to the owner document
 
   protected
+    fXmlNode:       xmlNodePtr;    //reference to the corresponding c-struct
     { for internal use within this unit only}
     function IsReadOnly: boolean;
     function IsAncestorOrSelf(newNode: xmlNodePtr): boolean;
@@ -314,7 +314,7 @@ type
 
   { TDomElement }
 
-  TDomElement = class(TDomNode, IDomElement)
+  TDomElement = class(TDomNode, IDomElement, IDomNode, IDomNodeEx, IDomNodeEx2)
   private
     function getXmlElement: xmlNodePtr;
   protected
@@ -1831,7 +1831,7 @@ begin
     xmlGetNsAttrib(node,name,OldValue);
     if (OldValue<>'') and (OldValue<>Value) then checkError(NO_MODIFICATION_ALLOWED_ERR);
     // if the same namespace is already defined, then quit
-    if OldValue<>'' then exit;      
+    if OldValue<>'' then exit;
     // find or create the new namespace
     ns:=(doc as IDomInternal).findOrCreateNewNamespace
       (nil,PAnsiChar(UTF8Encode(value)),
@@ -3787,7 +3787,7 @@ begin
   FPrefixList:=TStringList.Create;
   FURIList:=TStringList.Create;
 
-  if (loadFrom_XmlParserCtx(xmlCreateFileParserCtxt(PAnsiChar(fn))))
+  if (loadFrom_XmlParserCtx(xmlCreateFileParserCtxt(PAnsiChar(UTF8Encode(fn)))))
      then begin
        fXsltStylesheet:=nil;
        (fDomImpl as IDomDebug).doccount:=(fDomImpl as IDomDebug).doccount+1;
@@ -3881,7 +3881,7 @@ begin
        // stylesheet information
        if fXsltStylesheet=nil
          then
-           xmlFreeDoc(GetXmlDocPtr)
+           xmlFreeDoc(xmlNode)
          else
            begin
              xsltFreeStylesheet(fXsltStylesheet);
@@ -4089,7 +4089,7 @@ begin
         // I think xmlSetTreeDoc does not what it was supposed to do!
         // I would expect it to recurse and modify the doc for all nodes
         // but, for one, it doesn't change the doc for attributes and
-        // it doesn't change the doc for attribute values... (MAV) 
+        // it doesn't change the doc for attribute values... (MAV)
         //
         xmlSetTreeDoc(node, GetXmlDocPtr);
 
@@ -4300,7 +4300,7 @@ begin
 
         // here we have to make sure that all namespaces are well declared
         cleanNsDef(xmlDocGetRootElement(GetXmlDocPtr),true);
-   
+
         // Dump this to my memory
         xmlDocDumpFormatMemoryEnc(GetXmlDocPtr, CString, @length, encoding, format);
 
@@ -5765,6 +5765,3 @@ initialization
 finalization
 
 end.
-
-
-

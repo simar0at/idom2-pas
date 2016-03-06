@@ -22,18 +22,19 @@ uses
   DomImplementationTests,
   domSetup,
   SysUtils,
-{$ifdef linux}
+  iconv in '..\..\Open_libxml2\iconv.pas',
+  libxml2 in '..\..\Open_libxml2\libxml2.pas',
+  libxslt in '..\..\Open_libxslt\libxslt.pas',
+  {$ifdef linux}
   QForms,
-  KylixGUITestRunner,
-{$endif}
-{$ifdef mswindows}
+  {$endif }
+  {$ifdef mswindows}
   Windows,
   Forms,
   GUITestRunner,
-  msxml_impl,
-{$endif}
-  libxmldom,
-  libxslt;
+  msxml_impl in '..\msxml_impl.pas',
+  {$endif }
+  libxmldom in '..\libxmldom.pas';
 
 {$ifdef mswindows}
 {$R *.res}
