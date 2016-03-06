@@ -1064,6 +1064,7 @@ constructor TMSXMLDocument.create(msDomDocument : IXMLDOMDocument);
 begin
   inherited create(msDomDocument);
   fMSDomDocument := msDomDocument;
+  with fMSDomDocument as IXMLDOMDocument2 do setProperty ('ProhibitDTD', False);
   {wrapper registration will be done within TMSXMLDomNode}
 end;
 

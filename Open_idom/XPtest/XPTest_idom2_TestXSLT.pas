@@ -20,7 +20,7 @@ type
     impl: IDomImplementation;
     xml: IDomDocument;
     xsl: IDomDocument;
-    xnode: IDomNode;
+    xnode: IDomNodeEx;
     snode: IDomNode;
   protected
     procedure ClearUp;
@@ -81,12 +81,17 @@ procedure TTestXSLT.setText;
 var
   node: IDomNode;
   i:    integer;
-  tmp:  string;
+  tmp:  DOMString;
+  xnode: IDomNodeEx;
 begin
   node := xml.createElement('test');
   xml.documentElement.appendChild(node);
   node := xml.documentElement;
-  (node as IDomNodeEx).Text := 'test';
+  xnode := node as IDomNodeEx;
+  with xml as IDomPersist do tmp := xml;
+  with xnode do tmp := xml;
+  tmp := 'test';
+  xnode.Text := tmp;
   check((node as IDomNodeSelect).selectNode('test') = nil, '<test /> not removed');
   for i := 0 to node.childNodes.length - 1 do begin
     if node.childNodes[i].nodeType = TEXT_NODE then begin
@@ -130,9 +135,9 @@ begin
   // apply a stylesheet that produces html-output
   ok := (xsl as IDomPersist).loadxml(xslstr);
   check(ok, 'stylesheet no valid xml');
-  xnode := xml as IDomNode;
+  xnode := xml as IDomNodeEx;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDOMNodeEx).transformNode(snode, Text);
+  xnode.transformNode(snode, Text);
   Text := Unify(Text);
   CheckEquals(outstr, Text, 'wrong content');
 end;
@@ -185,10 +190,10 @@ begin
     '</xsl:stylesheet>';
 
   (xsl as IDomPersist).loadxml(Text);
-  xnode := xml as IDomNode;
+  xnode := xml as IDomNodeEx;
   snode := xsl.documentElement as IDomNode;
   try
-    (xnode as IDOMNodeEx).transformNode(snode, Text);
+    xnode.transformNode(snode, Text);
   except
     fail('transformation raises exception');
   end;
@@ -201,9 +206,9 @@ begin
   // apply a stylesheet that produces text-output
 
   (xsl as IDomPersist).loadxml(xslstr1);
-  xnode := xml as IDomNode;
+  xnode := xml as IDomNodeEx;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDOMNodeEx).transformNode(snode, Text);
+  xnode.transformNode(snode, Text);
   check(Text = 'test', 'wrong content - expected: "test" found: "' + Text + '"');
 end;
 
@@ -213,9 +218,10 @@ var
 begin
   // apply a stylesheet that produces text-output
   (xsl as IDomPersist).loadxml(xslstr1);
-  xnode := xml as IDomNode;
+  xnode := xml as IDomNodeEx;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDOMNodeEx).transformNode(snode, doc);
+  doc := impl.createDocument('', '', nil);
+  xnode.transformNode(snode, doc);
   check(doc.documentElement = nil, 'documentElement<>nil')
 end;
 
@@ -231,7 +237,7 @@ begin
 
   Text := xmldecl + '<data><expense-report><total>120.000 Euro</total></expense-report></data>';
   (xml as IDomPersist).loadxml(Text);
-  xnode := xml as IDomNode;
+  xnode := xml as IDomNodeEx;
   Text :=
     '<html xsl:version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/TR/xhtml1/strict">' +
     '  <head>' +
@@ -243,7 +249,7 @@ begin
     '</html>';
   (xsl as IDomPersist).loadxml(Text);
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDOMNodeEx).transformNode(snode, result1);
+  xnode.transformNode(snode, result1);
 
   Text :=
     '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/TR/xhtml1/strict">' +
@@ -318,9 +324,10 @@ var
 begin
   ok := (xsl as IDomPersist).loadxml(xslstr2);
   check(ok, 'stylesheet no valid xml');
-  xnode := xml as IDomNode;
+  xnode := xml as IDomNodeEx;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDOMNodeEx).transformNode(snode, doc);
+  doc := impl.createDocument('', '', nil);
+  xnode.transformNode(snode, doc);
   Text := (doc as IDomPersist).xml;
   Text := Unify(Text,False);
   check(Text = outstr1, 'wrong content');
@@ -333,9 +340,9 @@ var
 begin
   ok := (xsl as IDomPersist).loadxml(xslstr2);
   check(ok, 'stylesheet is not a valid xml document');
-  xnode := xml as IDomNode;
+  xnode := xml as IDomNodeEx;
   snode := xsl.documentElement as IDomNode;
-  (xnode as IDOMNodeEx).transformNode(snode, Text);
+  xnode.transformNode(snode, Text);
   Text := Unify(Text,False);
   check(Text = outstr1, 'wrong content');
 end;
@@ -395,7 +402,7 @@ begin
     xmlstr2 := xmldecl+'<root>'+xmlstr2+'</root>';
     check(xmlstr1 = xmlstr2, 'different content');
   end else begin
-    fail('Interface IDOMNodeListExt not supported');
+    Status('Interface IDOMNodeListExt not supported');
   end;
 end;
 

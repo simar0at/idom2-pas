@@ -228,6 +228,7 @@ procedure TTestPersist.valid4_ParseError;
   // Additional the parse error is checked.
 var
   sl: TStrings;
+  url: string;
 begin
   sl := TStringList.Create;
   sl.Text := xmldecl + CRLF +
@@ -245,7 +246,8 @@ begin
       'result of load is true - should be false because xml is not vaild');
   finally
     check((doc as IDOMParseError).line = 7,'There must occur a parse error at line 7.');
-    check((doc as IDOMParseError).url = 'temp.xml','The Url is different from "temp.xml".');
+    url := (doc as IDOMParseError).url;
+    check(url = 'temp.xml','The Url is different from "temp.xml".');
     if FileExists('temp.xml') then DeleteFile('temp.xml');
   end;
 end;
@@ -259,14 +261,14 @@ var
   rv:      integer; // returned value
   cnt:     integer; // tested file counter
 begin
-  fd := datapath;
+  fd := StringReplace(datapath,'\',PathDelim,[rfReplaceAll]);
   try
     cnt := 0;
-    rv := FindFirst(fd + '/*.xml', faAnyFile, sr);
+    rv := FindFirst(fd + '*.xml', faAnyFile, sr);
     while (rv = 0) do begin
       Inc(cnt);
       builder := getDocumentBuilderFactory(DomVendor).newDocumentBuilder;
-      fn := fd + '/' + sr.Name;
+      fn := fd + sr.Name;
       mydoc := builder.load(fn);
       check(mydoc <> nil, fn + ': document not loaded');
       check(mydoc.documentElement <> nil, fn + ': documentElement is nil');
@@ -291,7 +293,7 @@ var
 begin
   impl := GetDom(domvendor);
   mydoc := impl.createDocument('', '', nil);
-  fd := datapath;
+  fd := StringReplace(datapath,'\',PathDelim,[rfReplaceAll]);
   try
     cnt := 0;
     rv := FindFirst(fd + '/*.xml', faAnyFile, sr);
@@ -672,7 +674,7 @@ begin
   {$endif}
   (doc as IDOMParseOptions).resolveExternals := True;
   (doc as IDOMParseOptions).validate := True;
-  check((doc as IDOMPersist).load(datapath+'test-dtd.xml'), 'parse error');
+  check((doc as IDOMPersist).load(StringReplace(datapath,'\',PathDelim,[rfReplaceAll])+'test-dtd.xml'), 'parse error');
 end;
 
 initialization

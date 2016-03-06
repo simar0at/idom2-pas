@@ -456,9 +456,10 @@ end;
 
 procedure TTestDom2Methods.basic_appendChild;
 var
-  temp:         widestring;
-  temp1, temp2: widestring;
+  temp:         DOMString;
+  temp1, temp2: DOMString;
   diff:         integer;
+  tmpOut:       DOMString;
 begin
   elem := doc.createElement(Name);
   doc.documentElement.appendChild(elem);
