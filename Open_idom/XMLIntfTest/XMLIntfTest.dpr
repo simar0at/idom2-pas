@@ -24,7 +24,7 @@ uses
   XPTest_idom2_TestXSLT in 'XPTest_idom2_TestXSLT.pas',
   DomDocumentTests in 'contrib\DomDocumentTests.pas',
   DomImplementationTests in 'contrib\DomImplementationTests.pas',
-  libxml in '..\libxml.pas';
+  libxml2xmldom in '..\..\Open_libxml2\libxml2xmldom.pas';
 
 {$ifndef linux}
 

@@ -11,7 +11,7 @@ uses
   SysUtils,
   TestFrameWork,
   domSetup,
-  libxml,
+  libxml2xmldom,
   {$ifdef mswindows}
   msxmldom,
   {$endif}

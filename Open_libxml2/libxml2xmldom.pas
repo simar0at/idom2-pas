@@ -139,14 +139,6 @@ function GetXmlDoc(const Doc: IDomDocument): xmlDocPtr;
  *)
 function newDomImplementation: IDomImplementation;
 
-(*
- * Same as IsSameNode of IDomNodeCompare, but declared as function
- * and works correctly, if any of the nodes is nil.
- * It is neccessary to use it with libxml2, because there can be
- * several interfaces pointing to the same node.
- *)
-function IsSameNode(node1, node2: IDomNode): boolean;
-
 
 // code for registration with Borland TXMLDocument
 type
@@ -159,7 +151,39 @@ type
     function Description: String; override;
   end;
 
+  { TDomDocumentBuilderFactory }
 
+  (*
+   * taken from java, not defined in dom2 from w3c org
+   *)
+
+  TDomDocumentBuilderFactory = class(TInterfacedObject, IDomDocumentBuilderFactory)
+  //todo: find an url, where IDomDocumentBuilderFactory is explained
+  private
+    fFreeThreading: boolean;
+
+  public
+    constructor Create(AFreeThreading: boolean);
+
+    function NewDocumentBuilder: IDomDocumentBuilder;
+    function Get_VendorID: DomString;
+  end;
+
+  TDomDocumentBuilder = class(TInterfacedObject, IDomDocumentBuilder)
+  private
+    fFreeThreading: boolean;
+  public
+    constructor Create(AFreeThreading: boolean);
+    destructor Destroy; override;
+    function Get_DomImplementation: IDomImplementation;
+    function Get_IsNamespaceAware: boolean;
+    function Get_IsValidating: boolean;
+    function Get_HasAsyncSupport: boolean;
+    function Get_HasAbsoluteURLSupport: boolean;
+    function newDocument: IDomDocument;
+    function parse(const xml: DomString): IDomDocument;
+    function load(const url: DomString): IDomDocument;
+  end;
 (*
  * same as IsSameNode of IDomNodeCompare, but declared as function
  * and works correctly, if any of the nodes is nil
@@ -588,9 +612,6 @@ type
     procedure processError;        // removes wrong error message validation error (if fValidate=false)
                                    // end extracts line and row number of error from fReason
     procedure setDefaults;         // set the default options
-    procedure setDocOnCurrentLevel(next: xmlNodePtr; doc: xmlDocPtr);
-    procedure setDocOnNextLevel(next: xmlNodePtr; doc: xmlDocPtr);
-    procedure injectDifferentDocElement(docElement: xmlDocPtr);
     function schemaValidatorFromDOMDocument(source: IDOMDocument): xmlSchemaValidCtxtPtr;
     function relaxNGValidatorFromDOMDocument(source: IDOMDocument): xmlRelaxNGValidCtxtPtr;
     function xsdValidate(source: IDOMDocument; flags: Integer): Boolean;
@@ -687,7 +708,7 @@ type
     function  get_exposeNsDefAttribs: boolean;
     procedure set_exposeNsDefAttribs(value: boolean);
     // IDOMXMLProlog
-    function get_Encoding: DOMString; safecall;
+    function get_encoding: DOMString; safecall;
     function get_Standalone: DOMString; safecall;
     function get_Version: DOMString; safecall;
     procedure set_Encoding(const Value: DOMString); safecall;
@@ -809,21 +830,21 @@ end;
 function errorString(err: integer): string;
 begin
   case err of
-    INDEX_SIZE_ERR: Result := SINDEX_SIZE_ERR;
-    DOMSTRING_SIZE_ERR: Result := SDOMSTRING_SIZE_ERR;
-    HIERARCHY_REQUEST_ERR: Result := SHIERARCHY_REQUEST_ERR;
-    WRONG_DOCUMENT_ERR: Result := SWRONG_DOCUMENT_ERR;
-    INVALID_CHARACTER_ERR: Result := SINVALID_CHARACTER_ERR;
-    NO_DATA_ALLOWED_ERR: Result := SNO_DATA_ALLOWED_ERR;
-    NO_MODIFICATION_ALLOWED_ERR: Result := SNO_MODIFICATION_ALLOWED_ERR;
-    NOT_FOUND_ERR: Result := SNOT_FOUND_ERR;
-    NOT_SUPPORTED_ERR: Result := SNOT_SUPPORTED_ERR;
-    INUSE_ATTRIBUTE_ERR: Result := SINUSE_ATTRIBUTE_ERR;
-    INVALID_STATE_ERR: Result := SINVALID_STATE_ERR;
-    SYNTAX_ERR: Result := SSYNTAX_ERR;
-    INVALID_MODIFICATION_ERR: Result := SINVALID_MODIFICATION_ERR;
-    NAMESPACE_ERR: Result := SNAMESPACE_ERR;
-    INVALID_ACCESS_ERR: Result := SINVALID_ACCESS_ERR;
+    INDEX_SIZE_ERR: Result := SIndexOutOfRange;
+    DOMSTRING_SIZE_ERR: Result := SIndexOutOfBounds;
+    HIERARCHY_REQUEST_ERR: Result := SHierarchyRequestError;
+    WRONG_DOCUMENT_ERR: Result := SWrongOwnerError;
+    INVALID_CHARACTER_ERR: Result := SEncodingOutOfRange;
+    NO_DATA_ALLOWED_ERR: Result := 'SNO_DATA_ALLOWED_ERR';
+    NO_MODIFICATION_ALLOWED_ERR: Result := SNoModificationAllowedError;
+    NOT_FOUND_ERR: Result := SNotFoundError;
+    NOT_SUPPORTED_ERR: Result := SDOMNotSupported;
+    INUSE_ATTRIBUTE_ERR: Result := 'SINUSE_ATTRIBUTE_ERR';
+    INVALID_STATE_ERR: Result := 'SINVALID_STATE_ERR';
+    SYNTAX_ERR: Result := 'SSYNTAX_ERR';
+    INVALID_MODIFICATION_ERR: Result := 'SINVALID_MODIFICATION_ERR';
+    NAMESPACE_ERR: Result := 'SNAMESPACE_ERR';
+    INVALID_ACCESS_ERR: Result := 'SINVALID_ACCESS_ERR';
     NULL_PTR_ERR: Result:='NULL_PTR_ERR';
     WRITE_ERR: Result:='WRITE_ERR';
     20: Result := 'SaveXMLToMemory_ERR';
@@ -1056,7 +1077,7 @@ var
 begin
   // append the namespace of the node
   if node.ns <> nil then begin
-    appendNamespace(node,node.ns,true);
+    appendNamespace(node,node.ns);
   end;
   // append the namespace of it's attributes
   attr:=node.properties;
@@ -1064,7 +1085,7 @@ begin
   while attr <> nil do begin
     // append the namespace of the current attribute
     if attr.ns <> nil then begin
-      appendNamespace(node,attr.ns,true);
+      appendNamespace(node,attr.ns);
     end;
     attr:=attr.next;
   end;
@@ -1407,6 +1428,8 @@ begin
   child:=node.children;
   while assigned(child) do begin
     cleanNsdef(child,true);
+  end;
+end;
 
 function xmlGetDefaultNs(node: xmlNodePtr): xmlNsPtr;
 // get the default namespace attribute of the element node
@@ -1863,7 +1886,7 @@ begin
     ns:=(doc as IDomInternal).findOrCreateNewNamespace
       (nil,PAnsiChar(UTF8Encode(Value)),nil);
     // then append it
-    appendNamespace(node,ns,true);
+    appendNamespace(node,ns);
     exit;
   end else
   // if it is a non-default ns-decl attribute
@@ -1877,7 +1900,7 @@ begin
       (nil,PAnsiChar(UTF8Encode(value)),
            PAnsiChar(UTF8Encode(split_localName(name))));
     // then append it
-    appendNamespace(node,ns,true);
+    appendNamespace(node,ns);
     exit;
   end;
 end;
@@ -1941,7 +1964,7 @@ begin
           // if we found it
           then begin
             // remove the Namespace from the nsDef list
-            ns:=removeNamespace(node,ns);
+            removeNamespace(node,ns);
             break;
           end;
       // get the next entry of the list
@@ -3706,7 +3729,7 @@ begin
   FNodeList := TList.Create;
   FPrefixList:=TStringList.Create;
   FUriList:=TStringList.Create;
-  FtempXSL := nil;
+  fXsltStylesheet := nil;
   // check if we need to create a new namespace
   if (namespaceUri = '')
      then ns := nil
@@ -3769,7 +3792,7 @@ begin
   FURIList:=TStringList.Create;
   if (loadFrom_XmlParserCtx(xmlCreateFileParserCtxt(PAnsiChar(fn))))
      then begin
-       FtempXSL := nil;
+       fXsltStylesheet := nil;
        (fDomImpl as IDomDebug).doccount:=(fDomImpl as IDomDebug).doccount+1;
      end;
 end;
@@ -3778,7 +3801,7 @@ constructor TDomDocument.Create(DOMImpl: IDomImplementation;
   docnode: xmlNodePtr);
 begin
   fDomImpl := DOMImpl;
-  FtempXSL := nil;
+  fXsltStylesheet := nil;
   FAttrList := TList.Create;
   FNodeList := TList.Create;
   FNsList:=TList.Create;
@@ -3797,7 +3820,7 @@ var
   ANs:    xmlNsPtr;
 begin
   // check if we need to free the content
-  if getXmlDocument<>nil
+  if GetXmlDocPtr<>nil
      then begin
 
        // remove our global stored nodes
@@ -3869,11 +3892,11 @@ begin
          xmlSchemaFree(fDocAsXSDSchema);
        if Assigned(fDocAsRelaxNG) then
          xmlRelaxNGFree(fDocAsRelaxNG);
-       if Assigned(FtempXSL) then
+       if Assigned(fXsltStylesheet) then
          // this frees the document and the additional stylesheet information
-         xsltFreeStylesheet(FtempXSL)
+         xsltFreeStylesheet(fXsltStylesheet)
        else
-         xmlFreeDoc(getXmlDocument);
+         xmlFreeDoc(GetXmlDocPtr);
        fXmlNode:=nil;
        // setup the internal information
        (fDomImpl as IDomDebug).doccount:=(fDomImpl as IDomDebug).doccount-1;
@@ -4064,8 +4087,8 @@ begin
      if node.type_=XML_ATTRIBUTE_NODE
        then (self as IDomInternal).appendAttr(xmlAttrPtr(node))
        else (self as IDomInternal).appendNode(node);
-     node.doc:=getXmlDocument;
-     xmlSetTreeDoc(node,getXmlDocument);
+     node.doc:=GetXmlDocPtr;
+     xmlSetTreeDoc(node,GetXmlDocPtr);
     // build the interface object
     Result := MakeNode(node, self);
   end;
@@ -4545,11 +4568,11 @@ begin
            // rebuild document
            // the fXmlDocPtr has to be freed only, if the document
            // wasn't converted to a stylesheet.
-           if FtempXSL = nil
-             then xmlFreeDoc(getXmlDocument)
+           if fXsltStylesheet = nil
+             then xmlFreeDoc(GetXmlDocPtr)
              else begin
                // this frees the document and the additional stylesheet information
-               xsltFreeStylesheet(FtempXSL);
+               xsltFreeStylesheet(fXsltStylesheet);
              end;
            inherited Destroy;
            if Assigned(fDefaultXSDSchemaDoc) then
@@ -4625,7 +4648,7 @@ begin
   result := loadfrom_XmlParserCtx(xmlCreateFileParserCtxt(PAnsiChar(fn)));
 end;
 
-procedure TDomDocument.save(destination: OleVariant);
+procedure TDomDocument.save(Source: OleVariant);
 var
   encoding:    AnsiString;
   bytes:       integer;
@@ -4643,7 +4666,7 @@ begin
      else format := 0;
 
   // copy Source to get a PAnsiChar from DomString
-  sSource := destination;
+  sSource := Source;
 
   try
     // here we have to make sure that all namespaces are well declared
@@ -4651,7 +4674,7 @@ begin
     // xmlPrepareNSSerialization(xmlDocGetRootElement(fXmlDocPtr));
 
     // now save it to Sourec
-    bytes := xmlSaveFormatFileEnc(PAnsiChar(sSource), getXmlDocument, PAnsiChar(encoding), format);
+    bytes := xmlSaveFormatFileEnc(PAnsiChar(sSource), GetXmlDocPtr, PAnsiChar(encoding), format);
 
   finally
     // !!! ALLWAYS repair our ns nodes previous
@@ -5316,7 +5339,7 @@ begin
   // mark the document as stylesheetdocument;
   // it holds additional information, so a different free method must
   // be used
-  (stylesheet.ownerDocument as IDomInternal).set_FtempXSL(tempXSL);
+  (stylesheet.ownerDocument as IDomInternal).set_fXsltStylesheet(tempXSL);
   outputDoc := xsltApplyStylesheet(tempXSL, doc, nil);
   if outputDoc = nil then exit;
   doctype := outputDoc.type_;
@@ -5374,7 +5397,7 @@ begin
   // mark the document as stylesheetdocument;
   // it holds additional information, so a different free method must
   // be used
-  (stylesheet.ownerDocument as IDomInternal).set_fTempXSL(tempXSL);
+  (stylesheet.ownerDocument as IDomInternal).set_fXsltStylesheet(tempXSL);
   outputDoc := xsltApplyStylesheet(tempXSL, doc, nil);
   if outputDoc = nil then exit;
   (output as IDomInternal).injectDifferentDocElement(outputDoc);
@@ -5454,6 +5477,11 @@ end;
 function TDomDocument.get_encoding: DomString;
 begin
   Result := fEncoding;
+end;
+
+function TDomDocument.get_encoding1: DomString;
+begin
+  result := get_encoding;
 end;
 
 function TDomDocument.get_errorCode: Integer;
@@ -5689,42 +5717,6 @@ end;
 function TDomDocument.GetXmlDocPtr: xmlDocPtr;
 begin
   result := xmlDocPtr(xmlNode);
-end;
-
-function TDomDocument.get_errorCode: Integer;
-begin
-  result := 0;
-end;
-
-function TDomDocument.get_filepos: Integer;
-begin
-  result := 0;
-end;
-
-function TDomDocument.get_line: Integer;
-begin
-  result:=fLine;
-end;
-
-function TDomDocument.get_linepos: Integer;
-begin
-  result:=fLinePos;
-end;
-
-function TDomDocument.get_reason: DOMString;
-// get the reason of the last parse error
-begin
-  result:=fReason;
-end;
-
-function TDomDocument.get_srcText: DOMString;
-begin
-
-end;
-
-function TDomDocument.get_url: DOMString;
-begin
-  result:=fUrl;
 end;
 
 procedure TDomDocument.processError;
@@ -5973,20 +5965,6 @@ function TDOMImplementationFactory.DOMImplementation: IDOMImplementation;
 begin
   result:=getDocumentBuilderFactory(SLIBXML).
       newDocumentBuilder.DOMImplementation;
-end;
-
-function TDomDocument.loadFromStream(const stream: IStream): WordBool;
-begin
-
-end;
-
-procedure TDomDocument.saveToStream(const stream: IStream);
-begin
-
-end;
-  function TDomDocument.get_Encoding: DOMString;
-begin
-  result:=self.get_encoding1;
 end;
 
 function TDomDocument.get_Standalone: DOMString;
