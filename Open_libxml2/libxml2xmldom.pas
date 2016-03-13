@@ -1406,7 +1406,7 @@ procedure cleanNsdef(node:xmlNodePtr); overload;
   begin
     if node.type_ <> Element_Node then exit;
     tmp:=node.nsdef;
-    while tmp<>nil do begin
+    while Assigned(tmp) do begin
       next:=tmp.next;
       if LookUpNs(node.parent,tmp) then begin
         // delete the nsdef entry in the node
@@ -1426,8 +1426,9 @@ begin
   cleanNsdef(node);
   if not deep then exit;
   child:=node.children;
-  while assigned(child) do begin
+  while Assigned(child) do begin
     cleanNsdef(child,true);
+    child := child.next;
   end;
 end;
 
