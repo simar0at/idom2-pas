@@ -34,7 +34,8 @@ uses
   GUITestRunner,
   msxml_impl in '..\msxml_impl.pas',
   {$endif }
-  libxmldom in '..\libxmldom.pas';
+  libxmldom in '..\libxmldom.pas',
+  idom2_ext in '..\idom2_ext.pas';
 
 {$ifdef mswindows}
 {$R *.res}

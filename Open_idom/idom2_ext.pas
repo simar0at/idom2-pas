@@ -36,7 +36,7 @@ interface
  *
 *)
 
-uses idom2, classes;
+uses idom2, classes, sysutils;
 
 type
 	
@@ -125,9 +125,9 @@ type
     ['{C8F5A77E-39B6-4F88-8593-46130DFC5F60}']
     { Property Acessors }
     function get_errorCode: Integer;
-    function get_url: DOMString; safecall;
-    function get_reason: DOMString; safecall;
-    function get_srcText: DOMString; safecall;
+    function get_url: DOMString;
+    function get_reason: DOMString;
+    function get_srcText: DOMString;
     function get_line: Integer;
     function get_linepos: Integer;
     function get_filepos: Integer;
@@ -269,6 +269,43 @@ type
     property doccount: integer read get_doccount write set_doccount;
   end;
 
+  DomExceptionType = Integer;
+
+  EDomException = class(Exception)
+    private
+      fCode : DomExceptionType;
+    public
+      constructor create(code : DomExceptionType; const msg : DomString); overload;
+      constructor createFmt(
+              code       : DomExceptionType;
+              const msg  : string;
+              const args : array of const); overload;
+      property code : DomExceptionType read fCode;
+  end;
+
+  IURIResolver = interface
+    ['{2092A16A-33AD-48A9-B3A3-57C253F7AE18}']
+    function resolveURI(URI: string): TStream;
+  end;
+
+var
+  GlobalURIResolver: IURIResolver;
+
 implementation
+
+constructor EDomException.create(code : DomExceptionType; const msg : DomString);
+begin
+  inherited create(msg);
+  fCode := code;
+end;
+
+constructor EDomException.createFmt(
+        code       : DomExceptionType;
+        const msg  : string;
+        const args : array of const);
+begin
+  inherited createFmt(msg, args);
+  fCode := code;
+end;
 
 end.
