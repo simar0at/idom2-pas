@@ -731,8 +731,8 @@ type
  * xml utility functions
  *)
 
-function IsXmlName(const S: DOMString): boolean; forward;
-function IsXmlChars(const S: DOMString): boolean; forward;
+function IsXmlName(const aString: DOMString): boolean; forward;
+function IsXmlChars(const aString: DOMString): boolean; forward;
 
 
 const
@@ -5504,11 +5504,13 @@ begin
   end;
 end;
 
-function IsXmlChars(const S: DOMString): boolean;
+function IsXmlChars(const aString: DOMString): boolean;
 var
   i, l, pl: integer;
+  S: WideString;
   sChar:    widechar;
 begin
+  S := aString;
   Result := True;
   i := 0;
   l := length(S);
@@ -5540,10 +5542,12 @@ begin
   end;   {while ...}
 end;
 
-function IsXmlName(const S: DOMString): boolean;
+function IsXmlName(const aString: DOMString): boolean;
 var
   i: integer;
+  S: WideString;
 begin
+  S := aString;
   Result := True;
   if Length(S) = 0 then begin
     Result := False;
