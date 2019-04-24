@@ -40,7 +40,7 @@
 
 interface
 
-uses Windows, Classes, Variants, {$IFDEF VER300} System.Win.StdVCL,{$ELSE} StdVCL,{$ENDIF} Graphics, OleServer, ActiveX;
+uses Windows, Classes, Variants, {$IFNDEF FPC}StdVCL, {$ENDIF} Graphics, OleServer, ActiveX;
   
 // *********************************************************************//
 // In der Typbibliothek deklarierte GUIDS. Die folgenden Präfixe werden verwendet:        
@@ -770,7 +770,7 @@ type
     function createAttribute(const name: WideString): IXMLDOMAttribute; safecall;
     function createEntityReference(const name: WideString): IXMLDOMEntityReference; safecall;
     function getElementsByTagName(const tagName: WideString): IXMLDOMNodeList; safecall;
-    function createNode(type_: OleVariant; const name: WideString; const namespaceURI: WideString): IXMLDOMNode; safecall;
+    function createNode(type_: OleVariant; const name: WideString; const aNamespaceURI: WideString): IXMLDOMNode; safecall;
     function nodeFromID(const idString: WideString): IXMLDOMNode; safecall;
     function load(xmlSource: OleVariant): WordBool; safecall;
     function Get_readyState: Integer; safecall;
@@ -986,7 +986,7 @@ type
     function getAttributeNode(const name: WideString): IXMLDOMAttribute; dispid 102;
     function setAttributeNode(const DOMAttribute: IXMLDOMAttribute): IXMLDOMAttribute; dispid 103;
     function removeAttributeNode(const DOMAttribute: IXMLDOMAttribute): IXMLDOMAttribute; dispid 104;
-    function getElementsByTagName(const tagName: WideString): IXMLDOMNodeList; dispid 105;
+    function getElementsByTagName(const aTagName: WideString): IXMLDOMNodeList; dispid 105;
     procedure normalize; dispid 106;
     property nodeName: WideString readonly dispid 2;
     property nodeValue: OleVariant dispid 3;
@@ -1158,10 +1158,10 @@ type
     property data: WideString dispid 109;
     property length: Integer readonly dispid 110;
     function substringData(offset: Integer; count: Integer): WideString; dispid 111;
-    procedure appendData(const data: WideString); dispid 112;
-    procedure insertData(offset: Integer; const data: WideString); dispid 113;
+    procedure appendData(const aData: WideString); dispid 112;
+    procedure insertData(offset: Integer; const aData: WideString); dispid 113;
     procedure deleteData(offset: Integer; count: Integer); dispid 114;
-    procedure replaceData(offset: Integer; count: Integer; const data: WideString); dispid 115;
+    procedure replaceData(offset: Integer; count: Integer; const aData: WideString); dispid 115;
     property nodeName: WideString readonly dispid 2;
     property nodeValue: OleVariant dispid 3;
     property nodeType: DOMNodeType readonly dispid 4;
@@ -1217,10 +1217,10 @@ type
     property data: WideString dispid 109;
     property length: Integer readonly dispid 110;
     function substringData(offset: Integer; count: Integer): WideString; dispid 111;
-    procedure appendData(const data: WideString); dispid 112;
-    procedure insertData(offset: Integer; const data: WideString); dispid 113;
+    procedure appendData(const aData: WideString); dispid 112;
+    procedure insertData(offset: Integer; const aData: WideString); dispid 113;
     procedure deleteData(offset: Integer; count: Integer); dispid 114;
-    procedure replaceData(offset: Integer; count: Integer; const data: WideString); dispid 115;
+    procedure replaceData(offset: Integer; count: Integer; const aData: WideString); dispid 115;
     property nodeName: WideString readonly dispid 2;
     property nodeValue: OleVariant dispid 3;
     property nodeType: DOMNodeType readonly dispid 4;
@@ -1274,10 +1274,10 @@ type
     property data: WideString dispid 109;
     property length: Integer readonly dispid 110;
     function substringData(offset: Integer; count: Integer): WideString; dispid 111;
-    procedure appendData(const data: WideString); dispid 112;
-    procedure insertData(offset: Integer; const data: WideString); dispid 113;
+    procedure appendData(const aData: WideString); dispid 112;
+    procedure insertData(offset: Integer; const aData: WideString); dispid 113;
     procedure deleteData(offset: Integer; count: Integer); dispid 114;
-    procedure replaceData(offset: Integer; count: Integer; const data: WideString); dispid 115;
+    procedure replaceData(offset: Integer; count: Integer; const aData: WideString); dispid 115;
     property nodeName: WideString readonly dispid 2;
     property nodeValue: OleVariant dispid 3;
     property nodeType: DOMNodeType readonly dispid 4;
@@ -1332,10 +1332,10 @@ type
     property data: WideString dispid 109;
     property length: Integer readonly dispid 110;
     function substringData(offset: Integer; count: Integer): WideString; dispid 111;
-    procedure appendData(const data: WideString); dispid 112;
-    procedure insertData(offset: Integer; const data: WideString); dispid 113;
+    procedure appendData(const aData: WideString); dispid 112;
+    procedure insertData(offset: Integer; const aData: WideString); dispid 113;
     procedure deleteData(offset: Integer; count: Integer); dispid 114;
-    procedure replaceData(offset: Integer; count: Integer; const data: WideString); dispid 115;
+    procedure replaceData(offset: Integer; count: Integer; const aData: WideString); dispid 115;
     property nodeName: WideString readonly dispid 2;
     property nodeValue: OleVariant dispid 3;
     property nodeType: DOMNodeType readonly dispid 4;
@@ -2475,7 +2475,7 @@ type
     function Get_final: SCHEMADERIVATIONMETHOD; safecall;
     function Get_variety: SCHEMATYPEVARIETY; safecall;
     function Get_derivedBy: SCHEMADERIVATIONMETHOD; safecall;
-    function isValid(const data: WideString): WordBool; safecall;
+    function isValid(const aData: WideString): WordBool; safecall;
     function Get_minExclusive: WideString; safecall;
     function Get_minInclusive: WideString; safecall;
     function Get_maxExclusive: WideString; safecall;
@@ -2517,7 +2517,7 @@ type
     property final: SCHEMADERIVATIONMETHOD readonly dispid 1437;
     property variety: SCHEMATYPEVARIETY readonly dispid 1480;
     property derivedBy: SCHEMADERIVATIONMETHOD readonly dispid 1432;
-    function isValid(const data: WideString): WordBool; dispid 1445;
+    function isValid(const aData: WideString): WordBool; dispid 1445;
     property minExclusive: WideString readonly dispid 1452;
     property minInclusive: WideString readonly dispid 1453;
     property maxExclusive: WideString readonly dispid 1448;
@@ -2577,7 +2577,7 @@ type
     property final: SCHEMADERIVATIONMETHOD readonly dispid 1437;
     property variety: SCHEMATYPEVARIETY readonly dispid 1480;
     property derivedBy: SCHEMADERIVATIONMETHOD readonly dispid 1432;
-    function isValid(const data: WideString): WordBool; dispid 1445;
+    function isValid(const aData: WideString): WordBool; dispid 1445;
     property minExclusive: WideString readonly dispid 1452;
     property minInclusive: WideString readonly dispid 1453;
     property maxExclusive: WideString readonly dispid 1448;
@@ -2933,10 +2933,10 @@ type
     property documentElement: IXMLDOMElement dispid 40;
     function createElement(const tagName: WideString): IXMLDOMElement; dispid 41;
     function createDocumentFragment: IXMLDOMDocumentFragment; dispid 42;
-    function createTextNode(const data: WideString): IXMLDOMText; dispid 43;
-    function createComment(const data: WideString): IXMLDOMComment; dispid 44;
-    function createCDATASection(const data: WideString): IXMLDOMCDATASection; dispid 45;
-    function createProcessingInstruction(const target: WideString; const data: WideString): IXMLDOMProcessingInstruction; dispid 46;
+    function createTextNode(const aData: WideString): IXMLDOMText; dispid 43;
+    function createComment(const aData: WideString): IXMLDOMComment; dispid 44;
+    function createCDATASection(const aData: WideString): IXMLDOMCDATASection; dispid 45;
+    function createProcessingInstruction(const target: WideString; const aData: WideString): IXMLDOMProcessingInstruction; dispid 46;
     function createAttribute(const name: WideString): IXMLDOMAttribute; dispid 47;
     function createEntityReference(const name: WideString): IXMLDOMEntityReference; dispid 49;
     function getElementsByTagName(const tagName: WideString): IXMLDOMNodeList; dispid 50;
@@ -3020,10 +3020,10 @@ type
     property documentElement: IXMLDOMElement dispid 40;
     function createElement(const tagName: WideString): IXMLDOMElement; dispid 41;
     function createDocumentFragment: IXMLDOMDocumentFragment; dispid 42;
-    function createTextNode(const data: WideString): IXMLDOMText; dispid 43;
-    function createComment(const data: WideString): IXMLDOMComment; dispid 44;
-    function createCDATASection(const data: WideString): IXMLDOMCDATASection; dispid 45;
-    function createProcessingInstruction(const target: WideString; const data: WideString): IXMLDOMProcessingInstruction; dispid 46;
+    function createTextNode(const aData: WideString): IXMLDOMText; dispid 43;
+    function createComment(const aData: WideString): IXMLDOMComment; dispid 44;
+    function createCDATASection(const aData: WideString): IXMLDOMCDATASection; dispid 45;
+    function createProcessingInstruction(const target: WideString; const aData: WideString): IXMLDOMProcessingInstruction; dispid 46;
     function createAttribute(const name: WideString): IXMLDOMAttribute; dispid 47;
     function createEntityReference(const name: WideString): IXMLDOMEntityReference; dispid 49;
     function getElementsByTagName(const tagName: WideString): IXMLDOMNodeList; dispid 50;
@@ -3122,7 +3122,7 @@ type
     procedure validate; safecall;
     procedure Set_validateOnLoad(validateOnLoad: WordBool); safecall;
     function Get_validateOnLoad: WordBool; safecall;
-    function getSchema(const namespaceURI: WideString): ISchema; safecall;
+    function getSchema(const aNamespaceURI: WideString): ISchema; safecall;
     function getDeclaration(const node: IXMLDOMNode): ISchemaItem; safecall;
     property validateOnLoad: WordBool read Get_validateOnLoad write Set_validateOnLoad;
   end;
@@ -3852,7 +3852,12 @@ type
 
 implementation
 
-uses System.Win.ComObj;
+uses
+{$IFNDEF FPC}
+  System.Win.ComObj;
+{$ELSE}
+  ComObj;
+{$ENDIF}
 
 class function CoDOMDocument60.Create: IXMLDOMDocument3;
 begin

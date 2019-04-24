@@ -215,7 +215,7 @@ type
 
   IDomNodeEx2 = interface(IDomNode)
     ['{1B41AE3F-6365-41FC-AFDD-26BC143F9C0F}']
-    procedure RegisterNS(const prefix, URI: DomString);
+    procedure RegisterNS(const APrefix, URI: DomString);
   end;
 
   { IDomNodeListExt }
