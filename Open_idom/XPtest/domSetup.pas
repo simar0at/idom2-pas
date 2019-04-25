@@ -4,9 +4,6 @@ interface
 
 uses
   TestFramework,
-  {$IFDEF FPC}
-  TestFrameworkIfaces,
-  {$ENDIF}
   idom2;
 
 const
@@ -62,12 +59,7 @@ var
 
 constructor TDomSetup.Create(const vendorID: string; test: ITest);
 begin
-  {$IFDEF FPC}
-  inherited Create('DOM Setup');
-  AddTest(test);
-  {$ELSE}
   inherited Create(test);
-  {$ENDIF}
   fVendorID := vendorID;
 end;
 

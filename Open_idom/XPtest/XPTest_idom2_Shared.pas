@@ -4,25 +4,14 @@ interface
 
 uses
   IniFiles,
+  TestFrameWork,
   domSetup,
   idom2,
   idom2_ext,
   sysutils,
-{$ifdef linux}
-  libc,
-  QForms,
-  QStdCtrls,
-  QControls,
-  QDialogs,
-{$else}
   Forms,
   StdCtrls,
   Controls,
-{$endif}
-  TestFrameWork,
-  {$IFDEF FPC}
-  TestFrameworkIfaces,
-  {$ENDIF}
   Classes, Dialogs;
 
 const
@@ -385,7 +374,7 @@ begin
   {$endif}
 end;
 
-function getUnicodeStr(mode: integer = 0): DOMString;
+function getUnicodeStr(mode: integer = 0): UnicodeString;
   // this function returns an unicode string
 var
   i: integer;

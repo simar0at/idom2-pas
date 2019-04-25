@@ -277,7 +277,6 @@ end;
 
 procedure TTestDom2Methods.ext_appendChild_existing;
 var
-  node: IDomNode;
   temp: string;
 begin
   check(doc0.documentElement.childNodes.length = 0, 'wrong length (A)');
@@ -294,15 +293,12 @@ begin
 end;
 
 procedure TTestDom2Methods.basic_getElementByID;
-var
-  elem: IDomElement;
 begin
   elem := doc0.getElementById('110');
 end;
 
 procedure TTestDom2Methods.unknown_createElementNS_1;
 var
-  node: IDomNode;
   temp: string;
 begin
   check(doc0.documentElement.childNodes.length = 0, 'wrong length');
@@ -321,7 +317,6 @@ end;
 
 procedure TTestDom2Methods.unknown_createElementNS;
 var
-  node: IDomNode;
   temp: string;
 begin
   check(doc1.documentElement.childNodes.length = 0, 'wrong length');
@@ -345,7 +340,6 @@ end;
 
 procedure TTestDom2Methods.basic_createAttributeNS_createNsDecl;
 var
-  attr: IDomAttr;
   temp: string;
 begin
   // this test failes with libxml2 in the moment
@@ -365,7 +359,6 @@ end;
 procedure TTestDOM2Methods.ext_reconciliate;
 var
   s1,s2: string;
-  attr: IDomAttr;
   i:    integer;
 begin
   // setup DOM
@@ -402,7 +395,6 @@ end;
 
 procedure TTestDOM2Methods.ext_append_100_attributes_with_different_namespaces;
 var
-  attr: IDomAttr;
   i:    integer;
   attrval, temp: string;
   ok:   boolean;
@@ -431,9 +423,10 @@ end;
 
 procedure TTestDom2Methods.basic_appendChild;
 var
-  temp:         widestring;
-  temp1, temp2: widestring;
+  temp:         DOMString;
+  temp1, temp2: DOMString;
   diff:         integer;
+  tmpOut:       DOMString;
 begin
   elem := doc.createElement(Name);
   doc.documentElement.appendChild(elem);
@@ -920,7 +913,6 @@ begin
 
   check(myIsSameNode(elem.parentNode,doc), 'wrong parentNode');
   check(myIsSameNode(elem.ownerDocument,doc), 'wrong ownerDocument');
-  check(true);
 end;
 
 procedure TTestDom2Methods.basic_documentFragment;
@@ -979,7 +971,9 @@ procedure TTestDom2Methods.basic_getAttributeNodeNS_setAttributeNodeNS;
 begin
   elem := doc.createElement(Name);
   attr := doc.createAttributeNS(nsuri, fqname);
+  check((attr.parentNode=nil), 'wrong parentNode');
   elem.setAttributeNodeNS(attr);
+  check((attr.parentNode=nil), 'wrong parentNode');
   attr := elem.getAttributeNodeNS(nsuri, Name);
   check(attr <> nil, 'attribute is nil');
   check(attr.name = fqname, 'wrong name');
@@ -1908,8 +1902,6 @@ var
   //i: integer;
   entities:  IDomNamedNodeMap;
   notations: IDomNamedNodeMap;
-  node:     IDomNode;
-  ent:      IDomEntity;
   notation: IDomNotation;
 begin
   // there's no DTD !
@@ -2112,9 +2104,7 @@ const
   xml = xmldecl+
         '<test xmlns:eva="http://www.4commerce.de/eva"  eva:attrib="value1" />';
 var
-  doc:  IDomDocument;
   ok:   boolean;
-  attr: IDomAttr;
 begin
   doc := impl.createDocument('','',nil);
   ok := (doc as IDomPersist).loadxml(xml);
@@ -2146,8 +2136,6 @@ const
           '<root>&ct;</root>';
 var
   entities: IDomNamedNodeMap;
-  node:     IDomNode;
-  ent:      IDomEntity;
   sl:       TStrings;
   i:        integer;
 begin
@@ -2178,6 +2166,7 @@ begin
   sl := TStringList.Create;
   for i := 0 to doc.docType.entities.length-1 do begin
     ent := doc.docType.entities[i] as IDomEntity;
+    check(ent<>nil,'an existing entity was not found!');
     sl.Add(ent.nodeName);
   end;
   check(sl.IndexOf('ct') <> -1, 'entity "ct" not found');
@@ -2211,7 +2200,6 @@ const
 var
   i: integer;
   notations: IDomNamedNodeMap;
-  node:     IDomNode;
   notation: IDomNotation;
 begin
   // there's no DTD !
@@ -2819,11 +2807,9 @@ end;
 
 function TTestDOM2Methods.getFragmentA(out docstr: WideString): IDOMElement;
 var
-  doc: IDOMDocument;
   elem1,elem2: IDOMElement;
   i,j,n: integer;
   sl: TStrings;
-//  domdebug: IDOMDebug;
 begin
   result := nil;
   n := 0;
@@ -2832,9 +2818,6 @@ begin
   sl.Add('def=http://def.org');
   sl.Add('ghi=http://ghi.org');
   doc := impl.createDocument('','',nil);
-//  if impl.QueryInterface(IDOMDebug,domdebug) = S_OK then begin
-//    domdebug.doccount;
-//  end;
 
   if (doc as IDOMPersist).loadxml(xmlstr) then begin
     elem1 := doc.createElement('test');
@@ -2888,16 +2871,12 @@ procedure TTestDOM2Methods.ext_importNode_cloneNode;
 var
   elem1,elem2,elemb: IDOMElement;
   docstr: WideString;
-//  domdebug: IDOMDebug;
   i,j: integer;
 begin
   // delete all documents => doccount should be zero
   doc := nil;
   doc0 := nil;
   doc1 := nil;
-//  if impl.QueryInterface(IDOMDebug,domdebug) = S_OK then begin
-//    check(domdebug.doccount = 0, 'wrong doccount (I)');
-//  end;
 
   elemb := getFragmentA(docstr);
 
@@ -3441,6 +3420,8 @@ begin
 end;
 
 procedure TTestDOM2Methods.ext_cloneNode_NsDecl;
+var
+  tmp: string;
 const
   xmlstr0 = xmldecl+
             '<root>'+
@@ -3459,6 +3440,16 @@ const
                 '<elem3><abc:elem4 xmlns:abc="ABC"/></elem3>'+
               '</elem1b>'+
             '</root>';
+   xmlstr2 = '<root>'+
+               '<elem1 xmlns:abc="ABC">'+
+                 '<elem2>'+
+                   '<elem3><abc:elem4/></elem3>'+
+                 '</elem2>'+
+               '</elem1>'+
+               '<elem1b>'+
+                 '<elem3 xmlns:abc="ABC"><abc:elem4/></elem3>'+
+               '</elem1b>'+
+             '</root>';
 begin
   check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
   node := doc.createElement('elem3');
@@ -3467,7 +3458,8 @@ begin
   doc.documentElement.firstChild.firstChild.appendChild(node);
   node := node.cloneNode(True);
   doc.documentElement.lastChild.appendChild(node);
-  check(Unify((doc as IDOMPersist).xml) = xmlstr1, 'wrong content');
+  tmp:=(Unify((doc as IDOMPersist).xml));
+  check((tmp = xmlstr1) or (tmp = xmlstr2), 'wrong content');
 end;
 
 procedure TTestDOM2Methods.ext_cloneNode_AttributeNode_default_on_Element;

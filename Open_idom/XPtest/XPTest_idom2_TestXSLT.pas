@@ -82,7 +82,6 @@ var
   node: IDomNode;
   i:    integer;
   tmp:  DOMString;
-  xnode: IDomNodeEx;
 begin
   node := xml.createElement('test');
   xml.documentElement.appendChild(node);
@@ -116,7 +115,7 @@ procedure TTestXSLT.SetUp;
 begin
   ClearUp; // reset all
 
-  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
+  impl := getCurrentDomSetup.getDocumentBuilder.domImplementation;
   xml := impl.createDocument('', '', nil);
   (xml as IDomPersist).loadxml(xmlstr);
   xsl := impl.createDocument('', '', nil);

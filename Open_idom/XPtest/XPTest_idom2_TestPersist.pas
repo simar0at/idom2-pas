@@ -321,7 +321,7 @@ begin
   impl := nil;
   pe := nil;
 
-  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
+  impl := getCurrentDomSetup.getDocumentBuilder.domImplementation;
   doc := impl.createDocument('', '', nil);
   (doc as IDomPersist).loadxml(xmlstr);
   doc1 := impl.createDocument('', '', nil);

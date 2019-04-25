@@ -1,45 +1,5 @@
-Most of the files here have a license header. Most are MPL 1.1/LGPL 2.1/GPL 2 licensed
-I think the rest of the files is licensed LGPL 2.1 as per the LICENSE_GLPL.txt.
-The code is 
-The DOM Vendor (libxml2xmldom.pas) which I am interested most in is licensed like this
-because it is a extended version if the original libxmldom.pas that uses the slightly different
-idom2.pas interface:
-  ------------------------------------------------------------------------------
-   This unit is an object-oriented wrapper for libxml2.
-   It implements the interfaces defined in xmldom.pas and xmldom_ext.pas (a bunch of extensions).
-
-   Original author:
-   Uwe Fechner <ufechner@4commerce.de>
-
-   Contributers:
-   Martijn Brinkers   <m.brinkers@pobox.com>
-   Petr Kozelka       <pkozelka@centrum.cz>
-   Thomas Freudenberg <th.freudenberg@4commerce.de>
-   Omar Siam          <Omar.Siam@oeaw.ac.at>
-
-   Thanks to the gdome2 project, where I got many ideas from.
-   (see: http://phd.cs.unibo.it/gdome2/)
-
-   Thanks to Jan Kubatzki for testing.
-
-   | The routines for testing XML rules were taken from the Extended Document
-   | Object Model (XDOM) package, copyright (c) 1999-2002 by Dieter Köhler.
-   | The latest XDOM version is available at "http://www.philo.de/xml/" under
-   | a different open source license.  In addition, the author gave permission
-   | to use the routines for testing XML rules included in this file under the
-   | terms of either MPL 1.1, GPL 2.0 or LGPL 2.1.
-
-
-   Copyright [2002]:
-   4commerce technologies AG
-   Kamerbalken 10-14
-   22525 Hamburg, Germany
-
-   http://www.4commerce.de
-
    Published under a double license:
    a) the GNU Library General Public License:
       http://www.gnu.org/copyleft/lgpl.html
    b) the Mozilla Public License:
       http://www.mozilla.org/MPL/MPL-1.1.html
-  ------------------------------------------------------------------------------

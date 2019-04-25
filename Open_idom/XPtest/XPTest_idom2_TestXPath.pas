@@ -249,7 +249,6 @@ const
       '</xds:config>' +
     '</xds:repository>';
 var
-  doc: IDomDocument;
   xds_datalinks: IDomNodeList;
   docelement: IDomNode;
 begin
@@ -367,7 +366,7 @@ begin
 
   //inherited;
 
-  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
+  impl := getCurrentDomSetup.getDocumentBuilder.domImplementation;
   doc := impl.createDocument('', '', nil);
   (doc as IDomPersist).loadxml('<?xml version="1.0" encoding="iso-8859-1"?><root />');
   nsuri := 'http://ns.4commerce.de';

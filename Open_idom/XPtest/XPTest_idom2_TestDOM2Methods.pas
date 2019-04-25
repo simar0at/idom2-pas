@@ -272,7 +272,7 @@ begin
   ClearUp;
 
   // init all
-  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
+  impl := getCurrentDomSetup.getDocumentBuilder.domImplementation;
   doc0 := impl.createDocument('', '', nil);
   (doc0 as IDomPersist).loadxml(xmlstr);
   doc1 := impl.createDocument('', '', nil);
@@ -302,7 +302,6 @@ end;
 
 procedure TTestDom2Methods.ext_appendChild_existing;
 var
-  node: IDomNode;
   temp: string;
 begin
   check(doc0.documentElement.childNodes.length = 0, 'wrong length (A)');
@@ -319,15 +318,12 @@ begin
 end;
 
 procedure TTestDom2Methods.basic_getElementByID;
-var
-  elem: IDomElement;
 begin
   elem := doc0.getElementById('110');
 end;
 
 procedure TTestDom2Methods.unknown_createElementNS_1;
 var
-  node: IDomNode;
   temp: string;
 begin
   check(doc0.documentElement.childNodes.length = 0, 'wrong length');
@@ -346,7 +342,6 @@ end;
 
 procedure TTestDom2Methods.unknown_createElementNS;
 var
-  node: IDomNode;
   temp: string;
 begin
   check(doc1.documentElement.childNodes.length = 0, 'wrong length');
@@ -370,7 +365,6 @@ end;
 
 procedure TTestDom2Methods.basic_createAttributeNS_createNsDecl;
 var
-  attr: IDomAttr;
   temp: string;
 begin
   // this test failes with libxml2 in the moment
@@ -390,7 +384,6 @@ end;
 procedure TTestDOM2Methods.ext_reconciliate;
 var
   s1,s2: string;
-  attr: IDomAttr;
   i:    integer;
 begin
   // setup DOM
@@ -427,7 +420,6 @@ end;
 
 procedure TTestDOM2Methods.ext_append_100_attributes_with_different_namespaces;
 var
-  attr: IDomAttr;
   i:    integer;
   attrval, temp: string;
   ok:   boolean;
@@ -1905,8 +1897,6 @@ var
   //i: integer;
   entities:  IDomNamedNodeMap;
   notations: IDomNamedNodeMap;
-  node:     IDomNode;
-  ent:      IDomEntity;
   notation: IDomNotation;
 begin
   // there's no DTD !
@@ -2074,9 +2064,7 @@ const
   xml = xmldecl+
         '<test xmlns:eva="http://www.4commerce.de/eva"  eva:attrib="value1" />';
 var
-  doc:  IDomDocument;
   ok:   boolean;
-  attr: IDomAttr;
 begin
   doc := impl.createDocument('','',nil);
   ok := (doc as IDomPersist).loadxml(xml);
@@ -2108,8 +2096,6 @@ const
           '<root>&ct;</root>';
 var
   entities: IDomNamedNodeMap;
-  node:     IDomNode;
-  ent:      IDomEntity;
   sl:       TStrings;
   i:        integer;
 begin
@@ -2174,7 +2160,6 @@ const
 var
   i: integer;
   notations: IDomNamedNodeMap;
-  node:     IDomNode;
   notation: IDomNotation;
 begin
   // there's no DTD !
@@ -2782,7 +2767,6 @@ end;
 
 function TTestDOM2Methods.getFragmentA(out docstr: WideString): IDOMElement;
 var
-  doc: IDOMDocument;
   elem1,elem2: IDOMElement;
   i,j,n: integer;
   sl: TStrings;
@@ -3520,7 +3504,7 @@ begin
   node := doc.createAttributeNs('http://def.org', 'def:child');
   elem := doc.createElementNs('http://def.org', 'def:test');
   elem1:= doc.createElement('NAME');
-  elem1.setAttributeNode(IDomAttr(node));
+  elem1.setAttributeNode(node as IDOMAttr);
   elem.appendChild(elem1);
 
   // now clone the node flat
@@ -4234,7 +4218,6 @@ end;
 procedure TTestDOM2Methods.ext_namespaceMove_II;
 var
   elemBag, elemMoveMe: IDomElement;
-  attr: IDomAttr;
   tmp: string;
 begin
   elemBag := doc.createElementNS('AAA', 'a:elembag');
@@ -4265,7 +4248,6 @@ procedure TTestDOM2Methods.ext_namespaceAppendRemoveAttr;
 // nsdef entry of the attribute, too
 var
   elemBag: IDomElement;
-  attr: IDomAttr;
   tmp: string;
 begin
   elemBag := doc.createElementNS('AAA', 'a:elembag');
@@ -4423,7 +4405,6 @@ const
             '</root>';
 var
   ns:   string;
-  elem: IDomElement;
   ok: boolean;
 begin
   check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
@@ -4487,7 +4468,6 @@ const
             '</root>';
 var
   ns:   string;
-  elem: IDomElement;
 begin
   check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');
   doc.documentElement.setAttribute('xmlns','http://ABC');
@@ -4510,7 +4490,6 @@ const
             '</root>';
 var
   ns:   string;
-  elem: IDomElement;
   ok: boolean;
 begin
   check((doc as IDOMPersist).loadxml(xmlstr0), 'parse error');

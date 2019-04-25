@@ -6,7 +6,6 @@ uses
   TestFrameWork,
   idom2,
   idom2_ext,
-  domSetup,
   SysUtils,
   {$ifndef linux}
   ActiveX,
@@ -241,7 +240,7 @@ begin
   // reset all
   ClearUp;
 
-  impl := DomSetup.getCurrentDomSetup.getDocumentBuilder.domImplementation;
+  impl := getCurrentDomSetup.getDocumentBuilder.domImplementation;
   doc := impl.createDocument('', '', nil);
   (doc as IDomPersist).loadxml(xmlstr);
   doc1 := impl.createDocument('', '', nil);
@@ -285,8 +284,6 @@ begin
 end;
 
 procedure TTestDomExceptions.hierarchy_AppendAttribute;
-var
-  attr: IDomAttr;
 begin
   attr := doc.createAttribute('test');
   try
@@ -309,8 +306,6 @@ begin
 end;
 
 procedure TTestDomExceptions.unknown_InsertNilNode;
-var
-  node: IDomNode;
 begin
   node := doc.createElement('sub1');
   doc.documentElement.appendChild(node);

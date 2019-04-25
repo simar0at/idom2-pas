@@ -1,10 +1,44 @@
-MPL/LGPL/GPL licensed DOM Vendor for Delphi using libxml2
-=========================================================
+MPL/LGPL/GPL licensed DOM Vendor for Delphi using libxml2 and libxslt
+=====================================================================
 Origin of the project: http://idom2-pas.sourceforge.net/
-with Fixed Bugs, changes for Delphi 2010, current (git 2014) libxml2.dll and dependencies
+with Fixed Bugs, changes for Delphi 2010 to 10.1,
+current [libxml2.dll, libxslt.dll and dependencies](https://github.com/kiyolee/libxslt-win-build)
 Added IDOMParseError implementation, RelaxNG and XSD Schema validation.
 Should be a drop in replacement of the ever ageing msxmldom DOM Vendor.
-xsl:import and xsl:include resolution by callback implementation. 
+xsl:import and xsl:include resolution by callback implementation.
+
+------------------------------------------------------------------------------
+   This unit is an object-oriented wrapper for libxml2.
+   It implements the interfaces defined in xmldom.pas and xmldom_ext.pas (a bunch of extensions).
+
+   Original author:
+   Uwe Fechner <ufechner@4commerce.de>
+
+   Contributers:
+   Martijn Brinkers   <m.brinkers@pobox.com>
+   Petr Kozelka       <pkozelka@centrum.cz>
+   Thomas Freudenberg <th.freudenberg@4commerce.de>
+   Omar Siam          <Omar.Siam@oeaw.ac.at>
+
+   Thanks to the gdome2 project, where I got many ideas from.
+   (see: http://phd.cs.unibo.it/gdome2/)
+
+   Thanks to Jan Kubatzki for testing.
+
+   > The routines for testing XML rules were taken from the Extended Document
+   > Object Model (XDOM) package, copyright (c) 1999-2002 by Dieter Köhler.
+   > The latest XDOM version is available at "http://www.philo.de/xml/" under
+   > a different open source license.  In addition, the author gave permission
+   > to use the routines for testing XML rules included in this file under the
+   > terms of either MPL 1.1, GPL 2.0 or LGPL 2.1.
+
+
+   Copyright [2002]:
+   4commerce technologies AG
+   Kamerbalken 10-14
+   22525 Hamburg, Germany
+
+   http://www.4commerce.de
 
 Original Readme (form around 2002)
 ==================================
